@@ -1,0 +1,16 @@
+<Project>
+
+  <!-- Propiedades comunes a todos los proyectos de la solucion.
+       Ver docs/decisiones.md (ADR-0002) para el motivo de centralizarlas aqui. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- El contenido de la v1 es solo en espanol, pero la globalizacion debe quedar
+         activa para que los .resx y el formato de fechas/numeros funcionen. -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+</Project>

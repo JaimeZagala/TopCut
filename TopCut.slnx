@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TopCut.Api/TopCut.Api.csproj" />
+    <Project Path="src/TopCut.Application/TopCut.Application.csproj" />
+    <Project Path="src/TopCut.Domain/TopCut.Domain.csproj" />
+    <Project Path="src/TopCut.Infrastructure/TopCut.Infrastructure.csproj" />
+    <Project Path="src/TopCut.Web/TopCut.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TopCut.Application.Tests/TopCut.Application.Tests.csproj" />
+    <Project Path="tests/TopCut.Domain.Tests/TopCut.Domain.Tests.csproj" />
+    <Project Path="tests/TopCut.IntegrationTests/TopCut.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

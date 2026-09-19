@@ -1,0 +1,50 @@
+## Compilacion .NET
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+*.swp
+
+## Resultados de pruebas y cobertura
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.trx
+
+## Secretos y configuracion local
+appsettings.Development.local.json
+appsettings.*.Local.json
+*.pfx
+*.publishsettings
+PublishProfiles/
+.env
+.env.local
+
+## Scripts SQL generados por migraciones (se revisan, no se versionan por defecto)
+*.dacpac
+
+## Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
+
+## NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+!Directory.Packages.props
