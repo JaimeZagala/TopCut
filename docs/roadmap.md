@@ -22,15 +22,37 @@
 - ✅ Repositorio remoto: `JaimeZagala/TopCut` (privado), `main` sincronizada (ADR-0007)
 - ⏸ Correo dedicado del proyecto para Azure, Google Cloud y Play Console (ADR-0007)
 
-### Hito 1 — Modelo de datos, multi-tenancy e identidad ⬜
+### Hito 1 — Modelo de datos, multi-tenancy e identidad 🔨
 
-Entidades de dominio, `DbContext` con `TenantId` + `HasQueryFilter`, `RowVersion` donde toca,
-primera migracion con su script SQL revisado, Identity con los tres roles y politicas, registro
-con email/contrasena y casilla de consentimiento RGPD, login con Google, y **seed de los rulesets
-de Magic y One Piece validados contra sus reglas oficiales vigentes**.
+Partido en tres tramos para que cada uno sea revisable por separado.
 
-*Criterio de cierre*: se puede registrar un usuario, el Superadmin puede aprobar una tienda, y las
-pruebas de integracion confirman que una tienda no ve los datos de otra.
+#### 1a — Modelo de dominio y rulesets ✅
+
+- ✅ Entidades: `Tienda`, `Direccion`, `Tcg`, `Ruleset`, `Torneo`, `ConfiguracionTorneo`,
+  `Participante`, `Ronda`, `Emparejamiento`, `Partida`, `Liga`
+- ✅ Piezas comunes: claves mixtas (ADR-0006), `IPerteneceATenant`, `IAuditable`, `RowVersion`
+- ✅ Eventos de dominio sin suscriptores (`RondaLanzada`, `ResultadoRegistrado`,
+  `ResultadoPendiente`, `PlazaLiberada`, `TorneoFinalizado`)
+- ✅ Rulesets de Magic y One Piece **verificados contra los reglamentos oficiales vigentes**
+- ✅ 56 pruebas de dominio en verde
+- ⏸ ADR-0009: la regla de empate automatico del brief se aparta de ambos reglamentos oficiales.
+  Implementada tal cual, pendiente de decidir con Jaime antes del hito 2.
+
+#### 1b — Persistencia ⬜
+
+`DbContext` en Infrastructure, mapeo de las entidades, filtros globales por `TenantId`, `RowVersion`
+e interceptor de auditoria, seed del catalogo, primera migracion con su script SQL revisado y
+pruebas de integracion con Testcontainers.
+
+*Criterio de cierre*: las pruebas de integracion confirman que una tienda no ve los datos de otra.
+
+#### 1c — Identidad ⬜
+
+ASP.NET Core Identity con los tres roles y sus politicas, registro con email/contrasena y casilla
+de consentimiento RGPD, login con Google (condicionado a que existan credenciales) y tokens Bearer
+para la API externa.
+
+*Criterio de cierre*: se puede registrar un usuario y el Superadmin puede aprobar una tienda.
 
 ### Hito 2 — Motor de torneo ⬜
 

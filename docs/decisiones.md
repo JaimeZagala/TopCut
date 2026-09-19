@@ -125,7 +125,7 @@ Abrir una terminal nueva lo resuelve.
 
 ## ADR-0007 — Identidad en los commits y correo para los servicios del proyecto
 
-**Fecha**: 2026-09-19 · **Estado**: aceptada la parte de git; **pendiente** la de servicios
+**Fecha**: 2026-09-19 · **Estado**: aceptada
 
 ### Repositorio e identidad en los commits — decidido
 
@@ -144,10 +144,10 @@ Jaime. Los commits se firman con la direccion `noreply` que GitHub proporciona:
 - **Ejecucion**: los dos commits que ya existian se reescribieron con `git commit-tree` antes del
   primer push, de modo que **el Gmail personal nunca llego a GitHub**.
 
-### Correo propio para los servicios — pendiente
+### Correo propio para los servicios — decidido
 
-Propuesta sobre la mesa: crear una cuenta de Google dedicada al proyecto y usarla como identidad de
-**Azure**, **Google Cloud** (el OAuth del login con Google) y, en la fase 3, **Google Play Console**.
+Se creo la cuenta **`topcut.tcgapp@gmail.com`**, que es la identidad de **Azure**, **Google Cloud**
+(el OAuth del login con Google) y, en la fase 3, **Google Play Console**.
 
 - **Por que separarlo**: la cuenta de desarrollador de Play esta atada a la cuenta que la crea y
   transferirla despues es un tramite de soporte lento e incierto. Ademas, la oferta gratuita de
@@ -158,3 +158,48 @@ Propuesta sobre la mesa: crear una cuenta de Google dedicada al proyecto y usarl
   2FA y correo de recuperacion apuntando a la cuenta personal.
 - **Lo que NO cambia**: GitHub sigue siendo la cuenta personal. El correo del proyecto se anade como
   email secundario verificado en esa misma cuenta si se quiere enrutar notificaciones.
+
+---
+
+## ADR-0008 — Vocabulario del dominio en espanol, fontaneria tecnica en ingles
+
+**Fecha**: 2026-09-19 · **Estado**: aceptada · **Impacto**: medio (renombrado mecanico si se revierte)
+
+Las entidades y conceptos de negocio se nombran en espanol (`Torneo`, `Participante`,
+`Emparejamiento`, `Ronda`, `Ruleset`, `Tienda`), y la fontaneria tecnica sigue la convencion del
+framework en ingles (`DbContext`, `RowVersion`, `Repository`, `Handler`).
+
+- **Alternativa descartada**: todo el codigo en ingles.
+- **Por que**: el lenguaje con el que Jaime y su tienda hablan del problema es espanol, y este
+  documento, el resto de `/docs` y el vocabulario del negocio ya lo son. Mantener el mismo termino
+  en la conversacion, en la documentacion y en el codigo evita la capa de traduccion mental que
+  suele acabar en sinonimos incoherentes (`Match` / `Pairing` / `Enfrentamiento` conviviendo).
+- **Matiz**: los identificadores evitan tildes y enes para no depender de la codificacion del
+  fichero. Los textos visibles y los comentarios si las usan.
+- **Como revertir**: es un renombrado mecanico. Cuanto antes se decida, mas barato; por eso queda
+  registrado en el primer hito con codigo.
+
+---
+
+## ADR-0009 — Empate automatico al agotarse la ronda — **PENDIENTE DE CONFIRMAR**
+
+**Fecha**: 2026-09-19 · **Estado**: implementado segun el brief, pendiente de revisar con Jaime
+
+El brief pide que, si el cronometro llega a cero sin resultado reportado, el enfrentamiento se
+marque **automaticamente como empate**, con correccion manual posterior del organizador. Asi esta
+implementado (`Torneo.AplicarFinDeTiempo`).
+
+**Esto se aparta de los dos reglamentos oficiales**, y conviene saberlo antes de usarlo en un
+torneo real:
+
+- **Magic** (MTR): al acabar el tiempo se juegan cinco turnos extra; si al terminarlos nadie ha
+  ganado la partida en curso, gana el enfrentamiento **quien vaya por delante en partidas**, y solo
+  es empate si van igualados.
+- **One Piece** (TRM 5.2): se juegan tres turnos extra con un limite de 5 minutos y, si sigue sin
+  haber ganador, se resuelve por criterios de juego (cartas de Life restantes, cartas en el mazo,
+  personajes en juego) antes de declarar empate.
+
+Con la regla del brief, un 1-0 en Bo3 al que se le acaba el tiempo se registra como empate cuando
+por reglamento seria victoria. **Propuesta para el hito 2**: anadir al ruleset una politica de fin
+de tiempo (`EmpateSiempre` frente a `GanaQuienVaPorDelante`) y dejar la del brief como opcion. Se
+decide con Jaime antes de implementar el motor.

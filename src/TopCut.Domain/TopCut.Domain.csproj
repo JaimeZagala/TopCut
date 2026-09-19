@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- El emparejador suizo del hito 2 vive en este mismo proyecto, asi que Emparejar y demas
+         operaciones de agregado son internal. Las pruebas necesitan verlas. -->
+    <InternalsVisibleTo Include="TopCut.Domain.Tests" />
+  </ItemGroup>
+
 </Project>
