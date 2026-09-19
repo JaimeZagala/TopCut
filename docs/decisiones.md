@@ -74,9 +74,9 @@ la UI Blazor y los endpoints `/api/*` se sirven desde **un unico proceso y un un
 
 ---
 
-## ADR-0005 — Herramientas del equipo de desarrollo: git instalado, Docker pendiente de reparar
+## ADR-0005 — Herramientas del equipo de desarrollo
 
-**Fecha**: 2026-09-19 · **Estado**: aceptada (parcialmente ejecutada)
+**Fecha**: 2026-09-19 · **Estado**: aceptada y ejecutada
 
 Estado inicial del equipo: .NET SDK 10.0.401, SQL Server LocalDB (`MSSQLLocalDB`) y el workload
 `maui-windows`; **sin git**, y con Docker Desktop **instalado pero roto**.
@@ -85,13 +85,18 @@ Decision (confirmada por Jaime): instalar **git y Docker Desktop**.
 
 - **git 2.55.0.3**: instalado via `winget` en `C:\Program Files\Git`. Desbloquea el control de
   versiones, el repositorio en GitHub y el CI/CD del hito 8.
-- **Docker Desktop**: existe una instalacion **obsoleta y no funcional** (v26.0.0, de 2024): el
-  daemon no arranca y falta su distro WSL `docker-desktop` (solo queda `docker-desktop-data`).
-  Requiere **actualizacion con elevacion (UAC) y probablemente reinicio**, asi que lo ejecuta
-  Jaime a mano. No bloquea nada hasta las pruebas de integracion del hito 1.
+- **Docker Desktop 29.8.0**: habia una instalacion obsoleta y rota (v26.0.0, con el daemon caido y
+  sin su distro WSL). Jaime la reinstalo; el daemon corre con **contenedores Linux**, que es lo que
+  Testcontainers necesita.
+- **GitHub CLI 2.101.0**: instalado para crear y gestionar el repositorio remoto.
 - **Alternativa descartada**: pruebas de integracion contra LocalDB en local y Testcontainers solo
   en CI. Descartada porque LocalDB y Azure SQL difieren en restricciones y collation, y el objetivo
   de estas pruebas es precisamente validar el esquema contra un SQL Server real antes del PR.
+
+Nota operativa: `git`, `docker` y `gh` se instalaron durante una sesion ya abierta, asi que sus
+rutas (`C:\Program Files\Git\cmd`, `C:\Program Files\Docker\Docker\resources\bin`,
+`C:\Program Files\GitHub CLI`) no estan en el `PATH` de terminales anteriores a la instalacion.
+Abrir una terminal nueva lo resuelve.
 
 ---
 

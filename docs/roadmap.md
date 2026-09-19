@@ -17,10 +17,9 @@
 - ✅ `dotnet build` y `dotnet test` en verde
 - ✅ Decisiones confirmadas: topologia de `TopCut.Api` (ADR-0004), herramientas (ADR-0005),
   claves primarias (ADR-0006)
-- ✅ git 2.55 instalado y repositorio inicializado
-- ⏸ Docker Desktop: instalacion obsoleta y rota, la repara Jaime a mano (ADR-0005). No bloquea
-  hasta las pruebas de integracion del hito 1.
-- ⬜ Repositorio remoto en GitHub
+- ✅ Herramientas: git 2.55, Docker Desktop 29.8 (contenedores Linux) y GitHub CLI 2.101
+- ✅ Repositorio local inicializado
+- ⬜ Repositorio remoto en GitHub (pendiente de `gh auth login` y de elegir visibilidad)
 
 ### Hito 1 — Modelo de datos, multi-tenancy e identidad ⬜
 
