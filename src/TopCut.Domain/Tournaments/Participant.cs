@@ -1,0 +1,90 @@
+using TopCut.Domain.Common;
+
+namespace TopCut.Domain.Tournaments;
+
+/// <summary>
+/// A player in one specific tournament. <b>Does not assume an account exists</b>: the store signs
+/// up walk-ins by hand, and <see cref="UserId"/> stays empty for them.
+/// </summary>
+public class Participant : BusinessEntity, ITenantOwned, IHasRowVersion
+{
+    private Participant() { }
+
+    internal Participant(Guid tournamentId, Guid tenantId, string name, string? userId)
+    {
+        DomainException.Require(!string.IsNullOrWhiteSpace(name), "El participante necesita un nombre.");
+
+        TournamentId = tournamentId;
+        TenantId = tenantId;
+        Name = name.Trim();
+        UserId = userId;
+        Status = ParticipantStatus.Registered;
+        RegisteredAt = DateTimeOffset.UtcNow;
+    }
+
+    public Guid TournamentId { get; private set; }
+
+    public Guid TenantId { get; private set; }
+
+    /// <summary>
+    /// The name shown on pairings and standings. Kept even when an account is linked, so the
+    /// organiser can print the tables without loading users.
+    /// </summary>
+    public string Name { get; private set; } = null!;
+
+    /// <summary>Identity user, if the player registered from the application.</summary>
+    public string? UserId { get; private set; }
+
+    public ParticipantStatus Status { get; private set; }
+
+    /// <summary>Place in the waitlist queue. <c>null</c> when not waitlisted.</summary>
+    public int? WaitlistPosition { get; private set; }
+
+    public DateTimeOffset RegisteredAt { get; private set; }
+
+    public byte[]? RowVersion { get; set; }
+
+    /// <summary>Eligible for the next round's pairings.</summary>
+    public bool IsActive => Status == ParticipantStatus.Registered;
+
+    internal void MoveToWaitlist(int position)
+    {
+        Status = ParticipantStatus.Waitlisted;
+        WaitlistPosition = position;
+    }
+
+    internal void PromoteFromWaitlist()
+    {
+        DomainException.Require(
+            Status == ParticipantStatus.Waitlisted,
+            "Solo se promociona a quien esta en lista de espera.");
+
+        Status = ParticipantStatus.Registered;
+        WaitlistPosition = null;
+    }
+
+    internal void MoveUpWaitlist()
+    {
+        if (WaitlistPosition is > 1)
+        {
+            WaitlistPosition--;
+        }
+    }
+
+    /// <summary>Withdrawal. Keeps results already played and stops entering pairings and byes.</summary>
+    internal void Drop()
+    {
+        DomainException.Require(
+            Status != ParticipantStatus.Dropped,
+            "El participante ya estaba dado de baja.");
+
+        Status = ParticipantStatus.Dropped;
+        WaitlistPosition = null;
+    }
+
+    internal void Rename(string name)
+    {
+        DomainException.Require(!string.IsNullOrWhiteSpace(name), "El participante necesita un nombre.");
+        Name = name.Trim();
+    }
+}

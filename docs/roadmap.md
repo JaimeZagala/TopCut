@@ -1,6 +1,6 @@
 # Roadmap
 
-> Ultima actualizacion: 2026-09-19
+> Ultima actualizacion: 2026-09-20
 >
 > Leyenda: ✅ hecho · 🔨 en curso · ⏸ pendiente de confirmar · ⬜ no empezado
 
@@ -28,15 +28,15 @@ Partido en tres tramos para que cada uno sea revisable por separado.
 
 #### 1a — Modelo de dominio y rulesets ✅
 
-- ✅ Entidades: `Tienda`, `Direccion`, `Tcg`, `Ruleset`, `Torneo`, `ConfiguracionTorneo`,
-  `Participante`, `Ronda`, `Emparejamiento`, `Partida`, `Liga`
-- ✅ Piezas comunes: claves mixtas (ADR-0006), `IPerteneceATenant`, `IAuditable`, `RowVersion`
-- ✅ Eventos de dominio sin suscriptores (`RondaLanzada`, `ResultadoRegistrado`,
-  `ResultadoPendiente`, `PlazaLiberada`, `TorneoFinalizado`)
+- ✅ Entidades: `Store`, `Address`, `Tcg`, `Ruleset`, `Tournament`, `TournamentSettings`,
+  `Participant`, `Round`, `Pairing`, `Game`, `League`
+- ✅ Piezas comunes: claves mixtas (ADR-0006), `ITenantOwned`, `IAuditable`, `RowVersion`
+- ✅ Eventos de dominio sin suscriptores (`RoundStarted`, `ResultRecorded`, `RoundTimeExpired`,
+  `SeatFreed`, `TournamentCompleted`)
 - ✅ Rulesets de Magic y One Piece **verificados contra los reglamentos oficiales vigentes**
-- ✅ 56 pruebas de dominio en verde
-- ⏸ ADR-0009: la regla de empate automatico del brief se aparta de ambos reglamentos oficiales.
-  Implementada tal cual, pendiente de decidir con Jaime antes del hito 2.
+- ✅ Politica de fin de tiempo configurable y reporte partida a partida (ADR-0009)
+- ✅ Codigo renombrado a ingles (ADR-0008)
+- ✅ 64 pruebas de dominio en verde
 
 #### 1b — Persistencia ⬜
 

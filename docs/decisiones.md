@@ -161,45 +161,55 @@ Se creo la cuenta **`topcut.tcgapp@gmail.com`**, que es la identidad de **Azure*
 
 ---
 
-## ADR-0008 — Vocabulario del dominio en espanol, fontaneria tecnica en ingles
+## ADR-0008 — Codigo en ingles, textos visibles y documentacion en espanol
 
-**Fecha**: 2026-09-19 · **Estado**: aceptada · **Impacto**: medio (renombrado mecanico si se revierte)
+**Fecha**: 2026-09-19 · **Estado**: aceptada (confirmada por Jaime) · **Impacto**: alto si se revierte tarde
 
-Las entidades y conceptos de negocio se nombran en espanol (`Torneo`, `Participante`,
-`Emparejamiento`, `Ronda`, `Ruleset`, `Tienda`), y la fontaneria tecnica sigue la convencion del
-framework en ingles (`DbContext`, `RowVersion`, `Repository`, `Handler`).
+Los identificadores y los comentarios del codigo van en **ingles** (`Tournament`, `Participant`,
+`Pairing`, `Round`, `Ruleset`, `Store`). Se quedan en **espanol**:
 
-- **Alternativa descartada**: todo el codigo en ingles.
-- **Por que**: el lenguaje con el que Jaime y su tienda hablan del problema es espanol, y este
-  documento, el resto de `/docs` y el vocabulario del negocio ya lo son. Mantener el mismo termino
-  en la conversacion, en la documentacion y en el codigo evita la capa de traduccion mental que
-  suele acabar en sinonimos incoherentes (`Match` / `Pairing` / `Enfrentamiento` conviviendo).
-- **Matiz**: los identificadores evitan tildes y enes para no depender de la codificacion del
-  fichero. Los textos visibles y los comentarios si las usan.
-- **Como revertir**: es un renombrado mecanico. Cuanto antes se decida, mas barato; por eso queda
-  registrado en el primer hito con codigo.
+- `/docs` al completo, que es lo que lee Jaime.
+- Los **mensajes de `DomainException`**, porque pueden acabar en pantalla y el producto es
+  monolingue en espanol. Pasaran a recursos `.resx` en el hito 3, y entonces el codigo quedara
+  limpio de cadenas traducibles.
 
----
+- **Primera version de este ADR** (descartada el mismo dia): dominio en espanol para que el
+  vocabulario del negocio, la documentacion y el codigo usaran el mismo termino.
+- **Por que se cambio**: convencion mas habitual y legible para cualquiera de fuera que mire el
+  repositorio; encaja sin roces con el vocabulario de ASP.NET y EF Core; y evita identificadores
+  con tildes o enes.
+- **Coste real del cambio**: se ejecuto en el mismo hito 1a, sobre 19 archivos de dominio y 3 de
+  pruebas. Hacerlo tres hitos mas tarde habrian sido cientos.
 
-## ADR-0009 — Empate automatico al agotarse la ronda — **PENDIENTE DE CONFIRMAR**
+## ADR-0009 — Fin de tiempo de ronda: politica configurable, por defecto la oficial
 
-**Fecha**: 2026-09-19 · **Estado**: implementado segun el brief, pendiente de revisar con Jaime
+**Fecha**: 2026-09-19 · **Estado**: aceptada (confirmada por Jaime)
 
-El brief pide que, si el cronometro llega a cero sin resultado reportado, el enfrentamiento se
-marque **automaticamente como empate**, con correccion manual posterior del organizador. Asi esta
-implementado (`Torneo.AplicarFinDeTiempo`).
+El brief pedia que, al llegar el cronometro a cero sin resultado reportado, el enfrentamiento se
+marcase **automaticamente como empate**. Al validar los reglamentos oficiales aparecio que **ambos
+juegos dicen otra cosa**:
 
-**Esto se aparta de los dos reglamentos oficiales**, y conviene saberlo antes de usarlo en un
-torneo real:
+- **Magic** (MTR): tras los cinco turnos extra, gana el enfrentamiento **quien vaya por delante en
+  partidas**; solo hay empate si van igualados.
+- **One Piece** (TRM 5.2): tres turnos extra con limite de 5 minutos y, si sigue sin haber ganador,
+  se resuelve por criterios de juego antes de declarar empate.
 
-- **Magic** (MTR): al acabar el tiempo se juegan cinco turnos extra; si al terminarlos nadie ha
-  ganado la partida en curso, gana el enfrentamiento **quien vaya por delante en partidas**, y solo
-  es empate si van igualados.
-- **One Piece** (TRM 5.2): se juegan tres turnos extra con un limite de 5 minutos y, si sigue sin
-  haber ganador, se resuelve por criterios de juego (cartas de Life restantes, cartas en el mazo,
-  personajes en juego) antes de declarar empate.
+Con la regla literal del brief, un 1-0 en Bo3 al que se le acaba el tiempo se registraria como
+empate cuando por reglamento es victoria.
 
-Con la regla del brief, un 1-0 en Bo3 al que se le acaba el tiempo se registra como empate cuando
-por reglamento seria victoria. **Propuesta para el hito 2**: anadir al ruleset una politica de fin
-de tiempo (`EmpateSiempre` frente a `GanaQuienVaPorDelante`) y dejar la del brief como opcion. Se
-decide con Jaime antes de implementar el motor.
+**Decision**: el ruleset lleva una politica `TimeExpiryPolicy` con dos valores, y la tienda puede
+cambiarla por torneo hasta que empiece:
+
+| Valor | Comportamiento |
+|---|---|
+| `LeaderWins` (**por defecto en ambos TCG**) | Gana quien va por delante en partidas; empate solo si van igualados. Es lo que prescriben los dos reglamentos. |
+| `AlwaysDraw` | Empate siempre, pase lo que pase. Es la regla literal del brief, disponible para quien prefiera cerrar rondas rapido y corregir a mano. |
+
+**Consecuencia de diseno que esto obligo a resolver**: para que `LeaderWins` signifique algo hay
+que saber quien iba por delante, y eso exige poder **registrar cada partida segun termina**, no
+solo el resultado completo al final. De ahi `Tournament.RecordGame`, que anade una partida y cierra
+el enfrentamiento solo en cuanto queda decidido. Encaja ademas con el requisito de que el jugador
+pueda reportar en un par de toques desde el movil.
+
+En los dos casos el organizador puede corregir el resultado despues, y el enfrentamiento queda
+marcado con `DecidedByTimeExpiry` para que la pantalla en vivo pueda destacarlo.
