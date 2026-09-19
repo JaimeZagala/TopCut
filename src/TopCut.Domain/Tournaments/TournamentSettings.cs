@@ -28,8 +28,10 @@ public class TournamentSettings
         GameLossPoints = ruleset.GameLossPoints,
         ByesCountInOwnWinPercentage = ruleset.ByesCountInOwnWinPercentage,
         MinimumPercentage = ruleset.MinimumPercentage,
-        SwissPhase = ruleset.SwissPhase,
-        TopCutPhase = ruleset.TopCutPhase,
+        // Cloned, not shared: a copy that points back at the ruleset's own instances is not a
+        // copy at all, and EF Core refuses to map one owned entity under two owners.
+        SwissPhase = ruleset.SwissPhase with { },
+        TopCutPhase = ruleset.TopCutPhase with { },
         TimeExpiry = ruleset.TimeExpiry,
         _tiebreakers = [.. ruleset.Tiebreakers]
     };
@@ -57,9 +59,9 @@ public class TournamentSettings
 
     public decimal MinimumPercentage { get; private set; }
 
-    public PhaseSettings SwissPhase { get; private set; }
+    public PhaseSettings SwissPhase { get; private set; } = null!;
 
-    public PhaseSettings TopCutPhase { get; private set; }
+    public PhaseSettings TopCutPhase { get; private set; } = null!;
 
     public TimeExpiryPolicy TimeExpiry { get; private set; }
 

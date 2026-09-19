@@ -1,10 +1,11 @@
 # Modelo de datos
 
-> Ultima actualizacion: 2026-09-19 (hito 1a)
+> Ultima actualizacion: 2026-09-20 (hito 1b)
 >
-> **Estado: modelo de dominio implementado, persistencia pendiente.** Las entidades viven en
-> `src/TopCut.Domain`. Todavia no hay `DbContext` ni migraciones: el mapeo a SQL Server y los
-> indices llegan en el hito 1b y este documento se ampliara entonces con el esquema real.
+> **Estado: modelo de dominio y persistencia implementados.** Las entidades viven en
+> `src/TopCut.Domain` y su mapeo en `src/TopCut.Infrastructure/Persistence`. El esquema real esta
+> en la migracion `InitialSchema`, con su script revisable en
+> [`migraciones/001-InitialSchema.sql`](migraciones/001-InitialSchema.sql).
 
 ## Convenciones
 
@@ -146,7 +147,47 @@ en vivo por SignalR sea escribir un handler, sin tocar el dominio.
 abierta. `Tournament.LeagueId` apunta a ella, asi que un torneo puntua **como mucho para una liga**. La
 clasificacion acumulada llega en el hito 6.
 
+## Esquema en SQL Server
+
+Nueve tablas mas `__EFMigrationsHistory`. Los tipos propiedad se aplanan en la fila de su dueno en
+lugar de crear tablas aparte, porque nunca se consultan por separado y un join no aportaria nada:
+
+| Concepto | Como queda en la base de datos |
+|---|---|
+| `Address` | Columnas `Venue_Street`, `Venue_City`... dentro de `Tournaments`, y `Address_*` dentro de `Stores`. |
+| `PhaseSettings` | `SwissPhase_Format`, `SwissPhase_RoundLength`, `SwissPhase_ExtraTime` y sus equivalentes de top cut. |
+| `TournamentSettings` | Prefijo `Settings_` en `Tournaments`, con las fases anidadas dentro (`Settings_SwissPhase_Format`...). |
+| `Tiebreakers` | Una sola columna `nvarchar(64)` con los criterios separados por comas: la lista es corta, el orden se conserva solo y nadie consulta un criterio suelto. Lleva un `ValueComparer` para que EF detecte una reordenacion. |
+
+### Indices
+
+- `Tcgs.Code` unico: aparece en URLs y filtros.
+- `Rulesets.TcgId` unico: un ruleset por juego.
+- `Tournaments` por `(Status, StartsAt)` para la busqueda publica, por `(TenantId, Status)` para el
+  panel de la tienda, y por `TcgId` y `LeagueId`.
+- `Participants` unico y **filtrado** por `(TournamentId, UserId) WHERE UserId IS NOT NULL`: una
+  cuenta no ocupa dos plazas del mismo torneo, pero los jugadores de mostrador, que no tienen
+  cuenta, comparten el `NULL` sin chocar.
+- `Rounds` unico por `(TournamentId, Number)`; `Pairings` unico por `(RoundId, Table)`;
+  `Games` unico por `(PairingId, Number)`.
+- `Stores` por `(Status, IsTestStore)`, que es como filtra la busqueda publica.
+
+### Decisiones de integridad
+
+- **`Pairing` no tiene clave ajena a `Participant`** a proposito: borrar un participante nunca debe
+  arrastrar en cascada un enfrentamiento que ya cuenta para la clasificacion.
+- **`RowVersion`** en `Tournaments`, `Participants` y `Pairings`, que son las filas donde dos
+  acciones simultaneas pueden pisarse.
+- **Fechas** como `datetimeoffset`; las duraciones de ronda como `time`.
+- Las claves `Guid` v7 las genera el dominio, no la base de datos (`ValueGeneratedNever`).
+
+## Seed del catalogo
+
+`CatalogSeeder` crea los dos TCG y sus rulesets pasando por los mismos constructores del dominio que
+usa la aplicacion, en lugar de `HasData`, que lleva mal los tipos propiedad. Es idempotente, asi que
+puede ejecutarse en cada arranque.
+
 ## Pendiente
 
-- **Hito 1b**: mapeo EF Core, filtros globales por `TenantId`, indices, primera migracion.
+- **Hito 1c**: tablas de ASP.NET Core Identity y el vinculo `Participant.UserId`.
 - **Hito 2**: emparejador suizo y calculo de clasificacion con los desempates del ruleset.

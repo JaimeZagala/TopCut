@@ -108,9 +108,9 @@ public class Ruleset : CatalogEntity
 
     // --- Phases ------------------------------------------------------------------------------------
 
-    public PhaseSettings SwissPhase { get; private set; }
+    public PhaseSettings SwissPhase { get; private set; } = null!;
 
-    public PhaseSettings TopCutPhase { get; private set; }
+    public PhaseSettings TopCutPhase { get; private set; } = null!;
 
     // --- Traceability --------------------------------------------------------------------------------
 

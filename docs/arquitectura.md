@@ -1,6 +1,6 @@
 # Arquitectura
 
-> Ultima actualizacion: 2026-09-19 (hito 0)
+> Ultima actualizacion: 2026-09-20 (hito 1b)
 
 ## Stack
 
@@ -90,6 +90,12 @@ Motivo: es el enfoque mas simple, mas barato (una sola base de datos, que ademas
 limite del nivel gratuito de Azure SQL de una base de datos por suscripcion) y valido de sobra
 para el volumen previsto.
 
+Los filtros se aplican **por convencion**, recorriendo las entidades que implementan `ITenantOwned`
+al construir el modelo, para que anadir una entidad nueva no pueda filtrar datos entre tiendas
+porque alguien olvidase una linea. Y **fallan cerrado** (ADR-0011): sin tienda en contexto no se ve
+nada, y leer entre tiendas exige `IgnoreQueryFilters()` explicito en la consulta. `Store` no lleva
+filtro porque una tienda *es* el tenant.
+
 ## Autenticacion
 
 - **Blazor Web App**: cookie de sesion de ASP.NET Core Identity.
@@ -110,15 +116,19 @@ sensibles a condiciones de carrera:
 
 ## Eventos de dominio
 
-Los eventos de negocio (**ronda lanzada**, **resultado pendiente**, **plaza liberada en lista de
-espera**) se publican como eventos internos desacoplados mediante un mediador. En la v1 **no
-tienen ningun suscriptor que envie notificaciones**; activar push (Firebase Cloud Messaging en
-Android) o Web Push en el futuro sera anadir un handler, no tocar la logica de negocio.
+Los eventos de negocio (`RoundStarted`, `ResultRecorded`, `RoundTimeExpired`, `SeatFreed`,
+`TournamentCompleted`) se publican como eventos internos desacoplados. Un interceptor de EF Core los
+recoge de las entidades rastreadas y los despacha **despues** de que el guardado haya tenido exito,
+de modo que ningun handler reacciona a trabajo que se revirtio.
+
+El despachador es propio, de unas treinta lineas, en vez de MediatR (ADR-0010). En la v1 **no hay
+ningun suscriptor**; activar push (Firebase Cloud Messaging en Android) o Web Push en el futuro
+sera anadir un handler, no tocar la logica de negocio.
 
 ## Preparado para el futuro sin construirlo ahora
 
 - **Geolocalizacion**: la direccion de la tienda se guarda **estructurada** (calle, ciudad,
-  provincia, codigo postal) desde la v1, con campos `Latitud`/`Longitud` **opcionales y sin uso**.
+  provincia, codigo postal) desde la v1, con campos `Latitude`/`Longitude` **opcionales y sin uso**.
   Activar "torneos cerca de mi" sera anadir una consulta por distancia, no rediseniar el modelo.
 - **App Android**: Blazor Hybrid sobre .NET MAUI, reutilizando los componentes MudBlazor de la web.
   El workload `maui-windows` ya esta instalado en el equipo de desarrollo.
@@ -173,9 +183,20 @@ un "staging" completo sin coste. Tres capas, todas gratuitas:
    ejecucion. **No** el proveedor InMemory de EF Core, que no valida las mismas restricciones que
    SQL Server. Se ejecutan en GitHub Actions en cada pull request, antes de fusionar cambios de
    esquema.
-3. **Antes de tocar produccion** — generar el script SQL de cada migracion
-   (`dotnet ef migrations script`) y revisarlo a mano antes de aplicarlo contra la base real, ya
-   que no hay una base de respaldo donde ensayarlo.
+3. **Antes de tocar produccion** — generar el script SQL de cada migracion y revisarlo a mano antes
+   de aplicarlo contra la base real, ya que no hay una base de respaldo donde ensayarlo. Los
+   scripts se versionan en [`migraciones/`](migraciones/):
+
+   ```
+   dotnet dotnet-ef migrations script --idempotent --project src/TopCut.Infrastructure --output docs/migraciones/00X-Nombre.sql
+   ```
+
+   Se generan **idempotentes**, de modo que aplicar uno dos veces no rompe nada.
+
+Si Docker no esta disponible en la maquina, la variable `TOPCUT_TEST_SQL` apunta la bateria de
+integracion a un SQL Server existente, LocalDB incluido (ADR-0012). Es una valvula de escape para
+seguir trabajando, no un sustituto: un cambio de esquema se valida con Testcontainers antes de
+fusionarse.
 
 Si hace falta un entorno mas parecido a produccion para pruebas manuales, se usa una **tienda de
 pruebas dentro de la misma base de datos** — un tenant marcado como "prueba" y excluido de las

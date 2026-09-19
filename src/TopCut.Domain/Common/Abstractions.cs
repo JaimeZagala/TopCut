@@ -9,6 +9,16 @@ public interface ITenantOwned
     Guid TenantId { get; }
 }
 
+/// <summary>
+/// Lets infrastructure collect and clear domain events without knowing the entity's key type.
+/// </summary>
+public interface IHasDomainEvents
+{
+    IReadOnlyCollection<DomainEvent> DomainEvents { get; }
+
+    void ClearDomainEvents();
+}
+
 /// <summary>Creation and last-modification timestamps, filled in by an EF Core interceptor.</summary>
 public interface IAuditable
 {

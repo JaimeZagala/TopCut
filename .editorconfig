@@ -40,3 +40,9 @@ dotnet_naming_symbols.private_fields.applicable_kinds = field
 dotnet_naming_symbols.private_fields.applicable_accessibilities = private
 dotnet_naming_style.underscore_prefix.capitalization = camel_case
 dotnet_naming_style.underscore_prefix.required_prefix = _
+
+# Migraciones generadas por EF Core: no se editan a mano, asi que no se les aplica el estilo.
+[**/Persistence/Migrations/*.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none
+csharp_style_namespace_declarations = file_scoped:none

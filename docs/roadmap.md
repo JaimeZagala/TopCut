@@ -38,13 +38,17 @@ Partido en tres tramos para que cada uno sea revisable por separado.
 - ✅ Codigo renombrado a ingles (ADR-0008)
 - ✅ 64 pruebas de dominio en verde
 
-#### 1b — Persistencia ⬜
+#### 1b — Persistencia ✅
 
-`DbContext` en Infrastructure, mapeo de las entidades, filtros globales por `TenantId`, `RowVersion`
-e interceptor de auditoria, seed del catalogo, primera migracion con su script SQL revisado y
-pruebas de integracion con Testcontainers.
-
-*Criterio de cierre*: las pruebas de integracion confirman que una tienda no ve los datos de otra.
+- ✅ `TopCutDbContext` con las nueve entidades mapeadas y sus indices
+- ✅ Filtros globales por `TenantId` aplicados por convencion y **fallando cerrado** (ADR-0011)
+- ✅ `RowVersion` e interceptor de auditoria con `TimeProvider`
+- ✅ Despachador de eventos de dominio propio, que publica tras confirmar el guardado (ADR-0010)
+- ✅ Seed idempotente del catalogo
+- ✅ Migracion `InitialSchema` y su script revisable en `docs/migraciones/001-InitialSchema.sql`
+- ✅ 20 pruebas de integracion, incluida la que confirma que una tienda no ve los datos de otra
+- ⏸ Verificacion con Testcontainers pendiente de que Docker Desktop arranque en la maquina; la
+  bateria se valido contra LocalDB usando la valvula del ADR-0012
 
 #### 1c — Identidad ⬜
 

@@ -213,3 +213,62 @@ pueda reportar en un par de toques desde el movil.
 
 En los dos casos el organizador puede corregir el resultado despues, y el enfrentamiento queda
 marcado con `DecidedByTimeExpiry` para que la pantalla en vivo pueda destacarlo.
+
+---
+
+## ADR-0010 — Despacho de eventos de dominio sin libreria de mediador
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo, reversible
+
+El brief pedia publicar los eventos de dominio "mediante un mediador tipo MediatR". Se implementa
+con un despachador propio de unas treinta lineas: `IDomainEventHandler<TEvent>` e
+`IDomainEventDispatcher` en Application, y una implementacion en Infrastructure que resuelve los
+handlers registrados en el contenedor de DI. Un interceptor de EF Core recoge los eventos de las
+entidades rastreadas y los publica **despues** de que el guardado haya tenido exito.
+
+- **Alternativa descartada**: MediatR.
+- **Por que**: hay cinco tipos de evento, ningun suscriptor en la v1 y ninguna necesidad de
+  pipeline de peticion/respuesta. El despachador propio cubre exactamente eso y deja el proyecto sin
+  una dependencia mas que mantener.
+- **Sobre la licencia**: MediatR 13 pasó a licencia comercial en julio de 2025, pero mantiene un
+  tier Community gratuito por debajo de 5 M$ de facturacion anual, asi que **para este proyecto
+  seria gratuito**. La decision es de simplicidad, no de coste.
+- **Como revertir**: si mas adelante la capa Application quiere un pipeline de comandos con
+  validacion y logging transversales, cambiar a MediatR es sustituir la implementacion del
+  despachador; los handlers se renombran a `INotificationHandler` y poco mas.
+
+---
+
+## ADR-0011 — El filtro de tenant falla cerrado
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: alto en seguridad, barato de mantener
+
+El filtro global de EF Core es `entity.TenantId == context.CurrentTenantId`. Cuando no hay tienda en
+contexto, la comparacion es contra `NULL` y **no devuelve ninguna fila**.
+
+- **Alternativa descartada**: que un contexto sin tenant vea todo, que es lo comodo para la busqueda
+  publica de torneos y para el panel de Superadmin.
+- **Por que**: con esa variante, cualquier fallo que deje el tenant sin resolver —un endpoint nuevo
+  que olvide el middleware, un job en segundo plano, un test mal montado— expondria los datos de
+  todas las tiendas en silencio. Con el filtro actual el mismo fallo produce una lista vacia: se ve
+  enseguida y no filtra nada.
+- **Consecuencia**: leer entre tiendas exige `IgnoreQueryFilters()` explicito en el sitio de la
+  consulta. La busqueda publica y el panel de Superadmin lo usaran, y al ser explicito queda
+  visible en revision de codigo en vez de ser el comportamiento por defecto.
+- `Store` no lleva filtro: una tienda **es** el tenant, no pertenece a uno.
+
+---
+
+## ADR-0012 — Las pruebas de integracion aceptan un SQL Server externo
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo
+
+Por defecto la bateria levanta SQL Server con Testcontainers, como fija el ADR-0005. Si la variable
+de entorno `TOPCUT_TEST_SQL` trae una cadena de conexion, se usa esa instancia y se recrea el
+esquema desde cero al arrancar.
+
+- **Por que**: desbloquea el desarrollo cuando Docker no esta disponible en la maquina (LocalDB
+  sirve de sustituto), y permite que un runner de CI que ya ofrece SQL Server como service
+  container lo reutilice en vez de anidar un contenedor dentro de otro.
+- **Lo que no cambia**: el camino por defecto sigue siendo Testcontainers, y es el que debe
+  ejecutarse antes de fusionar un cambio de esquema. LocalDB y Azure SQL no son identicos.

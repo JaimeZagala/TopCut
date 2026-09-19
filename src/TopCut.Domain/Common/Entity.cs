@@ -4,7 +4,7 @@ namespace TopCut.Domain.Common;
 /// Common root for domain entities. Collects domain events that infrastructure publishes when
 /// changes are saved (see docs/arquitectura.md).
 /// </summary>
-public abstract class Entity<TId> where TId : struct
+public abstract class Entity<TId> : IHasDomainEvents where TId : struct
 {
     private readonly List<DomainEvent> _domainEvents = [];
 

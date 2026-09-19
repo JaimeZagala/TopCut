@@ -48,6 +48,19 @@ public class TournamentTests
     }
 
     [Fact]
+    public void The_copied_phase_settings_are_new_instances_and_not_the_rulesets_own()
+    {
+        var ruleset = SeedCatalog.MagicRuleset(tcgId: 1);
+        var tournament = NewTournament(ruleset: ruleset);
+
+        // Equal by value, but distinct objects: sharing them would mean the tournament and the
+        // catalog were the same row as far as the database is concerned.
+        Assert.Equal(ruleset.SwissPhase, tournament.Settings.SwissPhase);
+        Assert.NotSame(ruleset.SwissPhase, tournament.Settings.SwissPhase);
+        Assert.NotSame(ruleset.TopCutPhase, tournament.Settings.TopCutPhase);
+    }
+
+    [Fact]
     public void A_store_can_mix_Bo3_swiss_with_a_Bo1_top_cut()
     {
         var tournament = NewTournament();

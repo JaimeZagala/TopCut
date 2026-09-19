@@ -9,7 +9,10 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Testcontainers.MsSql" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
@@ -21,6 +24,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TopCut.Infrastructure\TopCut.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\TopCut.Web\TopCut.Web.csproj" />
+    <ProjectReference Include="..\..\src\TopCut.Domain\TopCut.Domain.csproj" />
+    <ProjectReference Include="..\..\src\TopCut.Application\TopCut.Application.csproj" />
   </ItemGroup>
 
 </Project>
