@@ -120,3 +120,41 @@ Abrir una terminal nueva lo resuelve.
   claves agrupadas secuenciales en SQL Server y no fragmentan el indice como haria un v4 aleatorio.
 - **Nota para el hito 1**: los IDs de ASP.NET Core Identity (`AspNetUsers`, `AspNetRoles`) quedan
   como `string` — es el default del framework y cambiarlo aporta poco.
+
+---
+
+## ADR-0007 — Identidad en los commits y correo para los servicios del proyecto
+
+**Fecha**: 2026-09-19 · **Estado**: aceptada la parte de git; **pendiente** la de servicios
+
+### Repositorio e identidad en los commits — decidido
+
+El repositorio vive en **`JaimeZagala/TopCut`**, **privado**, bajo la cuenta personal de GitHub de
+Jaime. Los commits se firman con la direccion `noreply` que GitHub proporciona:
+`692421+JaimeZagala@users.noreply.github.com`.
+
+- **Alternativas descartadas**:
+  - *Repositorio publico desde el principio*: el repo acabara conteniendo configuracion de Azure y
+    nombres de tiendas y jugadores reales. Privado → publico es un clic; al reves no, porque lo
+    indexado ya esta fuera.
+  - *Firmar con el Gmail personal*: en un repo que puede volverse publico, el correo queda en cada
+    commit para siempre y es rastreable por bots.
+  - *Una segunda cuenta de GitHub para el proyecto*: friccion permanente (dos sesiones, dos claves,
+    dos 2FA) y el codigo dejaria de contar como trabajo propio de Jaime.
+- **Ejecucion**: los dos commits que ya existian se reescribieron con `git commit-tree` antes del
+  primer push, de modo que **el Gmail personal nunca llego a GitHub**.
+
+### Correo propio para los servicios — pendiente
+
+Propuesta sobre la mesa: crear una cuenta de Google dedicada al proyecto y usarla como identidad de
+**Azure**, **Google Cloud** (el OAuth del login con Google) y, en la fase 3, **Google Play Console**.
+
+- **Por que separarlo**: la cuenta de desarrollador de Play esta atada a la cuenta que la crea y
+  transferirla despues es un tramite de soporte lento e incierto. Ademas, la oferta gratuita de
+  Azure SQL es **una base de datos por suscripcion**: una cuenta nueva estrena su propio cupo.
+- **Por que hacerlo antes del hito 1**: el login con Google necesita un proyecto de Google Cloud, y
+  crearlo bajo la cuenta equivocada obliga a rehacerlo.
+- **Riesgo a mitigar**: se convierte en un punto unico de fallo (Azure + Google Cloud + Play). Exige
+  2FA y correo de recuperacion apuntando a la cuenta personal.
+- **Lo que NO cambia**: GitHub sigue siendo la cuenta personal. El correo del proyecto se anade como
+  email secundario verificado en esa misma cuenta si se quiere enrutar notificaciones.

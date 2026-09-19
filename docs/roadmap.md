@@ -19,15 +19,15 @@
   claves primarias (ADR-0006)
 - ✅ Herramientas: git 2.55, Docker Desktop 29.8 (contenedores Linux) y GitHub CLI 2.101
 - ✅ Repositorio local inicializado
-- ⬜ Repositorio remoto en GitHub (pendiente de `gh auth login` y de elegir visibilidad)
+- ✅ Repositorio remoto: `JaimeZagala/TopCut` (privado), `main` sincronizada (ADR-0007)
+- ⏸ Correo dedicado del proyecto para Azure, Google Cloud y Play Console (ADR-0007)
 
 ### Hito 1 — Modelo de datos, multi-tenancy e identidad ⬜
 
 Entidades de dominio, `DbContext` con `TenantId` + `HasQueryFilter`, `RowVersion` donde toca,
 primera migracion con su script SQL revisado, Identity con los tres roles y politicas, registro
 con email/contrasena y casilla de consentimiento RGPD, login con Google, y **seed de los rulesets
-de Magic y One Piece validados contra sus reglas oficiales vigentes**. Se crea `TopCut.Api` con la
-topologia confirmada.
+de Magic y One Piece validados contra sus reglas oficiales vigentes**.
 
 *Criterio de cierre*: se puede registrar un usuario, el Superadmin puede aprobar una tienda, y las
 pruebas de integracion confirman que una tienda no ve los datos de otra.
