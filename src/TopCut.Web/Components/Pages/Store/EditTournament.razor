@@ -39,7 +39,11 @@ else
         · @string.Format(Textos.RulesFrom, details.RulesVersion)
     </MudText>
 
-    <TournamentTabs TournamentId="TournamentId" Current="TournamentTab.Details" />
+    <TournamentTabs TournamentId="TournamentId"
+                    Current="TournamentTab.Details"
+                    CanCancel="CanCancel"
+                    Busy="busy"
+                    OnCancel="CancelAsync" />
 
     @if (errors.Count > 0)
     {
@@ -66,16 +70,6 @@ else
                 @Textos.ActionUnpublish
             </MudButton>
         }
-        @if (details.Status is TournamentStatus.Draft or TournamentStatus.Published or TournamentStatus.InProgress)
-        {
-            <MudButton Variant="Variant.Text"
-                       Color="Color.Error"
-                       StartIcon="@Icons.Material.Filled.Cancel"
-                       Disabled="busy"
-                       OnClick="CancelAsync">
-                @Textos.ActionCancelTournament
-            </MudButton>
-        }
     </MudStack>
 
     <TournamentForm Model="model!"
@@ -98,6 +92,9 @@ else
     private TournamentFormModel? model;
     private bool loading = true;
     private bool busy;
+
+    private bool CanCancel =>
+        details?.Status is TournamentStatus.Draft or TournamentStatus.Published or TournamentStatus.InProgress;
 
     private Guid loaded;
 

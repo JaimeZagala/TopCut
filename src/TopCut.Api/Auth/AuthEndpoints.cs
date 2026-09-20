@@ -51,7 +51,7 @@ public static class AuthEndpoints
                 : Problem(result.Errors, StatusCodes.Status400BadRequest);
         })
         .AllowAnonymous()
-        .WithSummary("Registra un jugador. Exige aceptar el aviso de proteccion de datos.");
+        .WithSummary("Registra un jugador. Exige aceptar el aviso de protección de datos.");
 
         auth.MapPost("/login", async (
             LoginRequest request,

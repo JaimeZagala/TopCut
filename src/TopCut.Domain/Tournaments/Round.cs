@@ -15,7 +15,7 @@ public class Round : BusinessEntity, ITenantOwned
 
     internal Round(Guid tournamentId, Guid tenantId, int number, Phase phase, PhaseSettings settings, DateTimeOffset now)
     {
-        DomainException.Require(number >= 1, "La numeracion de rondas empieza en 1.");
+        DomainException.Require(number >= 1, "La numeración de rondas empieza en 1.");
 
         TournamentId = tournamentId;
         TenantId = tenantId;
@@ -80,7 +80,7 @@ public class Round : BusinessEntity, ITenantOwned
 
     internal Pairing Pair(int table, Guid playerAId, Guid? playerBId)
     {
-        DomainException.Require(Status == RoundStatus.InProgress, "La ronda ya esta cerrada.");
+        DomainException.Require(Status == RoundStatus.InProgress, "La ronda ya está cerrada.");
 
         var pairing = new Pairing(Id, TenantId, table, playerAId, playerBId);
         _pairings.Add(pairing);

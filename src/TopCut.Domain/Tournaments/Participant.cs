@@ -57,7 +57,7 @@ public class Participant : BusinessEntity, ITenantOwned, IHasRowVersion
     {
         DomainException.Require(
             Status == ParticipantStatus.Waitlisted,
-            "Solo se promociona a quien esta en lista de espera.");
+            "Solo se promociona a quien está en lista de espera.");
 
         Status = ParticipantStatus.Registered;
         WaitlistPosition = null;

@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using Microsoft.AspNetCore.Localization;
 using MudBlazor.Services;
 using TopCut.Web.Time;
@@ -18,6 +20,12 @@ builder.Services.AddMudServices();
 // La v1 es solo en espanol, pero los textos ya salen de .resx (ADR-0019) y las fechas y los
 // numeros se formatean con la cultura, no a mano. Anadir un idioma sera anadir la cultura aqui.
 builder.Services.AddLocalization();
+
+// Por defecto ASP.NET Core escapa todo lo que no sea Basic Latin, asi que "Clasificacion" salia al
+// HTML como "Clasificaci&#xF3;n": correcto pero ilegible en el fuente y mas pesado. La pagina es
+// UTF-8 y el idioma es espanol, asi que se deja pasar el Latin-1, donde viven las tildes, la ene y
+// los signos de apertura. Lo que importa (< > & " ') se sigue escapando igual.
+builder.Services.AddSingleton(HtmlEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Latin1Supplement));
 
 // La zona horaria de la tienda, para que la hora que se teclea signifique lo mismo en el portatil
 // de desarrollo y en un servidor que corre en UTC (ADR-0025).

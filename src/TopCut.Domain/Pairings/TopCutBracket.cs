@@ -21,7 +21,7 @@ public static class TopCutBracket
         DomainException.Require(tournament.HasTopCut, "Este torneo no tiene top cut configurado.");
         DomainException.Require(
             tournament.Rounds.Count(round => round.Phase == Phase.Swiss) == tournament.SwissRounds,
-            "Todavia quedan rondas suizas por jugar.");
+            "Todavía quedan rondas suizas por jugar.");
 
         var size = tournament.TopCutSize!.Value;
 
@@ -78,7 +78,7 @@ public static class TopCutBracket
         // reaches here the round was mis-reported, and guessing a winner would be worse than saying so.
         DomainException.Require(
             pairing.PlayerAWins != pairing.PlayerBWins,
-            $"La mesa {pairing.Table} del top cut quedo en empate, y la eliminacion directa no los admite.");
+            $"La mesa {pairing.Table} del top cut quedó en empate, y la eliminación directa no los admite.");
 
         return pairing.PlayerAWins > pairing.PlayerBWins ? pairing.PlayerAId : pairing.PlayerBId!.Value;
     }

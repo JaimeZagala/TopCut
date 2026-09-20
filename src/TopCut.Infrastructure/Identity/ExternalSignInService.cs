@@ -73,7 +73,7 @@ public sealed class ExternalSignInService(
     {
         if (!consentAccepted)
         {
-            return OperationResult.Fail("Hay que aceptar el aviso de proteccion de datos.");
+            return OperationResult.Fail("Hay que aceptar el aviso de protección de datos.");
         }
 
         if (string.IsNullOrWhiteSpace(displayName))
@@ -85,7 +85,7 @@ public sealed class ExternalSignInService(
 
         if (info is null)
         {
-            return OperationResult.Fail("La sesion con el proveedor externo ha caducado. Vuelve a intentarlo.");
+            return OperationResult.Fail("La sesión con el proveedor externo ha caducado. Vuelve a intentarlo.");
         }
 
         var email = info.Principal.FindFirstValue(ClaimTypes.Email);

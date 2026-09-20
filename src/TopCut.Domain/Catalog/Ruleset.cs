@@ -41,7 +41,7 @@ public class Ruleset : CatalogEntity
             "Los criterios de desempate no pueden repetirse.");
         DomainException.Require(
             minimumPercentage is >= 0m and <= 1m,
-            "El porcentaje minimo debe estar entre 0 y 1.");
+            "El porcentaje mínimo debe estar entre 0 y 1.");
         DomainException.Require(
             winPoints >= drawPoints && drawPoints >= lossPoints,
             "Los puntos deben ser decrecientes: victoria >= empate >= derrota.");
@@ -192,7 +192,7 @@ public class Ruleset : CatalogEntity
 
         DomainException.Require(
             ordered.Select(band => band.UpToPlayers).Distinct().Count() == ordered.Count,
-            "Las bandas de asistencia no pueden repetir su limite superior.");
+            "Las bandas de asistencia no pueden repetir su límite superior.");
         DomainException.Require(
             ordered.All(band => band.SwissRounds >= 1),
             "Cada banda necesita al menos una ronda suiza.");

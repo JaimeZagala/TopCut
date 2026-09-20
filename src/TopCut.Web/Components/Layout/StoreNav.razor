@@ -1,14 +1,14 @@
-@* Navegacion del organizador. Crece con cada tramo del hito 3. *@
+@* Navegacion del organizador. Con el cajon contraido solo se ven los iconos, asi que cada entrada
+   lleva el suyo y no depende del texto. *@
 
 <MudNavMenu Class="pa-2">
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+        @Textos.NavHome
+    </MudNavLink>
     <MudNavLink Href="/tienda" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
         @Textos.StoreDashboardTitle
     </MudNavLink>
     <MudNavLink Href="/tienda/torneos" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.EmojiEvents">
         @Textos.NavTournaments
-    </MudNavLink>
-    <MudDivider Class="my-2" />
-    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
-        @Textos.NavHome
     </MudNavLink>
 </MudNavMenu>

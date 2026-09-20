@@ -12,7 +12,7 @@ public class Tcg : CatalogEntity
 
     public Tcg(string code, string name, bool isActive = true)
     {
-        DomainException.Require(!string.IsNullOrWhiteSpace(code), "El TCG necesita un codigo.");
+        DomainException.Require(!string.IsNullOrWhiteSpace(code), "El TCG necesita un código.");
         DomainException.Require(!string.IsNullOrWhiteSpace(name), "El TCG necesita un nombre.");
 
         Code = code.Trim().ToUpperInvariant();

@@ -13,10 +13,10 @@ public sealed record Address
 
     public Address(string street, string city, string province, string postalCode)
     {
-        DomainException.Require(!string.IsNullOrWhiteSpace(street), "La direccion necesita una calle.");
-        DomainException.Require(!string.IsNullOrWhiteSpace(city), "La direccion necesita una ciudad.");
-        DomainException.Require(!string.IsNullOrWhiteSpace(province), "La direccion necesita una provincia.");
-        DomainException.Require(!string.IsNullOrWhiteSpace(postalCode), "La direccion necesita un codigo postal.");
+        DomainException.Require(!string.IsNullOrWhiteSpace(street), "La dirección necesita una calle.");
+        DomainException.Require(!string.IsNullOrWhiteSpace(city), "La dirección necesita una ciudad.");
+        DomainException.Require(!string.IsNullOrWhiteSpace(province), "La dirección necesita una provincia.");
+        DomainException.Require(!string.IsNullOrWhiteSpace(postalCode), "La dirección necesita un código postal.");
 
         Street = street.Trim();
         City = city.Trim();

@@ -56,7 +56,7 @@ public class AuthenticationTests(SqlServerFixture sqlServer) : IAsyncLifetime
 
         // Checked on the server, so posting straight to the API cannot skip the checkbox.
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Contains("proteccion de datos", await response.Content.ReadAsStringAsync());
+        Assert.Contains("protección de datos", await response.Content.ReadAsStringAsync());
     }
 
     [Fact]

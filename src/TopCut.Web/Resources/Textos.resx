@@ -59,10 +59,10 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Versión=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Versión=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
 
   <!-- Marca y navegacion -->
@@ -88,10 +88,10 @@
     <value>Salir</value>
   </data>
   <data name="NavPrivacy" xml:space="preserve">
-    <value>Proteccion de datos</value>
+    <value>Protección de datos</value>
   </data>
   <data name="NavMenuToggle" xml:space="preserve">
-    <value>Abrir el menu de navegacion</value>
+    <value>Abrir el menú de navegación</value>
     <comment>Etiqueta accesible del boton que abre el panel lateral.</comment>
   </data>
   <data name="NavUserMenu" xml:space="preserve">
@@ -100,16 +100,16 @@
 
   <!-- Portada -->
   <data name="HomeTitle" xml:space="preserve">
-    <value>Torneos de TCG, sin hojas de calculo</value>
+    <value>Torneos de TCG, sin hojas de cálculo</value>
   </data>
   <data name="HomeIntro" xml:space="preserve">
-    <value>TopCut se encarga de la parte tediosa de un torneo: emparejamientos suizos, desempates oficiales y clasificacion al dia. Tu te encargas de la tienda.</value>
+    <value>TopCut se encarga de la parte tediosa de un torneo: emparejamientos suizos, desempates oficiales y clasificación al día. Tú te encargas de la tienda.</value>
   </data>
   <data name="HomePlayersTitle" xml:space="preserve">
     <value>Si juegas</value>
   </data>
   <data name="HomePlayersBody" xml:space="preserve">
-    <value>Busca torneos, apuntate y consulta tu clasificacion desde el movil.</value>
+    <value>Busca torneos, apuntate y consulta tu clasificación desde el móvil.</value>
   </data>
   <data name="HomeStoresTitle" xml:space="preserve">
     <value>Si organizas</value>
@@ -132,7 +132,7 @@
     <value>Email</value>
   </data>
   <data name="FieldPassword" xml:space="preserve">
-    <value>Contrasena</value>
+    <value>Contraseña</value>
   </data>
 
   <!-- Registro -->
@@ -143,13 +143,13 @@
     <value>Crear cuenta</value>
   </data>
   <data name="SignUpConsent" xml:space="preserve">
-    <value>He leido y acepto el aviso de proteccion de datos.</value>
+    <value>He leído y acepto el aviso de protección de datos.</value>
   </data>
   <data name="SignUpConsentDetail" xml:space="preserve">
     <value>Guardamos tu email y tu historial de torneos para poder organizar los eventos.</value>
   </data>
   <data name="SignUpHaveAccount" xml:space="preserve">
-    <value>Ya tienes cuenta?</value>
+    <value>¿Ya tienes cuenta?</value>
   </data>
 
   <!-- Acceso -->
@@ -160,21 +160,21 @@
     <value>Entrar</value>
   </data>
   <data name="SignInRemember" xml:space="preserve">
-    <value>No cerrar sesion</value>
+    <value>No cerrar sesión</value>
   </data>
   <data name="SignInWithGoogle" xml:space="preserve">
     <value>Entrar con Google</value>
   </data>
   <data name="SignInNoAccount" xml:space="preserve">
-    <value>No tienes cuenta?</value>
+    <value>¿No tienes cuenta?</value>
   </data>
   <data name="SignInGoogleFailed" xml:space="preserve">
-    <value>No hemos podido completar la entrada con Google. Intentalo otra vez.</value>
+    <value>No hemos podido completar la entrada con Google. Inténtalo otra vez.</value>
   </data>
 
   <!-- Alta con Google -->
   <data name="GoogleSignUpTitle" xml:space="preserve">
-    <value>Ya casi esta</value>
+    <value>Ya casi está</value>
   </data>
   <data name="GoogleSignUpIntro" xml:space="preserve">
     <value>Has entrado con Google. Solo faltan dos cosas para crear tu cuenta.</value>
@@ -182,15 +182,15 @@
 
   <!-- Proteccion de datos -->
   <data name="PrivacyTitle" xml:space="preserve">
-    <value>Aviso de proteccion de datos</value>
+    <value>Aviso de protección de datos</value>
   </data>
   <data name="PrivacyLink" xml:space="preserve">
-    <value>aviso de proteccion de datos</value>
+    <value>aviso de protección de datos</value>
     <comment>Texto del enlace dentro de una frase, en minuscula.</comment>
   </data>
   <data name="PrivacyVersion" xml:space="preserve">
-    <value>Version {0}</value>
-    <comment>{0} es la version del aviso, por ejemplo 2026-09-20.</comment>
+    <value>Versión {0}</value>
+    <comment>{0} es la versión del aviso, por ejemplo 2026-09-20.</comment>
   </data>
 
   <!-- Panel de la tienda -->
@@ -198,7 +198,7 @@
     <value>Panel de la tienda</value>
   </data>
   <data name="StoreDashboardIntro" xml:space="preserve">
-    <value>Desde aqui se crean y se llevan los torneos.</value>
+    <value>Desde aquí se crean y se llevan los torneos.</value>
   </data>
 
   <!-- Errores -->
@@ -206,23 +206,23 @@
     <value>Algo ha fallado</value>
   </data>
   <data name="ErrorBody" xml:space="preserve">
-    <value>Se ha producido un error al procesar tu peticion. Si vuelve a pasar, avisa a la tienda.</value>
+    <value>Se ha producido un error al procesar tu petición. Si vuelve a pasar, avisa a la tienda.</value>
   </data>
   <data name="ErrorRequestId" xml:space="preserve">
-    <value>Identificador de la peticion: {0}</value>
-    <comment>{0} es el identificador tecnico de la peticion.</comment>
+    <value>Identificador de la petición: {0}</value>
+    <comment>{0} es el identificador tecnico de la petición.</comment>
   </data>
   <data name="NotFoundTitle" xml:space="preserve">
-    <value>Aqui no hay nada</value>
+    <value>Aquí no hay nada</value>
   </data>
   <data name="NotFoundBody" xml:space="preserve">
-    <value>La pagina que buscabas no existe o ha cambiado de sitio.</value>
+    <value>La página que buscabas no existe o ha cambiado de sitio.</value>
   </data>
   <data name="AccessDeniedTitle" xml:space="preserve">
     <value>No tienes permiso</value>
   </data>
   <data name="AccessDeniedBody" xml:space="preserve">
-    <value>Tu cuenta no puede ver esta pagina. Si crees que deberia, habla con la tienda o con el administrador de la plataforma.</value>
+    <value>Tu cuenta no puede ver esta página. Si crees que debería, habla con la tienda o con el administrador de la plataforma.</value>
   </data>
   <data name="BackHome" xml:space="preserve">
     <value>Volver al inicio</value>
@@ -239,16 +239,16 @@
     <value>Indica tu email.</value>
   </data>
   <data name="ValidationEmailInvalid" xml:space="preserve">
-    <value>Ese email no parece valido.</value>
+    <value>Ese email no parece válido.</value>
   </data>
   <data name="ValidationPasswordRequired" xml:space="preserve">
-    <value>Indica una contrasena.</value>
+    <value>Indica una contraseña.</value>
   </data>
   <data name="ValidationPasswordLength" xml:space="preserve">
-    <value>La contrasena necesita al menos 8 caracteres.</value>
+    <value>La contraseña necesita al menos 8 caracteres.</value>
   </data>
   <data name="ValidationConsentRequired" xml:space="preserve">
-    <value>Hay que aceptar el aviso de proteccion de datos.</value>
+    <value>Hay que aceptar el aviso de protección de datos.</value>
   </data>
 
   <!-- Hito 3b: gestion de torneos -->
@@ -280,7 +280,7 @@
     <value>Nuevo torneo</value>
   </data>
   <data name="TournamentsEmpty" xml:space="preserve">
-    <value>Todavia no has creado ningun torneo.</value>
+    <value>Todavía no has creado ningún torneo.</value>
   </data>
   <data name="TournamentsEmptyAction" xml:space="preserve">
     <value>Crear el primero</value>
@@ -305,7 +305,7 @@
   </data>
   <data name="WaitlistCount" xml:space="preserve">
     <value>+{0} en espera</value>
-    <comment>{0} es el numero de jugadores en lista de espera.</comment>
+    <comment>{0} es el número de jugadores en lista de espera.</comment>
   </data>
   <data name="RoundsSummary" xml:space="preserve">
     <value>{0} rondas</value>
@@ -338,10 +338,10 @@
     <value>Ese torneo no existe, o no es de tu tienda.</value>
   </data>
   <data name="SectionBasics" xml:space="preserve">
-    <value>Lo basico</value>
+    <value>Lo básico</value>
   </data>
   <data name="SectionVenue" xml:space="preserve">
-    <value>Donde se juega</value>
+    <value>Dónde se juega</value>
   </data>
   <data name="SectionStructure" xml:space="preserve">
     <value>Estructura</value>
@@ -380,7 +380,7 @@
     <value>Provincia</value>
   </data>
   <data name="FieldPostalCode" xml:space="preserve">
-    <value>Codigo postal</value>
+    <value>Código postal</value>
   </data>
   <data name="FieldSwissPhase" xml:space="preserve">
     <value>Fase suiza</value>
@@ -392,7 +392,7 @@
     <value>Formato de partida</value>
   </data>
   <data name="FieldRoundLength" xml:space="preserve">
-    <value>Duracion de ronda (min)</value>
+    <value>Duración de ronda (min)</value>
   </data>
   <data name="FieldExtraTime" xml:space="preserve">
     <value>Tiempo extra (min)</value>
@@ -419,14 +419,14 @@
     <value>Empate</value>
   </data>
   <data name="RoundLengthUnlimited" xml:space="preserve">
-    <value>Sin limite de tiempo</value>
+    <value>Sin límite de tiempo</value>
   </data>
   <data name="RulesFrom" xml:space="preserve">
     <value>Copiado de: {0}</value>
-    <comment>{0} es la version del reglamento oficial.</comment>
+    <comment>{0} es la versión del reglamento oficial.</comment>
   </data>
   <data name="RulesAreACopy" xml:space="preserve">
-    <value>Estas reglas son una copia que se quedo fija al crear el torneo. Cambiar las del juego no toca este torneo.</value>
+    <value>Estas reglas son una copia que se quedó fija al crear el torneo. Cambiar las del juego no toca este torneo.</value>
   </data>
   <data name="RecommendationTitle" xml:space="preserve">
     <value>Lo que recomienda el reglamento</value>
@@ -454,7 +454,7 @@
     <value>Cancelar el torneo</value>
   </data>
   <data name="ConfirmCancelBody" xml:space="preserve">
-    <value>El torneo deja de estar disponible y no se puede reabrir. Los inscritos se quedan como estan.</value>
+    <value>El torneo deja de estar disponible y no se puede reabrir. Los inscritos se quedan como están.</value>
   </data>
   <data name="NoticeCreated" xml:space="preserve">
     <value>Torneo creado.</value>
@@ -472,7 +472,7 @@
     <value>Torneo cancelado.</value>
   </data>
   <data name="LockedNotice" xml:space="preserve">
-    <value>El torneo ya esta en curso: su configuracion queda fijada para no invalidar lo ya jugado.</value>
+    <value>El torneo ya está en curso: su configuración queda fijada para no invalidar lo ya jugado.</value>
   </data>
   <data name="RegisteredSummary" xml:space="preserve">
     <value>{0} de {1} plazas</value>
@@ -502,10 +502,10 @@
     <value>Indica la provincia.</value>
   </data>
   <data name="ValidationPostalCodeRequired" xml:space="preserve">
-    <value>Indica el codigo postal.</value>
+    <value>Indica el código postal.</value>
   </data>
   <data name="ValidationRoundLengthRange" xml:space="preserve">
-    <value>La duracion de ronda va de 5 a 240 minutos.</value>
+    <value>La duración de ronda va de 5 a 240 minutos.</value>
   </data>
   <data name="ValidationExtraTimeRange" xml:space="preserve">
     <value>El tiempo extra va de 0 a 60 minutos.</value>
@@ -522,13 +522,13 @@
     <value>Participantes</value>
   </data>
   <data name="ParticipantAdd" xml:space="preserve">
-    <value>Anadir jugador</value>
+    <value>Añadir jugador</value>
   </data>
   <data name="FieldParticipantName" xml:space="preserve">
     <value>Nombre del jugador</value>
   </data>
   <data name="ActionAdd" xml:space="preserve">
-    <value>Anadir</value>
+    <value>Añadir</value>
   </data>
   <data name="ActionRename" xml:space="preserve">
     <value>Cambiar el nombre</value>
@@ -546,7 +546,7 @@
     <value>Bajas</value>
   </data>
   <data name="RosterEmpty" xml:space="preserve">
-    <value>Todavia no hay nadie apuntado. Escribe un nombre y pulsa Intro.</value>
+    <value>Todavía no hay nadie apuntado. Escribe un nombre y pulsa Intro.</value>
   </data>
   <data name="SeatsLeft" xml:space="preserve">
     <value>Quedan {0} plazas.</value>
@@ -561,7 +561,7 @@
     <value>El torneo ya no admite inscripciones nuevas.</value>
   </data>
   <data name="DroppedKeepResults" xml:space="preserve">
-    <value>Las partidas que ya jugaron siguen contando para la clasificacion.</value>
+    <value>Las partidas que ya jugaron siguen contando para la clasificación.</value>
   </data>
   <data name="ColumnPosition" xml:space="preserve">
     <value>Puesto</value>
@@ -598,7 +598,7 @@
     <value>Se queda libre su plaza y entra la primera persona de la lista de espera.</value>
   </data>
   <data name="ConfirmDropInProgress" xml:space="preserve">
-    <value>Deja de entrar en los emparejamientos, pero lo que ya jugo sigue contando para la clasificacion.</value>
+    <value>Deja de entrar en los emparejamientos, pero lo que ya jugó sigue contando para la clasificación.</value>
   </data>
   <data name="RenameTitle" xml:space="preserve">
     <value>Cambiar el nombre</value>
@@ -642,7 +642,7 @@
     <comment>Encabezado de columna: enfrentamiento directo.</comment>
   </data>
   <data name="DeskNotStarted" xml:space="preserve">
-    <value>El torneo todavia no ha empezado.</value>
+    <value>El torneo todavía no ha empezado.</value>
   </data>
   <data name="DeskNotPublished" xml:space="preserve">
     <value>Publica el torneo para poder lanzar la primera ronda.</value>
@@ -675,7 +675,7 @@
     <value>{0} sin resultado</value>
   </data>
   <data name="DeskAllReported" xml:space="preserve">
-    <value>Todos los resultados estan puestos.</value>
+    <value>Todos los resultados están puestos.</value>
   </data>
   <data name="DeskRoundClosed" xml:space="preserve">
     <value>Ronda cerrada.</value>
@@ -685,13 +685,13 @@
     <comment>{0} es la hora de fin de la ronda.</comment>
   </data>
   <data name="DeskNoRounds" xml:space="preserve">
-    <value>Todavia no se ha jugado ninguna ronda.</value>
+    <value>Todavía no se ha jugado ninguna ronda.</value>
   </data>
   <data name="DeskTournamentDone" xml:space="preserve">
     <value>Torneo finalizado.</value>
   </data>
   <data name="DeskTournamentCancelled" xml:space="preserve">
-    <value>Este torneo esta cancelado.</value>
+    <value>Este torneo está cancelado.</value>
   </data>
   <data name="ColumnTable" xml:space="preserve">
     <value>Mesa</value>
@@ -725,10 +725,10 @@
     <value>Sin resultado</value>
   </data>
   <data name="StandingsTitle" xml:space="preserve">
-    <value>Clasificacion</value>
+    <value>Clasificación</value>
   </data>
   <data name="StandingsEmpty" xml:space="preserve">
-    <value>La clasificacion aparece en cuanto se juegue la primera ronda.</value>
+    <value>La clasificación aparece en cuanto se juegue la primera ronda.</value>
   </data>
   <data name="StandingsDropped" xml:space="preserve">
     <value>Baja</value>
@@ -737,13 +737,13 @@
     <value>Resolver por fin de tiempo</value>
   </data>
   <data name="ConfirmTimeExpiryBody" xml:space="preserve">
-    <value>Las partidas que sigan sin resultado se cierran segun la regla del torneo. Despues puedes corregir cualquiera a mano.</value>
+    <value>Las partidas que sigan sin resultado se cierran según la regla del torneo. Después puedes corregir cualquiera a mano.</value>
   </data>
   <data name="ConfirmCompleteTitle" xml:space="preserve">
     <value>Finalizar el torneo</value>
   </data>
   <data name="ConfirmCompleteBody" xml:space="preserve">
-    <value>El torneo queda cerrado y la clasificacion final es la que hay ahora.</value>
+    <value>El torneo queda cerrado y la clasificación final es la que hay ahora.</value>
   </data>
   <data name="NoticeRoundStarted" xml:space="preserve">
     <value>Ronda {0} en marcha.</value>
@@ -763,7 +763,7 @@
 
   <!-- Hito 4: tiempo real -->
   <data name="ClockExtraTime" xml:space="preserve">
-    <value>Prorroga</value>
+    <value>Prórroga</value>
   </data>
   <data name="ClockOver" xml:space="preserve">
     <value>Tiempo agotado</value>
@@ -772,13 +772,17 @@
     <value>Pantalla en vivo</value>
   </data>
   <data name="LiveOpen" xml:space="preserve">
-    <value>Abrir la pantalla en vivo</value>
+    <value>En vivo</value>
+    <comment>Boton de la fila de pestanas. El texto largo va en el tooltip.</comment>
+  </data>
+  <data name="LiveOpenHint" xml:space="preserve">
+    <value>Abrir la pantalla en vivo en otra pestaña</value>
   </data>
   <data name="LiveWaiting" xml:space="preserve">
     <value>Esperando a que empiece la ronda.</value>
   </data>
   <data name="LiveStandingsHeading" xml:space="preserve">
-    <value>Clasificacion tras la ronda {0}</value>
+    <value>Clasificación tras la ronda {0}</value>
   </data>
   <data name="LiveRoundHeading" xml:space="preserve">
     <value>Ronda {0}</value>

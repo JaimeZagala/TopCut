@@ -88,7 +88,7 @@ public class TournamentSettings
     {
         DomainException.Require(
             settings.RoundLength is null or { TotalMinutes: > 0 },
-            "La duracion de ronda debe ser positiva o nula (sin limite).");
+            "La duración de ronda debe ser positiva o nula (sin límite).");
 
         if (phase == Phase.Swiss)
         {

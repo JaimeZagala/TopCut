@@ -5,7 +5,7 @@
    vuelve a cargar la pantalla desde la base de datos, asi que pulsar "Datos" estando en Datos
    descartaba en silencio lo que hubieras cambiado sin guardar. *@
 
-<MudStack Row="true" Spacing="2" Class="mb-6" Wrap="Wrap.Wrap">
+<MudStack Row="true" Spacing="2" Class="mb-6" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
     @foreach (var tab in Tabs)
     {
         <MudButton Href="@(tab.Key == Current ? null : $"/tienda/torneos/{TournamentId}{tab.Suffix}")"
@@ -14,6 +14,32 @@
                    Color="Color.Primary"
                    aria-current="@(tab.Key == Current ? "page" : null)">
             @tab.Label
+        </MudButton>
+    }
+
+    @* Abre en otra pestana, asi que no es una de estas: se distingue con el contorno en gris, sin
+       competir por color con la pestana activa ni con las acciones. *@
+    <MudButton Href="@($"/tienda/torneos/{TournamentId}/en-vivo")"
+               Target="_blank"
+               StartIcon="@Icons.Material.Filled.Cast"
+               Variant="Variant.Outlined"
+               Color="Color.Default"
+               title="@Textos.LiveOpenHint">
+        @Textos.LiveOpen
+    </MudButton>
+
+    <MudSpacer />
+
+    @* Anclada al otro extremo, lo mas lejos posible de la navegacion: es la unica accion de aqui
+       que no tiene vuelta atras. Pide confirmacion igualmente. *@
+    @if (CanCancel)
+    {
+        <MudButton StartIcon="@Icons.Material.Filled.Cancel"
+                   Variant="Variant.Filled"
+                   Color="Color.Error"
+                   Disabled="Busy"
+                   OnClick="OnCancel">
+            @Textos.ActionCancelTournament
         </MudButton>
     }
 </MudStack>
@@ -31,4 +57,14 @@
 
     [Parameter, EditorRequired]
     public TournamentTab Current { get; set; }
+
+    /// <summary>A finished or already cancelled tournament has nothing left to cancel.</summary>
+    [Parameter]
+    public bool CanCancel { get; set; }
+
+    [Parameter]
+    public bool Busy { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
 }

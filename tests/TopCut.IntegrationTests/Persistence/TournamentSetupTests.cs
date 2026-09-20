@@ -72,7 +72,7 @@ public class TournamentSetupTests(SqlServerFixture fixture)
 
         Assert.False(created.Succeeded);
         Assert.Null(created.TournamentId);
-        Assert.Contains("no esta disponible", string.Join(" ", created.Errors));
+        Assert.Contains("no está disponible", string.Join(" ", created.Errors));
     }
 
     [Fact]

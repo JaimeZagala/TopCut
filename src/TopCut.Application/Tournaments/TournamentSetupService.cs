@@ -67,7 +67,7 @@ public sealed class TournamentSetupService(
 
         if (ruleset is null)
         {
-            return CreationResult.Fail("Ese juego no esta disponible.");
+            return CreationResult.Fail("Ese juego no está disponible.");
         }
 
         Tournament tournament;

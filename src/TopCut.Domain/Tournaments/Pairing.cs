@@ -15,8 +15,8 @@ public class Pairing : BusinessEntity, ITenantOwned, IHasRowVersion
 
     internal Pairing(Guid roundId, Guid tenantId, int table, Guid playerAId, Guid? playerBId)
     {
-        DomainException.Require(table >= 1, "El numero de mesa empieza en 1.");
-        DomainException.Require(playerBId != playerAId, "Un participante no puede enfrentarse a si mismo.");
+        DomainException.Require(table >= 1, "El número de mesa empieza en 1.");
+        DomainException.Require(playerBId != playerAId, "Un participante no puede enfrentarse a sí mismo.");
 
         RoundId = roundId;
         TenantId = tenantId;
@@ -70,7 +70,7 @@ public class Pairing : BusinessEntity, ITenantOwned, IHasRowVersion
             "Ese participante no juega este emparejamiento.");
         DomainException.Require(
             Status == PairingStatus.Reported,
-            "El emparejamiento aun no tiene resultado.");
+            "El emparejamiento aún no tiene resultado.");
 
         if (IsBye)
         {
@@ -106,13 +106,13 @@ public class Pairing : BusinessEntity, ITenantOwned, IHasRowVersion
     /// </summary>
     internal void RecordGame(GameWinner winner, MatchFormat format)
     {
-        DomainException.Require(!IsBye, "Un bye no admite resultado: ya esta resuelto.");
+        DomainException.Require(!IsBye, "Un bye no admite resultado: ya está resuelto.");
         DomainException.Require(
             Status == PairingStatus.AwaitingResult,
             "El emparejamiento ya tiene resultado.");
         DomainException.Require(
             _games.Count < format.MaxGames(),
-            $"Un enfrentamiento a {format} no admite mas de {format.MaxGames()} partidas.");
+            $"Un enfrentamiento a {format} no admite más de {format.MaxGames()} partidas.");
 
         _games.Add(new Game(Id, TenantId, _games.Count + 1, winner));
 
@@ -128,7 +128,7 @@ public class Pairing : BusinessEntity, ITenantOwned, IHasRowVersion
     /// <summary>A whole match reported at once, by a player or entered directly by the store.</summary>
     internal void Report(IReadOnlyList<GameWinner> games, MatchFormat format, Guid? reportedBy)
     {
-        DomainException.Require(!IsBye, "Un bye no admite resultado: ya esta resuelto.");
+        DomainException.Require(!IsBye, "Un bye no admite resultado: ya está resuelto.");
         Validate(games, format);
 
         _games.Clear();
@@ -145,7 +145,7 @@ public class Pairing : BusinessEntity, ITenantOwned, IHasRowVersion
     /// <summary>An amendment by the store, typically after the players disagreed.</summary>
     internal void Amend(IReadOnlyList<GameWinner> games, MatchFormat format)
     {
-        DomainException.Require(!IsBye, "Un bye no admite resultado: ya esta resuelto.");
+        DomainException.Require(!IsBye, "Un bye no admite resultado: ya está resuelto.");
         Validate(games, format);
 
         _games.Clear();
@@ -171,7 +171,7 @@ public class Pairing : BusinessEntity, ITenantOwned, IHasRowVersion
         DomainException.Require(!IsBye, "Un bye no puede resolverse por tiempo.");
         DomainException.Require(
             Status == PairingStatus.AwaitingResult,
-            "El emparejamiento ya tenia resultado.");
+            "El emparejamiento ya tenía resultado.");
 
         if (policy == TimeExpiryPolicy.AlwaysDraw)
         {
@@ -188,7 +188,7 @@ public class Pairing : BusinessEntity, ITenantOwned, IHasRowVersion
         DomainException.Require(games.Count > 0, "Hay que reportar al menos una partida.");
         DomainException.Require(
             games.Count <= format.MaxGames(),
-            $"Un enfrentamiento a {format} no admite mas de {format.MaxGames()} partidas.");
+            $"Un enfrentamiento a {format} no admite más de {format.MaxGames()} partidas.");
 
         // A match stops the moment someone reaches the games they need, so any game reported after
         // that point means the report is wrong (a 2-1 with a third game that was never played).

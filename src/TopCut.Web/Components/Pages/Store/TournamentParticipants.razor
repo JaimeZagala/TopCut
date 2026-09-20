@@ -4,6 +4,7 @@
 @using TopCut.Application.Tournaments
 @inject ITournamentQueries Tournaments
 @inject ParticipantService Participants
+@inject TournamentSetupService Setup
 @inject IDialogService Dialogs
 @inject ISnackbar Snackbar
 
@@ -31,7 +32,11 @@ else
         @details.TcgName · @string.Format(Textos.RegisteredSummary, roster.Registered.Count, details.Capacity)
     </MudText>
 
-    <TournamentTabs TournamentId="TournamentId" Current="TournamentTab.Participants" />
+    <TournamentTabs TournamentId="TournamentId"
+                    Current="TournamentTab.Participants"
+                    CanCancel="CanCancel"
+                    Busy="busy"
+                    OnCancel="CancelTournamentAsync" />
 
     @if (errors.Count > 0)
     {
@@ -179,6 +184,9 @@ else
     private Guid renameId;
     private string renameTo = string.Empty;
 
+    private bool CanCancel =>
+        details?.Status is TournamentStatus.Draft or TournamentStatus.Published or TournamentStatus.InProgress;
+
     /// <summary>Only a draft or a published tournament takes new sign-ups (docs/vision.md).</summary>
     private bool RegistrationsOpen =>
         details?.Status is TournamentStatus.Draft or TournamentStatus.Published;
@@ -278,6 +286,44 @@ else
     private sealed class QuickAdd
     {
         public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Cancelling is offered from every tournament screen, so it lives in the tab strip and each
+    /// page hands it the same confirmation.
+    /// </summary>
+    private async Task CancelTournamentAsync()
+    {
+        var confirmed = await Dialogs.ShowMessageBoxAsync(
+            Textos.ConfirmCancelTitle,
+            Textos.ConfirmCancelBody,
+            yesText: Textos.ActionConfirm,
+            cancelText: Textos.ActionCancel);
+
+        if (confirmed is not true)
+        {
+            return;
+        }
+
+        busy = true;
+
+        try
+        {
+            var result = await Setup.CancelAsync(TournamentId);
+
+            if (!result.Succeeded)
+            {
+                errors.AddRange(result.Errors);
+                return;
+            }
+
+            Snackbar.Add(Textos.NoticeCancelled, Severity.Success);
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
     }
 
     private void StartRename(ParticipantRow player)

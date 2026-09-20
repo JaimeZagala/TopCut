@@ -13,7 +13,7 @@ public class Game : BusinessEntity, ITenantOwned
 
     internal Game(Guid pairingId, Guid tenantId, int number, GameWinner winner)
     {
-        DomainException.Require(number is >= 1 and <= 3, "El numero de partida debe estar entre 1 y 3.");
+        DomainException.Require(number is >= 1 and <= 3, "El número de partida debe estar entre 1 y 3.");
 
         PairingId = pairingId;
         TenantId = tenantId;

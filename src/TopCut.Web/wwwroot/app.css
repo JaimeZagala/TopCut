@@ -162,10 +162,12 @@ h1:focus {
     margin: 0 0 1.5vw;
 }
 
+/* Una fila por jugador. En varias columnas el orden se lee en zigzag —el 1 arriba a la izquierda
+   y el 2 a su derecha— que es justo lo que una clasificacion no puede permitirse. */
 .topcut-live-standings {
-    display: grid;
-    gap: 0.5vw;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
+    display: flex;
+    flex-direction: column;
+    gap: 0.4vw;
 }
 
 .topcut-live-standing {

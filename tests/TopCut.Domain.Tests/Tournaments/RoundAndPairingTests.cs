@@ -140,7 +140,7 @@ public class RoundAndPairingTests
         var error = Assert.Throws<DomainException>(() => tournament.ReportResult(
             round.Id, pairing.Id, [GameWinner.PlayerA, GameWinner.PlayerB], ana.Id));
 
-        Assert.Contains("no admite mas de 1", error.Message);
+        Assert.Contains("no admite más de 1", error.Message);
     }
 
     [Fact]
@@ -205,7 +205,7 @@ public class RoundAndPairingTests
 
         var error = Assert.Throws<DomainException>(() => pairing.ResultFor(ana.Id));
 
-        Assert.Contains("aun no tiene resultado", error.Message);
+        Assert.Contains("aún no tiene resultado", error.Message);
     }
 
     // --- Game by game reporting ---------------------------------------------------------------------------
@@ -317,7 +317,7 @@ public class RoundAndPairingTests
         var error = Assert.Throws<DomainException>(
             () => tournament.ApplyTimeExpiry(round.Id, Now.AddMinutes(32)));
 
-        Assert.Contains("todavia tiene tiempo", error.Message);
+        Assert.Contains("todavía tiene tiempo", error.Message);
     }
 
     [Fact]

@@ -147,7 +147,7 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
 
         if (size is { } value)
         {
-            DomainException.Require(value >= 2, "El top cut mas pequeno es de 2 jugadores.");
+            DomainException.Require(value >= 2, "El top cut más pequeño es de 2 jugadores.");
             DomainException.Require(
                 (value & (value - 1)) == 0,
                 "El top cut debe ser una potencia de dos (2, 4, 8, 16...).");
@@ -158,20 +158,20 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
 
     public void SetPhaseSettings(Phase phase, PhaseSettings settings)
     {
-        DomainException.Require(!SettingsLocked, "La configuracion de fase queda congelada al empezar.");
+        DomainException.Require(!SettingsLocked, "La configuración de fase queda congelada al empezar.");
         Settings.SetPhase(phase, settings);
     }
 
     /// <summary>Overrides what happens to unreported matches when the clock runs out (ADR-0009).</summary>
     public void SetTimeExpiryPolicy(TimeExpiryPolicy policy)
     {
-        DomainException.Require(!SettingsLocked, "La configuracion queda congelada al empezar.");
+        DomainException.Require(!SettingsLocked, "La configuración queda congelada al empezar.");
         Settings.SetTimeExpiryPolicy(policy);
     }
 
     public void UpdateDetails(string name, DateTimeOffset startsAt, Address venue, int capacity, int swissRounds)
     {
-        DomainException.Require(!SettingsLocked, "El torneo ya esta en curso.");
+        DomainException.Require(!SettingsLocked, "El torneo ya está en curso.");
         DomainException.Require(!string.IsNullOrWhiteSpace(name), "El torneo necesita un nombre.");
         DomainException.Require(capacity >= Registered.Count(), "No puedes dejar menos plazas que inscritos hay.");
         DomainException.Require(swissRounds >= 1, "Un torneo necesita al menos una ronda suiza.");
@@ -185,7 +185,7 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
 
     public void AssignToLeague(Guid? leagueId)
     {
-        DomainException.Require(!SettingsLocked, "El torneo ya esta en curso.");
+        DomainException.Require(!SettingsLocked, "El torneo ya está en curso.");
         LeagueId = leagueId;
     }
 
@@ -202,7 +202,7 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
             "El torneo ya no admite inscripciones.");
         DomainException.Require(
             userId is null || _participants.All(p => p.UserId != userId),
-            "Ese jugador ya esta inscrito en el torneo.");
+            "Ese jugador ya está inscrito en el torneo.");
 
         var participant = new Participant(Id, TenantId, name, userId);
 
@@ -257,7 +257,7 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
     {
         DomainException.Require(
             Status is TournamentStatus.Published or TournamentStatus.InProgress,
-            "El torneo no esta en disposicion de jugar rondas.");
+            "El torneo no está en disposición de jugar rondas.");
         DomainException.Require(CurrentRound is null, "Hay una ronda en curso sin cerrar.");
         DomainException.Require(phase == Phase.Swiss || HasTopCut, "Este torneo no tiene top cut configurado.");
         DomainException.Require(
@@ -308,7 +308,7 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
     {
         var round = FindRound(roundId);
 
-        DomainException.Require(round.ExtraTimeExpired(now), "La ronda todavia tiene tiempo.");
+        DomainException.Require(round.ExtraTimeExpired(now), "La ronda todavía tiene tiempo.");
 
         var affected = round.ResolvePendingOnTimeExpiry(Settings.TimeExpiry);
 
@@ -330,7 +330,7 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
 
     private Participant FindParticipant(Guid participantId) =>
         _participants.FirstOrDefault(p => p.Id == participantId)
-        ?? throw new DomainException("Ese participante no esta en el torneo.");
+        ?? throw new DomainException("Ese participante no está en el torneo.");
 
     private Round FindRound(Guid roundId) =>
         _rounds.FirstOrDefault(r => r.Id == roundId)

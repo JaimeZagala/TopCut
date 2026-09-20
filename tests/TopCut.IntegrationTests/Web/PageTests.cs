@@ -56,7 +56,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         var response = await Browser().GetAsync("/esto-no-existe");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Contains("Aqui no hay nada", await response.Content.ReadAsStringAsync());
+        Assert.Contains("Aquí no hay nada", await response.Content.ReadAsStringAsync());
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
     {
         var html = await Browser().GetStringAsync("/privacidad");
 
-        Assert.Contains("Aviso de proteccion de datos", html);
+        Assert.Contains("Aviso de protección de datos", html);
         Assert.Contains(TopCut.Application.Abstractions.PrivacyNotice.CurrentVersion, html);
     }
 
@@ -133,7 +133,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("aceptar el aviso de proteccion de datos", html);
+        Assert.Contains("aceptar el aviso de protección de datos", html);
 
         // Retyping everything because of one unticked box would be maddening.
         Assert.Equal("Ana", HtmlPage.ValueOf(html, "Input.DisplayName"));
@@ -250,7 +250,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
 
         var html = await browser.GetStringAsync("/tienda/torneos");
 
-        Assert.Contains("Todavia no has creado ningun torneo", html);
+        Assert.Contains("Todavía no has creado ningún torneo", html);
         Assert.Contains("/tienda/torneos/nuevo", html);
     }
 
@@ -313,7 +313,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
 
         var html = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}/participantes");
 
-        Assert.Contains("Todavia no hay nadie apuntado", html);
+        Assert.Contains("Todavía no hay nadie apuntado", html);
         Assert.Contains("Participantes", html);
 
         // The tabs are real links, so the details screen is reachable from here.
@@ -352,7 +352,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         var html = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}/mesa");
 
         Assert.Contains("Lanzar la primera ronda", html);
-        Assert.Contains("Todavia no se ha jugado ninguna ronda", html);
+        Assert.Contains("Todavía no se ha jugado ninguna ronda", html);
     }
 
     [Fact]
@@ -371,7 +371,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
 
         Assert.Contains("Ronda 1", html);
         Assert.Contains("Ana", html);
-        Assert.Contains("Clasificacion", html);
+        Assert.Contains("Clasificación", html);
 
         // Two tables, both waiting on a result.
         Assert.Contains("2 sin resultado", html);
@@ -454,7 +454,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         var html = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}/en-vivo");
 
         Assert.Contains("Esperando a que empiece la ronda", html);
-        Assert.Contains("Clasificacion", html);
+        Assert.Contains("Clasificación", html);
     }
 
     // --- Helpers ----------------------------------------------------------------------------------------

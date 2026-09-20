@@ -5,6 +5,7 @@
 @using TopCut.Domain.Standings
 @implements IDisposable
 @inject TournamentService Tournaments
+@inject TournamentSetupService Setup
 @inject ITournamentWatch Live
 @inject LocalTime Clock
 @inject IDialogService Dialogs
@@ -43,17 +44,11 @@ else
             : string.Format(Textos.DeskActivePlayers, desk.ActivePlayers))
     </MudText>
 
-    <TournamentTabs TournamentId="TournamentId" Current="TournamentTab.Desk" />
-
-    <MudStack Row="true" Class="mb-4">
-        <MudSpacer />
-        <MudButton Href="@($"/tienda/torneos/{TournamentId}/en-vivo")"
-                   Target="_blank"
-                   Variant="Variant.Text"
-                   StartIcon="@Icons.Material.Filled.Cast">
-            @Textos.LiveOpen
-        </MudButton>
-    </MudStack>
+    <TournamentTabs TournamentId="TournamentId"
+                    Current="TournamentTab.Desk"
+                    CanCancel="CanCancel"
+                    Busy="busy"
+                    OnCancel="CancelTournamentAsync" />
 
     @if (errors.Count > 0)
     {
@@ -262,6 +257,9 @@ else
     private bool loading = true;
     private bool busy;
 
+    private bool CanCancel =>
+        desk?.Status is TournamentStatus.Draft or TournamentStatus.Published or TournamentStatus.InProgress;
+
     private string StartLabel => desk switch
     {
         { NextPhase: Phase.TopCut, TopCutSize: { } size } => string.Format(Textos.DeskStartTopCut, size),
@@ -365,6 +363,20 @@ else
         if (confirmed is true)
         {
             await Run(() => Tournaments.CompleteAsync(TournamentId), () => Textos.NoticeTournamentCompleted);
+        }
+    }
+
+    private async Task CancelTournamentAsync()
+    {
+        var confirmed = await Dialogs.ShowMessageBoxAsync(
+            Textos.ConfirmCancelTitle,
+            Textos.ConfirmCancelBody,
+            yesText: Textos.ActionConfirm,
+            cancelText: Textos.ActionCancel);
+
+        if (confirmed is true)
+        {
+            await Run(() => Setup.CancelAsync(TournamentId), () => Textos.NoticeCancelled);
         }
     }
 

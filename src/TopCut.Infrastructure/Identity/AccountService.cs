@@ -16,7 +16,7 @@ public sealed class AccountService(UserManager<TopCutUser> users, TimeProvider c
         // Enforced here rather than only in the form, so posting straight to the API cannot skip it.
         if (!request.ConsentAccepted)
         {
-            return new RegistrationResult(false, null, ["Hay que aceptar el aviso de proteccion de datos."]);
+            return new RegistrationResult(false, null, ["Hay que aceptar el aviso de protección de datos."]);
         }
 
         if (string.IsNullOrWhiteSpace(request.DisplayName))

@@ -229,7 +229,7 @@ public class ParticipantTests(SqlServerFixture fixture)
         var result = await Players(store).RenameAsync(tournament, Guid.CreateVersion7(), "Ana");
 
         Assert.False(result.Succeeded);
-        Assert.Contains("no esta en el torneo", string.Join(" ", result.Errors));
+        Assert.Contains("no está en el torneo", string.Join(" ", result.Errors));
     }
 
     // --- Multi-tenancy ---------------------------------------------------------------------------------

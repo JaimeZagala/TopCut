@@ -42,8 +42,8 @@ public sealed class SignInService(SignInManager<TopCutUser> signInManager) : ISi
 
         // Deliberately vague: saying "no such account" would let anyone enumerate registered emails.
         return result.IsLockedOut
-            ? OperationResult.Fail("La cuenta esta bloqueada temporalmente por intentos fallidos.")
-            : OperationResult.Fail("Email o contrasena incorrectos.");
+            ? OperationResult.Fail("La cuenta está bloqueada temporalmente por intentos fallidos.")
+            : OperationResult.Fail("Email o contraseña incorrectos.");
     }
 }
 
