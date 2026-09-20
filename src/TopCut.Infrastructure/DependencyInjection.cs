@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<ITcgCatalog, TcgCatalog>();
         services.AddScoped<TournamentService>();
         services.AddScoped<TournamentSetupService>();
+        services.AddScoped<ParticipantService>();
 
         services.AddTopCutIdentity();
 

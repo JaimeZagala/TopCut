@@ -200,9 +200,6 @@
   <data name="StoreDashboardIntro" xml:space="preserve">
     <value>Desde aqui se crean y se llevan los torneos.</value>
   </data>
-  <data name="StoreTournamentsSoon" xml:space="preserve">
-    <value>La gestion de torneos llega en el siguiente tramo del hito 3.</value>
-  </data>
 
   <!-- Errores -->
   <data name="ErrorTitle" xml:space="preserve">
@@ -367,9 +364,6 @@
   <data name="FieldCapacity" xml:space="preserve">
     <value>Plazas</value>
   </data>
-  <data name="FieldExpectedPlayers" xml:space="preserve">
-    <value>Jugadores que esperas</value>
-  </data>
   <data name="FieldSwissRounds" xml:space="preserve">
     <value>Rondas suizas</value>
   </data>
@@ -480,9 +474,6 @@
   <data name="LockedNotice" xml:space="preserve">
     <value>El torneo ya esta en curso: su configuracion queda fijada para no invalidar lo ya jugado.</value>
   </data>
-  <data name="ParticipantsSoon" xml:space="preserve">
-    <value>El alta de participantes llega en el siguiente tramo del hito 3.</value>
-  </data>
   <data name="RegisteredSummary" xml:space="preserve">
     <value>{0} de {1} plazas</value>
   </data>
@@ -518,5 +509,98 @@
   </data>
   <data name="ValidationExtraTimeRange" xml:space="preserve">
     <value>El tiempo extra va de 0 a 60 minutos.</value>
+  </data>
+
+  <!-- Hito 3c: participantes -->
+  <data name="TabDetails" xml:space="preserve">
+    <value>Datos</value>
+  </data>
+  <data name="TabParticipants" xml:space="preserve">
+    <value>Participantes</value>
+  </data>
+  <data name="ParticipantsTitle" xml:space="preserve">
+    <value>Participantes</value>
+  </data>
+  <data name="ParticipantAdd" xml:space="preserve">
+    <value>Anadir jugador</value>
+  </data>
+  <data name="FieldParticipantName" xml:space="preserve">
+    <value>Nombre del jugador</value>
+  </data>
+  <data name="ActionAdd" xml:space="preserve">
+    <value>Anadir</value>
+  </data>
+  <data name="ActionRename" xml:space="preserve">
+    <value>Cambiar el nombre</value>
+  </data>
+  <data name="ActionDrop" xml:space="preserve">
+    <value>Dar de baja</value>
+  </data>
+  <data name="SectionRegistered" xml:space="preserve">
+    <value>Inscritos</value>
+  </data>
+  <data name="SectionWaitlist" xml:space="preserve">
+    <value>Lista de espera</value>
+  </data>
+  <data name="SectionDropped" xml:space="preserve">
+    <value>Bajas</value>
+  </data>
+  <data name="RosterEmpty" xml:space="preserve">
+    <value>Todavia no hay nadie apuntado. Escribe un nombre y pulsa Intro.</value>
+  </data>
+  <data name="SeatsLeft" xml:space="preserve">
+    <value>Quedan {0} plazas.</value>
+  </data>
+  <data name="SeatsLeftOne" xml:space="preserve">
+    <value>Queda 1 plaza.</value>
+  </data>
+  <data name="SeatsFull" xml:space="preserve">
+    <value>No quedan plazas: quien se apunte ahora entra en lista de espera.</value>
+  </data>
+  <data name="RegistrationsClosed" xml:space="preserve">
+    <value>El torneo ya no admite inscripciones nuevas.</value>
+  </data>
+  <data name="DroppedKeepResults" xml:space="preserve">
+    <value>Las partidas que ya jugaron siguen contando para la clasificacion.</value>
+  </data>
+  <data name="ColumnPosition" xml:space="preserve">
+    <value>Puesto</value>
+  </data>
+  <data name="ColumnPlayer" xml:space="preserve">
+    <value>Jugador</value>
+  </data>
+  <data name="ColumnSignedUp" xml:space="preserve">
+    <value>Apuntado</value>
+  </data>
+  <data name="BadgeHasAccount" xml:space="preserve">
+    <value>Con cuenta</value>
+    <comment>Distintivo del jugador que se apunto el mismo desde la aplicacion.</comment>
+  </data>
+  <data name="NoticeRegistered" xml:space="preserve">
+    <value>{0} queda inscrito.</value>
+  </data>
+  <data name="NoticeWaitlisted" xml:space="preserve">
+    <value>{0} entra en lista de espera, puesto {1}.</value>
+  </data>
+  <data name="NoticeRenamed" xml:space="preserve">
+    <value>Nombre corregido.</value>
+  </data>
+  <data name="NoticeDropped" xml:space="preserve">
+    <value>Baja registrada.</value>
+  </data>
+  <data name="NoticePromoted" xml:space="preserve">
+    <value>{0} entra desde la lista de espera.</value>
+  </data>
+  <data name="ConfirmDropTitle" xml:space="preserve">
+    <value>Dar de baja a {0}</value>
+  </data>
+  <data name="ConfirmDropBeforeStart" xml:space="preserve">
+    <value>Se queda libre su plaza y entra la primera persona de la lista de espera.</value>
+  </data>
+  <data name="ConfirmDropInProgress" xml:space="preserve">
+    <value>Deja de entrar en los emparejamientos, pero lo que ya jugo sigue contando para la clasificacion.</value>
+  </data>
+  <data name="RenameTitle" xml:space="preserve">
+    <value>Cambiar el nombre</value>
   </data>
 </root>

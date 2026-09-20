@@ -154,6 +154,10 @@ operaciones sensibles a condiciones de carrera:
 - Ocupar la ultima plaza de un torneo.
 - Promover a alguien desde la lista de espera.
 
+Cuando salta, el choque se devuelve como un mensaje que el organizador entiende ("alguien ha
+cambiado este torneo mientras lo editabas"), no como un error de servidor: dos personas llevando el
+mismo torneo desde dos dispositivos es una situacion normal en una tienda, no una averia.
+
 ## Eventos de dominio
 
 Los eventos de negocio (`RoundStarted`, `ResultRecorded`, `RoundTimeExpired`, `SeatFreed`,

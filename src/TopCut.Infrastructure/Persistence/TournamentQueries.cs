@@ -114,6 +114,33 @@ public sealed class TournamentQueries(IDbContextFactory<TopCutDbContext> context
             tournament.Settings.RulesVersion);
     }
 
+    public async Task<Roster> RosterAsync(Guid tournamentId, CancellationToken cancellationToken = default)
+    {
+        await using var db = contexts.CreateDbContext();
+
+        // The tenant filter is on Participant too, so another store's roster comes back empty
+        // rather than visible.
+        var everyone = await db.Participants
+            .AsNoTracking()
+            .Where(participant => participant.TournamentId == tournamentId)
+            .Select(participant => new ParticipantRow(
+                participant.Id,
+                participant.Name,
+                participant.Status,
+                participant.WaitlistPosition,
+                participant.RegisteredAt,
+                participant.UserId != null))
+            .ToListAsync(cancellationToken);
+
+        return new Roster(
+            // Alphabetical: at the counter the question is always "am I on the list?", and the
+            // answer is quicker to find by name than by the order people happened to arrive in.
+            [.. everyone.Where(row => row.Status == ParticipantStatus.Registered).OrderBy(row => row.Name)],
+            // The queue, on the other hand, only makes sense in its own order.
+            [.. everyone.Where(row => row.Status == ParticipantStatus.Waitlisted).OrderBy(row => row.WaitlistPosition)],
+            [.. everyone.Where(row => row.Status == ParticipantStatus.Dropped).OrderBy(row => row.Name)]);
+    }
+
     private static string NameOf(Dictionary<int, (string Code, string Name)> games, int tcgId) =>
         games.TryGetValue(tcgId, out var game) ? game.Name : string.Empty;
 

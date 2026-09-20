@@ -42,6 +42,32 @@ public sealed record TournamentDetails(
     TimeExpiryPolicy TimeExpiry,
     string RulesVersion);
 
+/// <summary>One player on a tournament's roster.</summary>
+/// <param name="WaitlistPosition">Their place in the queue, or <c>null</c> when they hold a seat.</param>
+/// <param name="HasAccount">
+/// Whether they registered themselves from the application. Walk-ins the store typed in by hand
+/// have no account, and renaming one of those is the store fixing its own typo rather than
+/// overwriting what a player chose to be called.
+/// </param>
+public sealed record ParticipantRow(
+    Guid Id,
+    string Name,
+    ParticipantStatus Status,
+    int? WaitlistPosition,
+    DateTimeOffset RegisteredAt,
+    bool HasAccount);
+
+/// <summary>A tournament's players, split the way the screen shows them.</summary>
+public sealed record Roster(
+    IReadOnlyList<ParticipantRow> Registered,
+    IReadOnlyList<ParticipantRow> Waitlisted,
+    IReadOnlyList<ParticipantRow> Dropped)
+{
+    public static readonly Roster Empty = new([], [], []);
+
+    public int Count => Registered.Count + Waitlisted.Count + Dropped.Count;
+}
+
 /// <summary>
 /// Read-only views of tournaments for the store's screens. Separate from
 /// <see cref="ITournamentRepository"/> because these never load the aggregate: a list of thirty
@@ -54,4 +80,10 @@ public interface ITournamentQueries
 
     /// <summary><c>null</c> when it does not exist or belongs to another store.</summary>
     Task<TournamentDetails?> DetailsAsync(Guid tournamentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Who is playing, who is waiting and who has dropped. Empty when the tournament does not exist
+    /// or belongs to another store.
+    /// </summary>
+    Task<Roster> RosterAsync(Guid tournamentId, CancellationToken cancellationToken = default);
 }

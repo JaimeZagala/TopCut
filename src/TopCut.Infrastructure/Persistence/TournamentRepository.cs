@@ -24,9 +24,22 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
 
         // Only a successful operation is saved. A refused one throws its context away with whatever
         // half-applied state it had, so a rule broken midway cannot leave a trace behind.
-        if (result.Succeeded)
+        if (!result.Succeeded)
+        {
+            return result;
+        }
+
+        try
         {
             await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Two people working the same tournament at once — the desk and a phone, say. The
+            // RowVersion check caught it, which is the whole point of having one; what it must not
+            // do is reach the organiser as a stack trace.
+            return OperationResult.Fail(
+                "Alguien ha cambiado este torneo mientras lo editabas. Recarga y vuelve a intentarlo.");
         }
 
         return result;

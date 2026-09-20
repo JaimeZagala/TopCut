@@ -1,0 +1,28 @@
+@* Las pestanas de un torneo. Son enlaces de verdad, no un control de pestanas: cada una es una
+   pagina con su propia direccion, asi que se puede recargar y compartir. Crecen con los tramos:
+   la mesa de control llega en el 3d. *@
+
+<MudStack Row="true" Spacing="2" Class="mb-6" Wrap="Wrap.Wrap">
+    <MudButton Href="@($"/tienda/torneos/{TournamentId}")"
+               StartIcon="@Icons.Material.Filled.Tune"
+               Variant="@VariantFor(TournamentTab.Details)"
+               Color="Color.Primary">
+        @Textos.TabDetails
+    </MudButton>
+    <MudButton Href="@($"/tienda/torneos/{TournamentId}/participantes")"
+               StartIcon="@Icons.Material.Filled.Groups"
+               Variant="@VariantFor(TournamentTab.Participants)"
+               Color="Color.Primary">
+        @Textos.TabParticipants
+    </MudButton>
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired]
+    public Guid TournamentId { get; set; }
+
+    [Parameter, EditorRequired]
+    public TournamentTab Current { get; set; }
+
+    private Variant VariantFor(TournamentTab tab) => tab == Current ? Variant.Filled : Variant.Text;
+}

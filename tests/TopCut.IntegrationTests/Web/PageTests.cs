@@ -303,6 +303,41 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         Assert.Contains("no existe", byGuessingTheId);
     }
 
+    [Fact]
+    public async Task The_participants_screen_starts_empty_and_says_how_to_add_somebody()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+        var tournamentId = await CreateTournament(storeId, "Torneo con gente");
+
+        var html = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}/participantes");
+
+        Assert.Contains("Todavia no hay nadie apuntado", html);
+        Assert.Contains("Participantes", html);
+
+        // The tabs are real links, so the details screen is reachable from here.
+        Assert.Contains($"/tienda/torneos/{tournamentId}", html);
+    }
+
+    [Fact]
+    public async Task The_participants_screen_shows_who_is_in_and_who_is_waiting()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+        var tournamentId = await CreateTournament(storeId, "Torneo pequeno", capacity: 2);
+
+        await SignUp(storeId, tournamentId, "Ana", "Bruno", "Carla");
+
+        var html = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}/participantes");
+
+        Assert.Contains("Ana", html);
+        Assert.Contains("Lista de espera", html);
+        Assert.Contains("Carla", html);
+        Assert.Contains("No quedan plazas", html);
+    }
+
     // --- Helpers ----------------------------------------------------------------------------------------
 
     /// <summary>Where a redirect points, as a path, whether the header is absolute or relative.</summary>
@@ -344,7 +379,21 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
     /// itself is interactive, so driving it needs a circuit rather than an HTTP post; what these
     /// tests check is that the pages then render what the store actually owns.
     /// </summary>
-    private async Task<Guid> CreateTournament(Guid storeId, string name)
+    private async Task SignUp(Guid storeId, Guid tournamentId, params string[] names)
+    {
+        using var scope = _app.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<ITenantScope>().Set(storeId);
+
+        var players = scope.ServiceProvider.GetRequiredService<ParticipantService>();
+
+        foreach (var name in names)
+        {
+            var outcome = await players.RegisterAsync(tournamentId, name);
+            Assert.True(outcome.Succeeded, string.Join(" ", outcome.Errors));
+        }
+    }
+
+    private async Task<Guid> CreateTournament(Guid storeId, string name, int capacity = 16)
     {
         using var scope = _app.Services.CreateScope();
 
@@ -363,7 +412,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
             "Valencia",
             "Valencia",
             "46001",
-            Capacity: 16,
+            capacity,
             SwissRounds: 5,
             TopCutSize: 4));
 

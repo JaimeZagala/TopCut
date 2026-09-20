@@ -39,6 +39,8 @@ else
         · @string.Format(Textos.RulesFrom, details.RulesVersion)
     </MudText>
 
+    <TournamentTabs TournamentId="TournamentId" Current="TournamentTab.Details" />
+
     @if (errors.Count > 0)
     {
         <MudAlert Severity="Severity.Error" Class="mb-4">@string.Join(" ", errors)</MudAlert>
@@ -75,10 +77,6 @@ else
             </MudButton>
         }
     </MudStack>
-
-    <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Class="mb-6" Dense="true">
-        @Textos.ParticipantsSoon
-    </MudAlert>
 
     <TournamentForm Model="model!"
                     Games="games!"

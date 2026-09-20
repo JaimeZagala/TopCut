@@ -11,4 +11,17 @@
 <MudText Typo="Typo.h1" GutterBottom="true">@Textos.StoreDashboardTitle</MudText>
 <MudText Typo="Typo.body1" Class="mb-6">@Textos.StoreDashboardIntro</MudText>
 
-<MudAlert Severity="Severity.Info" Variant="Variant.Outlined">@Textos.StoreTournamentsSoon</MudAlert>
+<MudStack Row="true" Spacing="3" Wrap="Wrap.Wrap">
+    <MudButton Href="/tienda/torneos"
+               Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.EmojiEvents">
+        @Textos.NavTournaments
+    </MudButton>
+    <MudButton Href="/tienda/torneos/nuevo"
+               Variant="Variant.Outlined"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add">
+        @Textos.TournamentsNew
+    </MudButton>
+</MudStack>

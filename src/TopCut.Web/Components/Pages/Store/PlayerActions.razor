@@ -1,0 +1,31 @@
+@* Los dos botones de cada fila del roster. Existe para no repetirlos en la tabla de inscritos y en
+   la de lista de espera. *@
+
+<MudIconButton Icon="@Icons.Material.Filled.Edit"
+               Size="Size.Small"
+               aria-label="@Textos.ActionRename"
+               title="@Textos.ActionRename"
+               Disabled="Busy"
+               OnClick="@(() => OnRename.InvokeAsync(Player))" />
+
+<MudIconButton Icon="@Icons.Material.Filled.PersonRemove"
+               Size="Size.Small"
+               Color="Color.Error"
+               aria-label="@Textos.ActionDrop"
+               title="@Textos.ActionDrop"
+               Disabled="Busy"
+               OnClick="@(() => OnDrop.InvokeAsync(Player))" />
+
+@code {
+    [Parameter, EditorRequired]
+    public ParticipantRow Player { get; set; } = null!;
+
+    [Parameter]
+    public bool Busy { get; set; }
+
+    [Parameter]
+    public EventCallback<ParticipantRow> OnRename { get; set; }
+
+    [Parameter]
+    public EventCallback<ParticipantRow> OnDrop { get; set; }
+}

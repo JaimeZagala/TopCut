@@ -145,9 +145,22 @@ Partido en cuatro tramos para que cada uno sea revisable por separado.
 - ✅ **18 pruebas nuevas**: 11 sobre crear, editar, publicar y el aislamiento entre tiendas contra
   SQL Server real, 4 sobre las pantallas por HTTP, y 3 sobre el ambito de tienda
 
-#### 3c — Participantes ⬜
+#### 3c — Participantes ✅
 
-Alta manual de jugadores sin cuenta, renombrar, dar de baja, y la lista de espera a la vista.
+- ✅ **Alta en el mostrador**: se escribe el nombre y se pulsa Intro, y el cursor se queda donde
+  estaba. Apuntar a dieciseis personas no deberia exigir tocar el raton dieciseis veces
+- ✅ **Sin cuenta**: un participante es un nombre. Quien si se registro desde la aplicacion lleva su
+  distintivo, y dos personas pueden llamarse igual, porque a un jugador que entra por la puerta no
+  hay mas cosa que lo distinga
+- ✅ **Lista de espera** a la vista, con su orden: al llenarse las plazas los siguientes entran en
+  cola, y el alta dice en que puesto quedan
+- ✅ **Bajas** con confirmacion, y el aviso dice lo que significa dar de baja **en ese momento**:
+  antes de empezar libera la plaza y entra la primera persona de la cola (y se dice quien), y con el
+  torneo en marcha solo deja de emparejarse, conservando lo que ya jugo
+- ✅ **Corregir un nombre** mal escrito
+- ✅ Pestanas por torneo (*Datos* / *Participantes*), cada una con su direccion propia
+- ✅ Un choque de concurrencia al guardar deja de ser un error de servidor y se explica
+- ✅ **15 pruebas nuevas**, 13 sobre el roster contra SQL Server real y 2 sobre las pantallas
 
 #### 3d — Mesa de control del torneo ⬜
 

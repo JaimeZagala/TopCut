@@ -1,0 +1,349 @@
+@page "/tienda/torneos/{TournamentId:guid}/participantes"
+@layout StoreLayout
+@attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
+@using TopCut.Application.Tournaments
+@inject ITournamentQueries Tournaments
+@inject ParticipantService Participants
+@inject IDialogService Dialogs
+@inject ISnackbar Snackbar
+
+<PageTitle>@Textos.ParticipantsTitle - @(details?.Name ?? Textos.AppName)</PageTitle>
+
+@if (loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@Textos.Loading" />
+}
+else if (details is null)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-6">@Textos.TournamentNotFound</MudAlert>
+    <MudButton Href="/tienda/torneos" Variant="Variant.Filled" Color="Color.Primary">@Textos.ActionBack</MudButton>
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Spacing="3">
+        <MudText Typo="Typo.h1">@details.Name</MudText>
+        <MudChip T="string" Size="Size.Small" Color="@Labels.ColourFor(details.Status)">
+            @Labels.For(details.Status)
+        </MudChip>
+    </MudStack>
+
+    <MudText Typo="Typo.caption" Class="d-block mb-6">
+        @details.TcgName · @string.Format(Textos.RegisteredSummary, roster.Registered.Count, details.Capacity)
+    </MudText>
+
+    <TournamentTabs TournamentId="TournamentId" Current="TournamentTab.Participants" />
+
+    @if (errors.Count > 0)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@string.Join(" ", errors)</MudAlert>
+    }
+
+    @if (RegistrationsOpen)
+    {
+        <MudPaper Class="pa-6 mb-6" Elevation="0" Outlined="true">
+            <MudText Typo="Typo.h4" GutterBottom="true">@Textos.ParticipantAdd</MudText>
+
+            @* Dar de alta a dieciseis personas en el mostrador tiene que ser escribir, Intro,
+               escribir, Intro, sin tocar el raton. El Intro se escucha en el contenedor, donde el
+               evento burbujea, y no en el propio campo: MudBlazor ya usa esa tecla para confirmar
+               el valor que se esta escribiendo, y asi no dependemos de como la trate por dentro. *@
+            <div @onkeydown="OnKeyDown">
+                <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Start">
+                    <MudTextField @bind-Value="quickAdd.Name"
+                                  @ref="nameField"
+                                  Label="@Textos.FieldParticipantName"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true"
+                                  Disabled="busy"
+                                  Class="flex-grow-1" />
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.PersonAdd"
+                               Disabled="@(busy || string.IsNullOrWhiteSpace(quickAdd.Name))"
+                               OnClick="RegisterAsync"
+                               Class="mt-2">
+                        @Textos.ActionAdd
+                    </MudButton>
+                </MudStack>
+            </div>
+
+            <MudText Typo="Typo.caption" Class="d-block mt-2">@SeatsNotice</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-6" Dense="true">
+            @Textos.RegistrationsClosed
+        </MudAlert>
+    }
+
+    <MudText Typo="Typo.h4" GutterBottom="true">@Textos.SectionRegistered</MudText>
+
+    @if (roster.Registered.Count == 0)
+    {
+        <MudPaper Class="pa-6 mb-6" Elevation="0" Outlined="true">
+            <MudText Typo="Typo.body2">@Textos.RosterEmpty</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudTable Items="roster.Registered" Hover="true" Elevation="0" Outlined="true" Class="mb-6" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>@Textos.ColumnPlayer</MudTh>
+                <MudTh>@Textos.ColumnSignedUp</MudTh>
+                <MudTh />
+            </HeaderContent>
+            <RowTemplate Context="player">
+                <MudTd DataLabel="@Textos.ColumnPlayer">
+                    @player.Name
+                    @if (player.HasAccount)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Class="ml-2">
+                            @Textos.BadgeHasAccount
+                        </MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="@Textos.ColumnSignedUp">@Clock.Format(player.RegisteredAt)</MudTd>
+                <MudTd Class="text-right">
+                    <PlayerActions Player="player" Busy="busy" OnRename="StartRename" OnDrop="ConfirmDropAsync" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+
+    @if (roster.Waitlisted.Count > 0)
+    {
+        <MudText Typo="Typo.h4" GutterBottom="true">@Textos.SectionWaitlist</MudText>
+        <MudTable Items="roster.Waitlisted" Hover="true" Elevation="0" Outlined="true" Class="mb-6" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>@Textos.ColumnPosition</MudTh>
+                <MudTh>@Textos.ColumnPlayer</MudTh>
+                <MudTh />
+            </HeaderContent>
+            <RowTemplate Context="player">
+                <MudTd DataLabel="@Textos.ColumnPosition">@player.WaitlistPosition</MudTd>
+                <MudTd DataLabel="@Textos.ColumnPlayer">@player.Name</MudTd>
+                <MudTd Class="text-right">
+                    <PlayerActions Player="player" Busy="busy" OnRename="StartRename" OnDrop="ConfirmDropAsync" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+
+    @if (roster.Dropped.Count > 0)
+    {
+        <MudText Typo="Typo.h4">@Textos.SectionDropped</MudText>
+        <MudText Typo="Typo.caption" Class="d-block mb-3">@Textos.DroppedKeepResults</MudText>
+        <MudPaper Class="pa-4" Elevation="0" Outlined="true">
+            @string.Join(" · ", roster.Dropped.Select(player => player.Name))
+        </MudPaper>
+    }
+
+    <MudDialog @bind-Visible="renaming" Options="RenameDialog">
+        <TitleContent>@Textos.RenameTitle</TitleContent>
+        <DialogContent>
+            <MudTextField @bind-Value="renameTo"
+                          Label="@Textos.FieldParticipantName"
+                          Variant="Variant.Outlined"
+                          Immediate="true" />
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => renaming = false)">@Textos.ActionCancel</MudButton>
+            <MudButton Color="Color.Primary"
+                       Disabled="@(busy || string.IsNullOrWhiteSpace(renameTo))"
+                       OnClick="RenameAsync">
+                @Textos.ActionSave
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+    private readonly List<string> errors = [];
+
+    [Parameter]
+    public Guid TournamentId { get; set; }
+
+    [Inject]
+    private LocalTime Clock { get; set; } = null!;
+
+    private TournamentDetails? details;
+    private Roster roster = Roster.Empty;
+    private readonly QuickAdd quickAdd = new();
+
+    private MudTextField<string>? nameField;
+    private bool loading = true;
+    private bool busy;
+
+    private bool renaming;
+    private Guid renameId;
+    private string renameTo = string.Empty;
+
+    /// <summary>Only a draft or a published tournament takes new sign-ups (docs/vision.md).</summary>
+    private bool RegistrationsOpen =>
+        details?.Status is TournamentStatus.Draft or TournamentStatus.Published;
+
+    private int SeatsLeft => Math.Max(0, (details?.Capacity ?? 0) - roster.Registered.Count);
+
+    private string SeatsNotice => SeatsLeft switch
+    {
+        0 => Textos.SeatsFull,
+        1 => Textos.SeatsLeftOne,
+        var left => string.Format(Textos.SeatsLeft, left)
+    };
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+
+        details = await Tournaments.DetailsAsync(TournamentId);
+        roster = details is null ? Roster.Empty : await Tournaments.RosterAsync(TournamentId);
+
+        loading = false;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs key)
+    {
+        if (key.Key is "Enter" or "NumpadEnter")
+        {
+            await RegisterAsync();
+        }
+    }
+
+    private async Task RegisterAsync()
+    {
+        var name = quickAdd.Name.Trim();
+
+        if (string.IsNullOrEmpty(name) || busy)
+        {
+            return;
+        }
+
+        errors.Clear();
+        busy = true;
+
+        try
+        {
+            var outcome = await Participants.RegisterAsync(TournamentId, name);
+
+            if (!outcome.Succeeded)
+            {
+                errors.AddRange(outcome.Errors);
+                return;
+            }
+
+            Snackbar.Add(
+                outcome.Waitlisted
+                    ? string.Format(Textos.NoticeWaitlisted, name, outcome.WaitlistPosition)
+                    : string.Format(Textos.NoticeRegistered, name),
+                outcome.Waitlisted ? Severity.Info : Severity.Success);
+
+            quickAdd.Name = string.Empty;
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+
+        // Back to the box, ready for the next person in the queue.
+        if (nameField is not null)
+        {
+            await nameField.FocusAsync();
+        }
+    }
+
+    private static readonly DialogOptions RenameDialog = new()
+    {
+        CloseOnEscapeKey = true,
+        FullWidth = true,
+        MaxWidth = MaxWidth.ExtraSmall
+    };
+
+    /// <summary>The quick-add box binds to this rather than to a loose field.</summary>
+    private sealed class QuickAdd
+    {
+        public string Name { get; set; } = string.Empty;
+    }
+
+    private void StartRename(ParticipantRow player)
+    {
+        renameId = player.Id;
+        renameTo = player.Name;
+        renaming = true;
+    }
+
+    private async Task RenameAsync()
+    {
+        errors.Clear();
+        busy = true;
+
+        try
+        {
+            var result = await Participants.RenameAsync(TournamentId, renameId, renameTo.Trim());
+
+            if (!result.Succeeded)
+            {
+                errors.AddRange(result.Errors);
+                return;
+            }
+
+            renaming = false;
+            Snackbar.Add(Textos.NoticeRenamed, Severity.Success);
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task ConfirmDropAsync(ParticipantRow player)
+    {
+        // What dropping means depends on whether the tournament has started, so the question says so.
+        var consequence = details!.Status == TournamentStatus.InProgress
+            ? Textos.ConfirmDropInProgress
+            : Textos.ConfirmDropBeforeStart;
+
+        var confirmed = await Dialogs.ShowMessageBoxAsync(
+            string.Format(Textos.ConfirmDropTitle, player.Name),
+            consequence,
+            yesText: Textos.ActionConfirm,
+            cancelText: Textos.ActionCancel);
+
+        if (confirmed is not true)
+        {
+            return;
+        }
+
+        errors.Clear();
+        busy = true;
+
+        try
+        {
+            var outcome = await Participants.DropAsync(TournamentId, player.Id);
+
+            if (!outcome.Succeeded)
+            {
+                errors.AddRange(outcome.Errors);
+                return;
+            }
+
+            Snackbar.Add(Textos.NoticeDropped, Severity.Success);
+
+            // Whoever moved up is expecting to be told, so say it out loud.
+            if (outcome.PromotedName is { } promoted)
+            {
+                Snackbar.Add(string.Format(Textos.NoticePromoted, promoted), Severity.Info);
+            }
+
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}
