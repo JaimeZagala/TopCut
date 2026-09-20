@@ -620,3 +620,54 @@ media base de datos para mostrar una fecha y un contador.
 - **Guardar es atomico por pantalla**: la pantalla de edicion manda datos y reglas en **una** sola
   llamada. Partido en cuatro, un torneo podria quedarse con las plazas nuevas y la duracion de ronda
   vieja porque la tercera llamada fue rechazada.
+
+---
+
+## ADR-0027 — Las pantallas en vivo van por el circuito de Blazor, no por un hub propio
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: medio · **Cambia**: el plan del hito 4
+
+El roadmap del hito 4 decia "hub de SignalR". Al montarlo se ve que **para la web no hace falta, y
+ademas seria contraproducente**: toda pantalla de TopCut es una pagina de Blazor Server, y una
+pagina de Blazor Server **ya tiene un WebSocket abierto** con el servidor. Anadirle un hub propio
+significaria **dos conexiones por espectador**, y el nivel gratuito de App Service permite **cinco
+en total**.
+
+- **Decision**: un difusor en memoria (`ITournamentBroadcaster` / `ITournamentWatch`). Quien guarda
+  un cambio levanta su evento de dominio de siempre; un handler avisa al difusor; las pantallas que
+  esten mirando ese torneo se enteran por **su propio circuito**, que es el que ya tenian abierto.
+- **El mensaje no lleva datos**, solo "este torneo se ha movido". La pantalla vuelve a leer con la
+  consulta que ya usa, asi que hay **una sola descripcion** de lo que enseña cada pantalla y quien
+  se reconecta tras perderse un aviso acaba en el estado actual y no en un remiendo.
+- **Primer suscriptor de los eventos de dominio.** Hasta ahora se levantaban y se tiraban a
+  proposito (ADR-0010); esta es la prueba de que la costura era de verdad.
+- **Se anade `RoundClosed`**, que faltaba: sin el, la pantalla de la sala seguia enseñando una ronda
+  ya cerrada, con su reloj corriendo, hasta que alguien recargaba.
+- **Que pasa con el hub**: sigue teniendo sentido, pero **para clientes externos** — la futura app
+  movil, que no tiene circuito. Construirlo ahora seria una superficie sin nadie que la consuma y
+  sin forma de probarla de verdad, asi que va con la Web API externa (hito 8) y la fase 2.
+- **En produccion** se delega en Azure SignalR Service, y eso vale igual: lo que se delega son los
+  **circuitos de Blazor**, que es justo lo que resuelve el limite de cinco WebSockets.
+- **Limite conocido**: el difusor es de un solo proceso. Con varias instancias de App Service cada
+  una avisaria solo a sus propias pantallas. En el plan gratuito hay una sola instancia; el dia que
+  haya mas, esto pasa a ser un backplane (Azure SignalR o Redis) detras de la misma interfaz.
+
+---
+
+## ADR-0028 — El cronometro cuenta en el navegador desde un instante del servidor
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo
+
+El servidor manda **el instante de fin en UTC y su propia hora**; el navegador calcula una vez la
+diferencia entre los dos relojes y a partir de ahi lleva la cuenta atras el solo.
+
+- **Alternativa descartada**: un temporizador por circuito en el servidor. Serian un render y un
+  diff por segundo **y por espectador**, y en el nivel gratuito de Azure SignalR (~20.000 mensajes
+  al dia) una sola pantalla abierta una tarde se comeria la cuota entera.
+- **Alternativa descartada**: mandar los segundos que quedan. Recargar la pagina reiniciaria el
+  reloj, que es exactamente lo que `docs/arquitectura.md` dice que no puede pasar.
+- **Por que tambien se manda la hora del servidor**: un portatil con la hora mal puesta veria un
+  tiempo equivocado si comparase el instante de fin con su propio reloj. Con la diferencia medida
+  una vez, el cronometro es correcto aunque el reloj del equipo no lo sea.
+- El primer valor se pinta **desde el servidor**, asi que la sala ve un tiempo antes de que el
+  JavaScript tome el relevo, y la pagina sigue diciendo algo util sin JavaScript.

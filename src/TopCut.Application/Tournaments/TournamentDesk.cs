@@ -61,6 +61,10 @@ public sealed record DeskRoundLink(int Number, Phase Phase, RoundStatus Status);
 /// <param name="CanStartNextRound">There is a round to launch and none open.</param>
 /// <param name="CanApplyTimeExpiry">The clock is spent and something is still unreported.</param>
 /// <param name="CanComplete">Every round is closed and there is nothing left to play.</param>
+/// <param name="ServerNow">
+/// The server's clock when this was read. The round countdown runs in the browser, and this is what
+/// lets it correct for the viewer's own clock being off (ADR-0028).
+/// </param>
 public sealed record TournamentDesk(
     Guid TournamentId,
     string Name,
@@ -77,4 +81,5 @@ public sealed record TournamentDesk(
     int NextRoundNumber,
     bool CanApplyTimeExpiry,
     bool CanComplete,
-    bool CanCloseRound);
+    bool CanCloseRound,
+    DateTimeOffset ServerNow);

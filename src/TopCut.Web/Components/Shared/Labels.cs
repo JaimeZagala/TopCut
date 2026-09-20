@@ -70,6 +70,12 @@ public static class Labels
         _ => tiebreaker.ToString()
     };
 
+    /// <summary>A countdown as minutes and seconds, the way a round clock is read.</summary>
+    public static string Countdown(TimeSpan remaining) =>
+        remaining <= TimeSpan.Zero
+            ? "0:00"
+            : $"{(int)remaining.TotalMinutes}:{remaining.Seconds:00}";
+
     /// <summary>A tiebreaker's value for one player, as a percentage.</summary>
     public static string Percentage(decimal value) => value.ToString("P1");
 

@@ -183,11 +183,26 @@ Partido en cuatro tramos para que cada uno sea revisable por separado.
 *Criterio de cierre del hito 3 alcanzado*: una tienda crea un torneo, apunta a los jugadores, lanza
 rondas, registra y corrige resultados y lo cierra, todo desde el navegador.
 
-### Hito 4 — Tiempo real: pantalla en vivo y cronometro ⬜
+### Hito 4 — Tiempo real: pantalla en vivo y cronometro 🔨
 
-Hub de SignalR, pantalla en vivo del organizador, **cronometro de ronda sincronizado** (el servidor
-manda el instante de fin en UTC), y la pantalla movil del jugador para **reportar resultado en un
-par de toques**.
+- ✅ **Las pantallas se actualizan solas**: lanzar una ronda, meter un resultado, corregirlo, cerrar
+  la ronda o dar una baja aparece en cualquier otra pantalla abierta de ese torneo sin recargar
+- ✅ **Pantalla en vivo** para proyectar en la sala (`/tienda/torneos/{id}/en-vivo`): sin barras ni
+  menus, tipografia que se lee de lejos, mesas mientras se juega y **clasificacion entre rondas**
+- ✅ **Cronometro de ronda sincronizado** (ADR-0028): el servidor manda el instante de fin en UTC y
+  su propia hora, y la cuenta atras la lleva el navegador. Recargar no lo reinicia, un equipo con la
+  hora mal puesta lo ve bien, y no cuesta un mensaje por segundo y espectador
+- ✅ **Primer suscriptor de los eventos de dominio** (ADR-0010), que hasta ahora se levantaban y se
+  tiraban. Se anade `RoundClosed`, que faltaba
+- ✅ **17 pruebas nuevas**, incluida la que recorre la cadena entera contra SQL Server real: guardar,
+  interceptor, despachador, handler y aviso a la pantalla
+- 🔁 **Sin hub de SignalR propio** (ADR-0027). Toda pantalla de TopCut es una pagina de Blazor
+  Server y **ya tiene su WebSocket**; un hub aparte serian dos conexiones por espectador cuando el
+  plan gratuito de App Service permite cinco en total. El hub sigue teniendo sentido para clientes
+  **externos** (la app movil), y va con la Web API externa del hito 8
+- ⏸ **Pantalla movil del jugador para reportar en un par de toques**: necesita que un jugador este
+  vinculado a su participante, y ese vinculo lo crea la inscripcion, que es el hito 5. Pendiente de
+  confirmar si se hace al principio del hito 5 o se adelanta atando la cuenta a mano
 
 ### Hito 5 — Cara publica: busqueda, inscripcion y lista de espera ⬜
 

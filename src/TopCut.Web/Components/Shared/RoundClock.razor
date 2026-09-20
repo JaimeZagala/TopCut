@@ -1,0 +1,94 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@* El reloj de la ronda. El servidor solo dice cuando termina; la cuenta atras la lleva el
+   navegador (ADR-0028), asi que no cuesta un mensaje por segundo y por espectador.
+
+   El texto se pinta ya desde el servidor para que se vea algo en el primer render, antes de que
+   el JavaScript tome el relevo. *@
+
+<span @ref="host" class="topcut-clock" data-state="@InitialState">@InitialText</span>
+
+@code {
+    private ElementReference host;
+    private IJSObjectReference? module;
+    private bool ticking;
+
+    /// <summary>End of normal play, in UTC.</summary>
+    [Parameter, EditorRequired]
+    public DateTimeOffset EndsAt { get; set; }
+
+    /// <summary>End of overtime. Equal to <see cref="EndsAt"/> when the game has none.</summary>
+    [Parameter, EditorRequired]
+    public DateTimeOffset ExtraEndsAt { get; set; }
+
+    /// <summary>
+    /// The server's clock at the moment this was read, so the browser can correct for its own being
+    /// off without the two ever having to agree on what time it is.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public DateTimeOffset ServerNow { get; set; }
+
+    private string InitialText => Remaining switch
+    {
+        { TotalSeconds: > 0 } left => Labels.Countdown(left),
+        _ when ExtraEndsAt > ServerNow => $"{Textos.ClockExtraTime} {Labels.Countdown(ExtraEndsAt - ServerNow)}",
+        _ => Textos.ClockOver
+    };
+
+    private string InitialState => Remaining switch
+    {
+        { TotalSeconds: > 0 } => "running",
+        _ when ExtraEndsAt > ServerNow => "extra",
+        _ => "over"
+    };
+
+    private TimeSpan Remaining => EndsAt - ServerNow;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Nothing to run against during prerendering: the server-rendered text stands until the
+        // circuit is up.
+        if (!RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/roundClock.js");
+
+        // Restarted on every render on purpose: a new round means new instants, and start() clears
+        // whatever was ticking before.
+        await module.InvokeVoidAsync("start", host, new
+        {
+            endsAtMs = EndsAt.ToUnixTimeMilliseconds(),
+            extraEndsAtMs = ExtraEndsAt.ToUnixTimeMilliseconds(),
+            serverNowMs = ServerNow.ToUnixTimeMilliseconds(),
+            extraLabel = Textos.ClockExtraTime,
+            overLabel = Textos.ClockOver
+        });
+
+        ticking = true;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (module is null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (ticking)
+            {
+                await module.InvokeVoidAsync("stop", host);
+            }
+
+            await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit went away before we could tidy up, which takes the timer with it.
+        }
+    }
+}

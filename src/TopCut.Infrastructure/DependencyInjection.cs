@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TopCut.Application.Abstractions;
+using TopCut.Domain.Events;
 using TopCut.Infrastructure.Identity;
+using TopCut.Infrastructure.Live;
 using TopCut.Infrastructure.Persistence;
 using TopCut.Infrastructure.Persistence.Interceptors;
 using TopCut.Application.Tournaments;
@@ -50,6 +52,8 @@ public static class DependencyInjection
         services.AddScoped<TournamentSetupService>();
         services.AddScoped<ParticipantService>();
 
+        services.AddTopCutLiveUpdates();
+
         services.AddTopCutIdentity();
 
         return services;
@@ -86,6 +90,25 @@ public static class DependencyInjection
         services.AddScoped<ISignInService, SignInService>();
         services.AddScoped<IExternalSignInService, ExternalSignInService>();
         services.AddScoped<IStoreDirectory, StoreDirectory>();
+    }
+
+    /// <summary>
+    /// The live screens (ADR-0027). The broadcaster is a singleton because the side that publishes
+    /// and the side that listens are in different scopes, and the handlers are the first
+    /// subscribers the domain events have ever had (ADR-0010).
+    /// </summary>
+    private static void AddTopCutLiveUpdates(this IServiceCollection services)
+    {
+        services.AddSingleton<TournamentBroadcaster>();
+        services.AddSingleton<ITournamentBroadcaster>(p => p.GetRequiredService<TournamentBroadcaster>());
+        services.AddSingleton<ITournamentWatch>(p => p.GetRequiredService<TournamentBroadcaster>());
+
+        services.AddScoped<IDomainEventHandler<RoundStarted>, LiveUpdates.OnRoundStarted>();
+        services.AddScoped<IDomainEventHandler<RoundClosed>, LiveUpdates.OnRoundClosed>();
+        services.AddScoped<IDomainEventHandler<ResultRecorded>, LiveUpdates.OnResultRecorded>();
+        services.AddScoped<IDomainEventHandler<RoundTimeExpired>, LiveUpdates.OnRoundTimeExpired>();
+        services.AddScoped<IDomainEventHandler<SeatFreed>, LiveUpdates.OnSeatFreed>();
+        services.AddScoped<IDomainEventHandler<TournamentCompleted>, LiveUpdates.OnTournamentCompleted>();
     }
 
     private static void TryAddSingletonTimeProvider(this IServiceCollection services)

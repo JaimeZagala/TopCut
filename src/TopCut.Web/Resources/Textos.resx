@@ -684,9 +684,6 @@
     <value>Termina a las {0}</value>
     <comment>{0} es la hora de fin de la ronda.</comment>
   </data>
-  <data name="DeskTimeOver" xml:space="preserve">
-    <value>Se acabo el tiempo.</value>
-  </data>
   <data name="DeskNoRounds" xml:space="preserve">
     <value>Todavia no se ha jugado ninguna ronda.</value>
   </data>
@@ -762,5 +759,31 @@
   </data>
   <data name="NoticeTournamentCompleted" xml:space="preserve">
     <value>Torneo finalizado.</value>
+  </data>
+
+  <!-- Hito 4: tiempo real -->
+  <data name="ClockExtraTime" xml:space="preserve">
+    <value>Prorroga</value>
+  </data>
+  <data name="ClockOver" xml:space="preserve">
+    <value>Tiempo agotado</value>
+  </data>
+  <data name="LiveTitle" xml:space="preserve">
+    <value>Pantalla en vivo</value>
+  </data>
+  <data name="LiveOpen" xml:space="preserve">
+    <value>Abrir la pantalla en vivo</value>
+  </data>
+  <data name="LiveWaiting" xml:space="preserve">
+    <value>Esperando a que empiece la ronda.</value>
+  </data>
+  <data name="LiveStandingsHeading" xml:space="preserve">
+    <value>Clasificacion tras la ronda {0}</value>
+  </data>
+  <data name="LiveRoundHeading" xml:space="preserve">
+    <value>Ronda {0}</value>
+  </data>
+  <data name="LiveDone" xml:space="preserve">
+    <value>Torneo finalizado</value>
   </data>
 </root>

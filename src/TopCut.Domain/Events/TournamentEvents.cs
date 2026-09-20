@@ -7,6 +7,12 @@ namespace TopCut.Domain.Events;
 public sealed record RoundStarted(Guid TenantId, Guid TournamentId, Guid RoundId, int Number, Phase Phase)
     : DomainEvent;
 
+/// <summary>
+/// A round was closed. The pair of <see cref="RoundStarted"/>: without it the screen in the room
+/// would keep showing a finished round, clock and all, until somebody reloaded it.
+/// </summary>
+public sealed record RoundClosed(Guid TenantId, Guid TournamentId, Guid RoundId, int Number) : DomainEvent;
+
 /// <summary>A match result was recorded or amended.</summary>
 public sealed record ResultRecorded(Guid TenantId, Guid TournamentId, Guid RoundId, Guid PairingId)
     : DomainEvent;

@@ -318,7 +318,13 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
         }
     }
 
-    public void CloseRound(Guid roundId, DateTimeOffset now) => FindRound(roundId).Close(now);
+    public void CloseRound(Guid roundId, DateTimeOffset now)
+    {
+        var round = FindRound(roundId);
+
+        round.Close(now);
+        Raise(new RoundClosed(TenantId, Id, round.Id, round.Number));
+    }
 
     // --- Helpers -----------------------------------------------------------------------------------
 

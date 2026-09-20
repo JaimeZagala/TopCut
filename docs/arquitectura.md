@@ -83,14 +83,27 @@ encapsulado en `SsrTextField` y `SsrCheckBox`.
 
 ## Tiempo real
 
-ASP.NET Core SignalR para:
+Las pantallas de la web **ya hablan por SignalR**: cada pagina de Blazor Server tiene su circuito.
+Las actualizaciones en vivo viajan por ahi (ADR-0027) en vez de por un hub propio, que significaria
+dos WebSockets por espectador cuando el plan gratuito permite cinco.
 
-- Pantalla en vivo del organizador (emparejamientos, resultados que van entrando).
-- **Cronometro de ronda**: cuenta atras sincronizada para jugadores y organizador, a partir de la
-  duracion configurada en el torneo. El servidor es la fuente de verdad del instante de fin; el
-  cliente solo renderiza la diferencia, para que recargar la pagina no reinicie el reloj.
+- **Quien avisa**: un evento de dominio, despachado despues del commit, llega a un handler que
+  publica en un difusor en memoria. El aviso **no lleva datos**: dice que el torneo se movio, y cada
+  pantalla vuelve a leer con la consulta que ya usa.
+- **Pantalla en vivo del organizador** (emparejamientos y resultados segun entran, clasificacion
+  entre rondas), pensada para proyectar en la sala.
+- **Cronometro de ronda** (ADR-0028): el servidor manda el instante de fin en UTC **y su propia
+  hora**; el navegador mide la diferencia una vez y cuenta el solo. Recargar no reinicia el reloj y
+  no se gasta un mensaje por segundo y espectador.
+- **Un hub propio** queda para los clientes **externos** (la app movil, que no tiene circuito), con
+  la Web API externa.
 
-En produccion se delega en **Azure SignalR Service** (ver mas abajo).
+En produccion se delega en **Azure SignalR Service** (ver mas abajo): lo que se delega son los
+circuitos de Blazor, que es justo lo que resuelve el limite de WebSockets del plan gratuito.
+
+> El difusor es de **un solo proceso**. Con varias instancias de App Service cada una avisaria solo
+> a sus propias pantallas; el plan gratuito tiene una sola instancia, y el dia que haya mas esto
+> pasa a ser un backplane detras de la misma interfaz.
 
 ## Acceso a datos
 

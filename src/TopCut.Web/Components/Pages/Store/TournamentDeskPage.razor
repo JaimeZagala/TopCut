@@ -3,7 +3,9 @@
 @attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
 @using TopCut.Application.Tournaments
 @using TopCut.Domain.Standings
+@implements IDisposable
 @inject TournamentService Tournaments
+@inject ITournamentWatch Live
 @inject LocalTime Clock
 @inject IDialogService Dialogs
 @inject ISnackbar Snackbar
@@ -42,6 +44,16 @@ else
     </MudText>
 
     <TournamentTabs TournamentId="TournamentId" Current="TournamentTab.Desk" />
+
+    <MudStack Row="true" Class="mb-4">
+        <MudSpacer />
+        <MudButton Href="@($"/tienda/torneos/{TournamentId}/en-vivo")"
+                   Target="_blank"
+                   Variant="Variant.Text"
+                   StartIcon="@Icons.Material.Filled.Cast">
+            @Textos.LiveOpen
+        </MudButton>
+    </MudStack>
 
     @if (errors.Count > 0)
     {
@@ -131,11 +143,12 @@ else
                     </MudText>
                     @if (open.RegularTimeEndsAt is { } endsAt)
                     {
-                        <MudChip T="string" Size="Size.Small" Color="@(open.ExtraTimeExpired ? Color.Error : Color.Default)">
-                            @(open.ExtraTimeExpired
-                                ? Textos.DeskTimeOver
-                                : string.Format(Textos.DeskTimeLeft, Clock.ToLocal(endsAt).ToString("HH:mm")))
-                        </MudChip>
+                        <RoundClock EndsAt="endsAt"
+                                    ExtraEndsAt="open.ExtraTimeEndsAt ?? endsAt"
+                                    ServerNow="desk.ServerNow" />
+                        <MudText Typo="Typo.caption">
+                            @string.Format(Textos.DeskTimeLeft, Clock.ToLocal(endsAt).ToString("HH:mm"))
+                        </MudText>
                     }
                 }
             }
@@ -257,6 +270,7 @@ else
         _ => Textos.DeskStartFirstRound
     };
 
+    private IDisposable? watch;
     private (Guid Tournament, int? Round) loaded;
 
     /// <summary>
@@ -273,12 +287,34 @@ else
         await LoadAsync();
     }
 
+    protected override void OnInitialized()
+    {
+        // The desk of somebody else in the same shop, or the projector screen, moves this one too.
+        if (RendererInfo.IsInteractive)
+        {
+            watch = Live.Watch(TournamentId, _ => InvokeAsync(RefreshAsync));
+        }
+    }
+
+    /// <summary>
+    /// A change that came from somewhere else. It only refreshes what is on screen — it never
+    /// touches <c>busy</c> or the row being amended, so it cannot yank a half-finished correction
+    /// out from under whoever is making it.
+    /// </summary>
+    private async Task RefreshAsync()
+    {
+        desk = await Tournaments.GetDeskAsync(TournamentId, RoundNumber);
+        StateHasChanged();
+    }
+
     private async Task LoadAsync()
     {
         loading = true;
         desk = await Tournaments.GetDeskAsync(TournamentId, RoundNumber);
         loading = false;
     }
+
+    public void Dispose() => watch?.Dispose();
 
     private void ShowRound(int number) =>
         Navigation.NavigateTo($"/tienda/torneos/{TournamentId}/mesa?ronda={number}");

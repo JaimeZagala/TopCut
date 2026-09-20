@@ -413,6 +413,50 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         Assert.Contains($"href=\"/tienda/torneos/{tournamentId}\"", roster);
     }
 
+    [Fact]
+    public async Task The_live_screen_shows_the_tables_and_the_round_clock()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+        var tournamentId = await CreateTournament(storeId, "Torneo proyectado");
+
+        await SignUp(storeId, tournamentId, "Ana", "Bruno", "Carla", "Diego");
+        await Publish(storeId, tournamentId);
+        await StartRound(storeId, tournamentId);
+
+        var html = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}/en-vivo");
+
+        Assert.Contains("Ronda 1", html);
+        Assert.Contains("Ana", html);
+
+        // The clock is rendered server-side first, so the room sees a time before the browser
+        // takes over the ticking.
+        Assert.Contains("topcut-clock", html);
+        Assert.Contains("data-state=\"running\"", html);
+
+        // No sidebar and no app bar: every pixel is for names read from the back of the room.
+        Assert.DoesNotContain("Panel de la tienda", html);
+        Assert.DoesNotContain("Mesa de control", html);
+    }
+
+    [Fact]
+    public async Task Between_rounds_the_live_screen_shows_the_standings_instead()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+        var tournamentId = await CreateTournament(storeId, "Entre rondas");
+
+        await SignUp(storeId, tournamentId, "Ana", "Bruno");
+        await Publish(storeId, tournamentId);
+
+        var html = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}/en-vivo");
+
+        Assert.Contains("Esperando a que empiece la ronda", html);
+        Assert.Contains("Clasificacion", html);
+    }
+
     // --- Helpers ----------------------------------------------------------------------------------------
 
     /// <summary>Where a redirect points, as a path, whether the header is absolute or relative.</summary>

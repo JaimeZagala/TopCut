@@ -145,7 +145,8 @@ public sealed class TournamentService(ITournamentRepository tournaments, TimePro
                 && open.ExtraTimeExpired(now)
                 && !open.AllResultsReported,
             CanComplete: tournament.Status == TournamentStatus.InProgress && everyRoundClosed,
-            CanCloseRound: tournament.CurrentRound is { AllResultsReported: true });
+            CanCloseRound: tournament.CurrentRound is { AllResultsReported: true },
+            ServerNow: now);
     }
 
     private static DeskRound Board(Round round, Dictionary<Guid, string> names, DateTimeOffset now) => new(

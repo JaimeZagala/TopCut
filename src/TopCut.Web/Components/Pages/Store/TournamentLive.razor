@@ -1,0 +1,135 @@
+@page "/tienda/torneos/{TournamentId:guid}/en-vivo"
+@layout LiveLayout
+@attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
+@using TopCut.Application.Tournaments
+@implements IDisposable
+@inject TournamentService Tournaments
+@inject ITournamentWatch Live
+
+@* La pantalla que se proyecta en la sala. Se repinta sola cuando pasa algo en el torneo: no hace
+   falta que nadie vuelva a este portatil a darle a recargar entre ronda y ronda (ADR-0027). *@
+
+<PageTitle>@(desk?.Name ?? Textos.LiveTitle)</PageTitle>
+
+@if (desk is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@Textos.Loading" />
+}
+else
+{
+    <header class="topcut-live-header">
+        <div>
+            <h1>@desk.Name</h1>
+            <p>
+                @* Solo la ronda que se esta jugando: con una cerrada debajo, poner su numero aqui
+                   hacia pensar que seguia en marcha. *@
+                @if (desk.Round is { IsOpen: true } current)
+                {
+                    @string.Format(Textos.LiveRoundHeading, current.Number)
+                    @if (current.Phase == Phase.TopCut)
+                    {
+                        @(" · ")
+                        @Labels.For(current.Phase)
+                    }
+                }
+                else if (desk.Status == TournamentStatus.Completed)
+                {
+                    @Textos.LiveDone
+                }
+                else
+                {
+                    @Textos.LiveWaiting
+                }
+            </p>
+        </div>
+
+        @if (desk.Round is { IsOpen: true, RegularTimeEndsAt: not null } timed)
+        {
+            <RoundClock EndsAt="timed.RegularTimeEndsAt!.Value"
+                        ExtraEndsAt="timed.ExtraTimeEndsAt ?? timed.RegularTimeEndsAt!.Value"
+                        ServerNow="desk.ServerNow" />
+        }
+    </header>
+
+    @if (desk.Round is { IsOpen: true } board)
+    {
+        <div class="topcut-live-tables">
+            @foreach (var match in board.Matches)
+            {
+                <div class="topcut-live-table @(match.Pending ? "pending" : "done")">
+                    <span class="table-number">@match.Table</span>
+                    <span class="player @(match.PlayerAWins > match.PlayerBWins ? "winner" : "")">
+                        @match.PlayerAName
+                    </span>
+                    <span class="score">
+                        @if (match.IsBye)
+                        {
+                            @Textos.MatchBye
+                        }
+                        else if (match.Pending)
+                        {
+                            @("—")
+                        }
+                        else
+                        {
+                            @match.Score
+                        }
+                    </span>
+                    <span class="player @(match.PlayerBWins > match.PlayerAWins ? "winner" : "")">
+                        @(match.PlayerBName ?? string.Empty)
+                    </span>
+                </div>
+            }
+        </div>
+    }
+    else if (desk.Standings.Count > 0)
+    {
+        @* Entre rondas la sala quiere ver la clasificacion, no una pantalla vacia. *@
+        <h2 class="topcut-live-subheading">
+            @(desk.Rounds.Count > 0
+                ? string.Format(Textos.LiveStandingsHeading, desk.Rounds.Max(round => round.Number))
+                : Textos.StandingsTitle)
+        </h2>
+
+        <div class="topcut-live-standings">
+            @foreach (var row in desk.Standings.Where(row => !row.Dropped))
+            {
+                <div class="topcut-live-standing">
+                    <span class="rank">@row.Rank</span>
+                    <span class="player">@row.Name</span>
+                    <span class="points">@row.MatchPoints</span>
+                    <span class="record">@row.Record</span>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private IDisposable? watch;
+    private TournamentDesk? desk;
+
+    [Parameter]
+    public Guid TournamentId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+
+        // Only once the circuit is live: during prerender there is nobody to push to yet.
+        if (RendererInfo.IsInteractive)
+        {
+            watch = Live.Watch(TournamentId, _ => InvokeAsync(RefreshAsync));
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadAsync() => desk = await Tournaments.GetDeskAsync(TournamentId);
+
+    public void Dispose() => watch?.Dispose();
+}
