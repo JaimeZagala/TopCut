@@ -306,3 +306,33 @@ excluye las rutas `/api`.
 
 Lo detectaron las pruebas de integracion del hito 1c, no una revision del codigo: es el tipo de
 fallo que solo aparece cuando algo llama de verdad al endpoint y mira el codigo de estado.
+
+---
+
+## ADR-0015 — La base de datos de desarrollo es SQL Server en Docker, no LocalDB
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada (confirmada por Jaime) · **Impacto**: bajo, solo afecta al puesto de desarrollo
+
+El desarrollo local usa el SQL Server 2022 que levanta el [`compose.yaml`](../compose.yaml) de la
+raiz, en el puerto **11433** y con los datos en un volumen con nombre. `appsettings.Development.json`
+y el `DesignTimeDbContextFactory` apuntan ahi.
+
+- **Alternativa descartada**: SQL Server LocalDB, que era la eleccion inicial del ADR-0005.
+- **Por que se cambio**:
+  - **Es otro motor**. LocalDB es una variante de escritorio; produccion es Azure SQL y las pruebas
+    de integracion ya usan el SQL Server de un contenedor. Con esto los tres entornos coinciden.
+  - **Se apaga solo** cuando lleva unos minutos sin uso, y despertar tarda lo justo para perder la
+    carrera contra el arranque de la aplicacion. Eso es lo que obligo a escribir la espera del
+    `DatabaseInitializer` — que se queda igualmente, porque **Azure SQL serverless tambien se
+    pausa** y el problema es real en produccion.
+  - **Su estado vive en el registro de Windows** (`HKCU\SOFTWARE\Microsoft\Microsoft SQL Server\UserInstances`),
+    separado de los ficheros en disco. Cuando las dos mitades se desincronizan, los errores que da
+    apuntan a cualquier sitio menos a la causa: "no puedo crear el fichero porque ya existe"
+    seguido de "la base ya existe" seguido de que la instancia entera deja de arrancar.
+  - Un contenedor **se tira y se vuelve a levantar** (`docker compose down -v`) sin dejar residuos
+    en el perfil del usuario ni en el registro.
+- **Coste**: Docker Desktop pasa de ser opcional a requisito para desarrollar. Ya lo era en la
+  practica: sin el no se pueden ejecutar las pruebas de integracion antes de fusionar un cambio de
+  esquema (ADR-0005).
+- **Lo que no cambia**: las pruebas de integracion siguen usando Testcontainers, con su propio
+  contenedor efimero. La base de desarrollo y la de las pruebas no se tocan entre si.

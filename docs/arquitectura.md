@@ -176,8 +176,8 @@ B1) tiene un coste mensual bajo.
 El nivel gratuito de Azure SQL permite **una sola base de datos por suscripcion**, asi que no hay
 un "staging" completo sin coste. Tres capas, todas gratuitas:
 
-1. **Desarrollo local** — SQL Server LocalDB (`MSSQLLocalDB`, ya disponible en el equipo) o SQL
-   Server en Docker. Ningun cambio se prueba primero contra un recurso de la nube.
+1. **Desarrollo local** — **SQL Server en Docker**, con el `compose.yaml` de la raiz (ADR-0015).
+   Ningun cambio se prueba primero contra un recurso de la nube.
 2. **Pruebas de integracion automatizadas** — **Testcontainers para .NET**
    (`Testcontainers.MsSql`), que levanta una instancia real y desechable de SQL Server en cada
    ejecucion. **No** el proveedor InMemory de EF Core, que no valida las mismas restricciones que

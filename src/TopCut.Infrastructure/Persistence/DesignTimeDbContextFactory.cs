@@ -10,8 +10,13 @@ namespace TopCut.Infrastructure.Persistence;
 /// </summary>
 public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<TopCutDbContext>
 {
+    /// <summary>
+    /// The SQL Server that <c>compose.yaml</c> at the repository root brings up (ADR-0015).
+    /// Override it with the <c>TOPCUT_CONNECTION</c> environment variable to point the tooling
+    /// somewhere else.
+    /// </summary>
     private const string DesignTimeConnection =
-        "Server=(localdb)\\MSSQLLocalDB;Database=TopCut;Trusted_Connection=True;MultipleActiveResultSets=true";
+        "Server=localhost,11433;Database=TopCut;User Id=sa;Password=TopCut-Local-2026;TrustServerCertificate=True";
 
     public TopCutDbContext CreateDbContext(string[] args)
     {

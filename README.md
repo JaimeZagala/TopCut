@@ -41,12 +41,19 @@ los endpoints `/api/*` se sirven desde un unico proceso y un unico despliegue
 ## Requisitos
 
 - .NET SDK **10.0.401** o superior (ver [`global.json`](global.json))
-- SQL Server LocalDB (incluido con Visual Studio) para desarrollo local
-- Docker Desktop, solo para las pruebas de integracion con Testcontainers
+- **Docker Desktop**, para la base de datos de desarrollo y para las pruebas de integracion
 
 ## Configuracion local
 
-La cadena de conexion de desarrollo apunta a LocalDB y ya viene en `appsettings.Development.json`.
+Arranca primero la base de datos:
+
+```bash
+docker compose up -d
+```
+
+Levanta un SQL Server 2022 en el puerto **11433** con los datos en un volumen, asi que sobreviven
+entre sesiones. La cadena de conexion ya apunta ahi en `appsettings.Development.json`.
+
 Lo demas son secretos y va en user-secrets, nunca en el repositorio. El `UserSecretsId` ya esta en
 `TopCut.Web.csproj`, asi que no hace falta inicializarlo:
 
@@ -62,33 +69,30 @@ Sin esas dos claves la aplicacion arranca igual, pero no habra ningun Superadmin
 que pueda aprobar la primera tienda. El login con Google se activa solo si existen
 `Authentication:Google:ClientId` y `Authentication:Google:ClientSecret`.
 
-## Si LocalDB se atraganta
+## La base de datos de desarrollo
 
-Sintoma al arrancar la web: `Cannot create file 'C:\Users\<tu-usuario>\TopCut.mdf' because it
-already exists`, o al reves, `Database 'TopCut' already exists`.
+| Para | Comando |
+|---|---|
+| Arrancarla | `docker compose up -d` |
+| Pararla conservando los datos | `docker compose down` |
+| Empezar de cero | `docker compose down -v` |
+| Ver los logs | `docker compose logs -f sqlserver` |
 
-Es un vicio de LocalDB, no de la aplicacion: el registro de la base en la instancia y los ficheros
-en disco se desincronizan tras un cierre sucio. La base **existe**, y suele bastar con reiniciar la
-instancia para que la vuelva a adjuntar:
+Tras un `down -v`, la aplicacion recrea el esquema y siembra el catalogo al siguiente arranque.
 
-```bash
-sqllocaldb stop MSSQLLocalDB
-```
-
-```bash
-sqllocaldb start MSSQLLocalDB
-```
-
-Para ver que tiene registrado ahora mismo:
+Para mirar dentro sin salir de la terminal:
 
 ```bash
-sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "SELECT name, state_desc FROM sys.databases WHERE database_id > 4"
+docker exec -it topcut-sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "TopCut-Local-2026" -C -d TopCut
 ```
 
-Si sigue sin cuadrar, `DROP DATABASE [TopCut]` y borrar despues los `.mdf` y `.ldf` del perfil de
-usuario deja la pizarra limpia: la aplicacion recrea el esquema y el catalogo al siguiente arranque.
-**No muevas ni renombres esos ficheros mientras la base siga registrada**, porque entonces la
-instancia apunta a rutas que ya no existen y el error se vuelve mas confuso.
+La contrasena esta en claro en `compose.yaml` a proposito: esa base solo escucha en tu localhost y
+no contiene nada real. **No la reutilices en ningun otro sitio.**
+
+> **Por que no LocalDB** (ADR-0015): funcionaba, pero es un motor distinto al de produccion, se
+> apaga solo cuando lleva rato sin uso y su estado vive en el registro de Windows, donde es facil
+> que se desincronice del disco y deje errores desconcertantes. El contenedor es el mismo SQL Server
+> que usan las pruebas de integracion y el que hay detras de Azure SQL.
 
 ## Comandos
 

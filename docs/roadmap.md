@@ -18,6 +18,7 @@
 - ✅ Decisiones confirmadas: topologia de `TopCut.Api` (ADR-0004), herramientas (ADR-0005),
   claves primarias (ADR-0006)
 - ✅ Herramientas: git 2.55, Docker Desktop 29.8 (contenedores Linux) y GitHub CLI 2.101
+- ✅ Base de datos de desarrollo en Docker via `compose.yaml` (ADR-0015)
 - ✅ Repositorio local inicializado
 - ✅ Repositorio remoto: `JaimeZagala/TopCut` (privado), `main` sincronizada (ADR-0007)
 - ⏸ Correo dedicado del proyecto para Azure, Google Cloud y Play Console (ADR-0007)
