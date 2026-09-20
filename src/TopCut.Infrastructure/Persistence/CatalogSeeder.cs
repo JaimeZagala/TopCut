@@ -42,6 +42,15 @@ public static class CatalogSeeder
         {
             db.Rulesets.Add(rulesetFor(existing.Id));
             await db.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
+        // Backfill for rulesets created before a field existed. Only fills what is empty, so a
+        // table the Superadmin has since tuned is never overwritten by the seed.
+        if (existing.Ruleset.AttendanceBands.Count == 0)
+        {
+            existing.Ruleset.SetAttendanceBands(rulesetFor(existing.Id).AttendanceBands);
+            await db.SaveChangesAsync(cancellationToken);
         }
     }
 }

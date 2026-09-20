@@ -47,6 +47,7 @@ Reglas de competicion **como datos**. Ninguna logica de torneo pregunta que jueg
 | `MinimumPercentage` | Suelo aplicado a los porcentajes antes de promediarlos. |
 | `SwissPhase` / `TopCutPhase` | Sendos `PhaseSettings` independientes. |
 | `Tiebreakers` | Lista **ordenada**; el orden es significativo. |
+| `AttendanceBands` | Rondas suizas y tamano de cut recomendados segun la asistencia. Cada juego tiene la suya (ADR-0018). |
 | `RulesVersion` / `OfficialSource` | Trazabilidad: contra que documento se valido y donde esta. |
 
 `PhaseSettings` es un value object con `Format` (Bo1/Bo3), `RoundLength` (nula = sin limite) y
@@ -67,6 +68,7 @@ reloj (ADR-0009).
 | Desempates, en orden | % victorias rivales → % partidas ganadas → % partidas ganadas rivales | % victorias propio → % victorias rivales → enfrentamiento directo |
 | Suelo de porcentaje | 0,33 | 0,33 |
 | El bye entra en el % propio | **Si** | **No** |
+| Recomendacion para 12 jugadores | 5 rondas, Top 4 | 4 rondas, Top 2 |
 | Fin de tiempo (ADR-0009) | Gana quien va por delante | Gana quien va por delante |
 
 Esa ultima fila es la razon concreta de que el ruleset sea configuracion y no codigo: Magic cuenta

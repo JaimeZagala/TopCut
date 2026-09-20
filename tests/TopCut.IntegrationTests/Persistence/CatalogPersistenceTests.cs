@@ -107,6 +107,25 @@ public class CatalogPersistenceTests(SqlServerFixture fixture)
     }
 
     [Fact]
+    public async Task The_attendance_table_survives_a_round_trip()
+    {
+        await using var db = fixture.CreateContext();
+        await CatalogSeeder.SeedAsync(db);
+        db.ChangeTracker.Clear();
+
+        var magic = await db.Rulesets.SingleAsync(r => r.Tcg.Code == SeedCatalog.MagicCode);
+        var onePiece = await db.Rulesets.SingleAsync(r => r.Tcg.Code == SeedCatalog.OnePieceCode);
+
+        // Twelve players: five rounds and a top 4 in Magic, four rounds and a top 2 in One Piece.
+        // Both tables come back out of one column apiece, order and nulls intact.
+        Assert.Equal((5, 4), (magic.RecommendationFor(12)!.Value.SwissRounds, magic.RecommendationFor(12)!.Value.TopCutSize));
+        Assert.Equal((4, 2), (onePiece.RecommendationFor(12)!.Value.SwissRounds, onePiece.RecommendationFor(12)!.Value.TopCutSize));
+
+        // The band with no cut round-trips its null rather than becoming a zero.
+        Assert.Null(magic.RecommendationFor(6)!.Value.TopCutSize);
+    }
+
+    [Fact]
     public async Task Two_TCGs_cannot_share_a_code()
     {
         await using var db = fixture.CreateContext();

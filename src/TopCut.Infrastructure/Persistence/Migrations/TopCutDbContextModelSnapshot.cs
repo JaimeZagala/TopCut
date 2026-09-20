@@ -207,6 +207,12 @@ namespace TopCut.Infrastructure.Persistence.Migrations
                     b.Property<int>("WinPoints")
                         .HasColumnType("int");
 
+                    b.Property<string>("_attendanceBands")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("AttendanceBands");
+
                     b.Property<string>("_tiebreakers")
                         .IsRequired()
                         .HasMaxLength(64)

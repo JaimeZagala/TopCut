@@ -89,6 +89,9 @@ una tienda.
 - ✅ **6 pruebas de integracion** que recorren torneos enteros recargando el agregado desde SQL
   Server entre cada operacion, como haria la aplicacion entre peticiones
 
+- ✅ **Tabla de rondas y cut por asistencia** en el ruleset, con los valores oficiales de cada juego
+  (ADR-0018), para que la pantalla de crear torneo del hito 3 llegue con el numero correcto puesto
+
 *Criterio de cierre alcanzado*: torneos completos simulados con campos pares e impares, con bajas,
 con y sin top cut, verificando emparejamientos y clasificacion.
 

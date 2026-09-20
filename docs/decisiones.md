@@ -401,3 +401,38 @@ todo lo anterior y no hay nadie mas con sus mismos puntos. En grupos de tres o m
 - **Consecuencia practica**: un triple empate exacto queda en el orden que dejaron los criterios
   numericos, y el organizador decide. Es lo correcto, no una carencia: fabricar un desempate donde
   el reglamento dice que no lo hay seria peor que no fabricarlo.
+
+---
+
+## ADR-0018 — La tabla de rondas por asistencia tambien es dato del ruleset
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo, una columna y una migracion
+
+Cuantas rondas suizas jugar y de que tamano hacer el top cut segun la asistencia **no es una
+formula universal**: cada TCG publica su propia tabla, y no coinciden.
+
+| Asistencia | Magic (MTR apendice E) | One Piece (TRM 3.6) |
+|---|---|---|
+| 4-8 | 3 rondas, sin cut | 3 rondas, sin cut |
+| 9-16 | 5 rondas, **Top 4** | **4 rondas**, **Top 2** |
+| 17-32 | 5 rondas, **Top 8** | 5 rondas, **Top 4** |
+| 33-64 | 6 rondas, Top 8 | 6 rondas, Top 8 |
+| 65-128 | 7 rondas, Top 8 | 7 rondas, Top 8 |
+| 129-226 / 129-256 | 8 rondas, **Top 8** | 8 rondas, **Top 16** |
+| 227-409 / 257-512 | 9 rondas, Top 8 | 9 rondas, Top 16 |
+| 410+ / 513-1024 | 10 rondas, Top 8 | 10 rondas, **Top 32** |
+
+- **Alternativa descartada**: una funcion compartida `RecommendedRounds(jugadores)`. Se acerca
+  bastante a `techo(log2(n))`, que es el principio del sistema suizo, pero **se equivoca en las
+  bandas medias y en el tamano del cut**, que es justo donde se juega la mayoria de los torneos de
+  tienda. Con 12 jugadores propondria lo mismo a los dos juegos, y los dos reglamentos piden cosas
+  distintas.
+- **Decision**: `Ruleset.AttendanceBands`, una lista ordenada de bandas con su limite superior, sus
+  rondas y su tamano de cut opcional, almacenada en una columna compacta igual que los criterios de
+  desempate. `RecommendationFor(jugadores)` devuelve la banda que toca.
+- **Es una sugerencia, no una imposicion**: la tienda puede poner las rondas y el cut que quiera. El
+  valor esta en que la pantalla de crear torneo llegue con el numero correcto ya puesto, porque
+  elegir tres rondas para 27 jugadores deja varios invictos y decide el torneo por desempate en vez
+  de por partidas.
+- **Migracion**: el seed rellena la tabla en los rulesets que ya existan y esten vacios, pero nunca
+  pisa una que el Superadmin haya ajustado.

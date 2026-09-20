@@ -10,6 +10,7 @@ namespace TopCut.Domain.Catalog;
 public class Ruleset : CatalogEntity
 {
     private List<Tiebreaker> _tiebreakers = [];
+    private List<AttendanceBand> _attendanceBands = [];
 
     private Ruleset() { }
 
@@ -27,6 +28,7 @@ public class Ruleset : CatalogEntity
         PhaseSettings swissPhase,
         PhaseSettings topCutPhase,
         IEnumerable<Tiebreaker> tiebreakers,
+        IEnumerable<AttendanceBand> attendanceBands,
         TimeExpiryPolicy timeExpiry,
         string rulesVersion,
         string officialSource)
@@ -57,6 +59,7 @@ public class Ruleset : CatalogEntity
         SwissPhase = swissPhase;
         TopCutPhase = topCutPhase;
         _tiebreakers = ordered;
+        _attendanceBands = [.. attendanceBands.OrderBy(band => band.UpToPlayers)];
         TimeExpiry = timeExpiry;
         RulesVersion = rulesVersion;
         OfficialSource = officialSource;
@@ -106,6 +109,13 @@ public class Ruleset : CatalogEntity
     /// <summary>What happens to unreported matches when the round clock runs out (ADR-0009).</summary>
     public TimeExpiryPolicy TimeExpiry { get; private set; }
 
+    /// <summary>
+    /// How many rounds and how big a cut this TCG prescribes for a given turnout, smallest band
+    /// first. <b>The two games disagree here too</b>: for 9-16 players Magic asks for five rounds
+    /// and a top 4, while One Piece asks for four rounds and a top 2.
+    /// </summary>
+    public IReadOnlyList<AttendanceBand> AttendanceBands => _attendanceBands.AsReadOnly();
+
     // --- Phases ------------------------------------------------------------------------------------
 
     public PhaseSettings SwissPhase { get; private set; } = null!;
@@ -129,6 +139,15 @@ public class Ruleset : CatalogEntity
         MatchResult.Bye => ByePoints,
         _ => throw new ArgumentOutOfRangeException(nameof(result))
     };
+
+    /// <summary>
+    /// What this TCG suggests for the given turnout, or <c>null</c> when its table says nothing
+    /// about a field that size. A suggestion only: the store can always override it.
+    /// </summary>
+    public AttendanceBand? RecommendationFor(int players) =>
+        _attendanceBands.FirstOrDefault(band => players <= band.UpToPlayers) is { UpToPlayers: > 0 } match
+            ? match
+            : null;
 
     /// <summary>Settings for the given phase.</summary>
     public PhaseSettings SettingsFor(Phase phase) => phase switch
@@ -168,6 +187,21 @@ public class Ruleset : CatalogEntity
     }
 
     public void SetTimeExpiryPolicy(TimeExpiryPolicy policy) => TimeExpiry = policy;
+
+    /// <summary>Replaces the attendance table, for instance when the governing body revises it.</summary>
+    public void SetAttendanceBands(IEnumerable<AttendanceBand> bands)
+    {
+        var ordered = bands.OrderBy(band => band.UpToPlayers).ToList();
+
+        DomainException.Require(
+            ordered.Select(band => band.UpToPlayers).Distinct().Count() == ordered.Count,
+            "Las bandas de asistencia no pueden repetir su limite superior.");
+        DomainException.Require(
+            ordered.All(band => band.SwissRounds >= 1),
+            "Cada banda necesita al menos una ronda suiza.");
+
+        _attendanceBands = ordered;
+    }
 
     /// <summary>Records which official rulebook version these values were last checked against.</summary>
     public void MarkReviewedAgainst(string rulesVersion, string officialSource)

@@ -18,6 +18,41 @@ public static class SeedCatalog
     /// <summary>Floor both games apply to percentages before averaging them.</summary>
     private const decimal PercentageFloor = 0.33m;
 
+    /// <summary>
+    /// Magic Tournament Rules, appendix E. The table starts at nine players: below that the MTR
+    /// tells organisers to skip Swiss entirely and just run a bracket, which is a different shape
+    /// of event, so the small band here is the pragmatic reading of "three rounds, no cut".
+    /// </summary>
+    private static readonly AttendanceBand[] MagicAttendance =
+    [
+        new(UpToPlayers: 8, SwissRounds: 3, TopCutSize: null),
+        new(UpToPlayers: 16, SwissRounds: 5, TopCutSize: 4),
+        new(UpToPlayers: 32, SwissRounds: 5, TopCutSize: 8),
+        new(UpToPlayers: 64, SwissRounds: 6, TopCutSize: 8),
+        new(UpToPlayers: 128, SwissRounds: 7, TopCutSize: 8),
+        new(UpToPlayers: 226, SwissRounds: 8, TopCutSize: 8),
+        new(UpToPlayers: 409, SwissRounds: 9, TopCutSize: 8),
+        new(UpToPlayers: int.MaxValue, SwissRounds: 10, TopCutSize: 8)
+    ];
+
+    /// <summary>
+    /// Bandai OP Tournament Rules Manual, section 3.6. Same idea as Magic's, different numbers:
+    /// fewer rounds and a much smaller cut in the mid bands, and a cut that keeps growing at the
+    /// top where Magic stays on eight.
+    /// </summary>
+    private static readonly AttendanceBand[] OnePieceAttendance =
+    [
+        new(UpToPlayers: 8, SwissRounds: 3, TopCutSize: null),
+        new(UpToPlayers: 16, SwissRounds: 4, TopCutSize: 2),
+        new(UpToPlayers: 32, SwissRounds: 5, TopCutSize: 4),
+        new(UpToPlayers: 64, SwissRounds: 6, TopCutSize: 8),
+        new(UpToPlayers: 128, SwissRounds: 7, TopCutSize: 8),
+        new(UpToPlayers: 256, SwissRounds: 8, TopCutSize: 16),
+        new(UpToPlayers: 512, SwissRounds: 9, TopCutSize: 16),
+        new(UpToPlayers: 1024, SwissRounds: 10, TopCutSize: 32),
+        new(UpToPlayers: int.MaxValue, SwissRounds: 11, TopCutSize: 32)
+    ];
+
     public static Tcg Magic() => new(MagicCode, "Magic: The Gathering");
 
     public static Tcg OnePiece() => new(OnePieceCode, "One Piece Card Game");
@@ -51,6 +86,7 @@ public static class SeedCatalog
             Tiebreaker.GameWinPercentage,
             Tiebreaker.OpponentsGameWinPercentage
         ],
+        attendanceBands: MagicAttendance,
         timeExpiry: TimeExpiryPolicy.LeaderWins,
         rulesVersion: "Magic Tournament Rules, 21 abr 2025",
         officialSource: "https://media.wizards.com/ContentResources/WPN/MTG_MTR_2025_Apr%2021_EN.pdf");
@@ -64,6 +100,7 @@ public static class SeedCatalog
     /// player's own match win rate, then their opponents', with a 0.33 floor.</item>
     /// <item>TRM 5.4: byes are excluded from the player's own percentage, <b>unlike Magic</b>. That
     /// difference is exactly why the ruleset is configuration and not code.</item>
+    /// <item>TRM 3.6: its own attendance table, which is <b>not</b> Magic's.</item>
     /// </list>
     /// </summary>
     public static Ruleset OnePieceRuleset(int tcgId) => new(
@@ -85,6 +122,7 @@ public static class SeedCatalog
             Tiebreaker.OpponentsMatchWinPercentage,
             Tiebreaker.HeadToHead
         ],
+        attendanceBands: OnePieceAttendance,
         timeExpiry: TimeExpiryPolicy.LeaderWins,
         rulesVersion: "Bandai OP Tournament Rules Manual, 17 oct 2025",
         officialSource: "https://en.onepiece-cardgame.com/pdf/tournament_rules_manual.pdf");

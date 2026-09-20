@@ -40,6 +40,13 @@ internal sealed class RulesetConfiguration : IEntityTypeConfiguration<Ruleset>
             .HasConversion(TiebreakerListConverter.Converter, TiebreakerListConverter.Comparer)
             .IsRequired();
 
+        builder.Ignore(ruleset => ruleset.AttendanceBands);
+        builder.Property<List<AttendanceBand>>("_attendanceBands")
+            .HasColumnName("AttendanceBands")
+            .HasMaxLength(256)
+            .HasConversion(AttendanceBandConverter.Converter, AttendanceBandConverter.Comparer)
+            .IsRequired();
+
         builder.Property(ruleset => ruleset.MinimumPercentage).HasPrecision(4, 3);
         builder.Property(ruleset => ruleset.RulesVersion).HasMaxLength(200).IsRequired();
         builder.Property(ruleset => ruleset.OfficialSource).HasMaxLength(500).IsRequired();
