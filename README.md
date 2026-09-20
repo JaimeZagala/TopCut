@@ -47,7 +47,8 @@ los endpoints `/api/*` se sirven desde un unico proceso y un unico despliegue
 ## Configuracion local
 
 La cadena de conexion de desarrollo apunta a LocalDB y ya viene en `appsettings.Development.json`.
-Lo demas son secretos y va en user-secrets, nunca en el repositorio:
+Lo demas son secretos y va en user-secrets, nunca en el repositorio. El `UserSecretsId` ya esta en
+`TopCut.Web.csproj`, asi que no hace falta inicializarlo:
 
 ```bash
 dotnet user-secrets --project src/TopCut.Web set "Superadmin:Email" "tu@email.com"
