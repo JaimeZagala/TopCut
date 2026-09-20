@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TopCut.Application.Abstractions;
 using TopCut.Domain.Catalog;
@@ -7,6 +8,7 @@ using TopCut.Domain.Common;
 using TopCut.Domain.Leagues;
 using TopCut.Domain.Tenancy;
 using TopCut.Domain.Tournaments;
+using TopCut.Infrastructure.Identity;
 
 namespace TopCut.Infrastructure.Persistence;
 
@@ -17,7 +19,7 @@ namespace TopCut.Infrastructure.Persistence;
 /// (see docs/arquitectura.md).
 /// </summary>
 public class TopCutDbContext(DbContextOptions<TopCutDbContext> options, ITenantContext tenantContext)
-    : DbContext(options)
+    : IdentityDbContext<TopCutUser>(options)
 {
     private static readonly MethodInfo ApplyTenantFilterMethod = typeof(TopCutDbContext)
         .GetMethod(nameof(ApplyTenantFilter), BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -48,6 +50,10 @@ public class TopCutDbContext(DbContextOptions<TopCutDbContext> options, ITenantC
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Identity brings its own tables (AspNetUsers, AspNetRoles...) with string keys, which is
+        // the framework default and not worth changing (ADR-0006).
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TopCutDbContext).Assembly);
 
         // One filter per tenant-owned entity, applied by convention rather than by hand, so adding

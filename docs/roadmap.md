@@ -50,13 +50,24 @@ Partido en tres tramos para que cada uno sea revisable por separado.
 - ✅ Verificadas **contra SQL Server real en Docker via Testcontainers**, que es el camino por
   defecto; tambien pasan contra LocalDB con la valvula del ADR-0012
 
-#### 1c — Identidad ⬜
+#### 1c — Identidad ✅
 
-ASP.NET Core Identity con los tres roles y sus politicas, registro con email/contrasena y casilla
-de consentimiento RGPD, login con Google (condicionado a que existan credenciales) y tokens Bearer
-para la API externa.
+- ✅ ASP.NET Core Identity sobre el mismo `DbContext`, con `TopCutUser` (nombre visible,
+  consentimiento con su version, y la tienda a la que pertenece)
+- ✅ Los tres roles y sus politicas; `CanOrganize` comprueba la aprobacion **contra la base de
+  datos**, no contra un claim, para que revocar una tienda surta efecto en la peticion siguiente
+- ✅ Consentimiento RGPD exigido **en el servidor**, con [aviso](../src/TopCut.Web/Components/Account/PrivacyNotice.razor)
+  versionado en `/privacidad`
+- ✅ Paginas de registro, acceso y salida (sin estilar: MudBlazor llega en el hito 3)
+- ✅ Login con Google cableado y **condicionado a que existan credenciales**, con su propia pantalla
+  de consentimiento antes de crear la cuenta
+- ✅ Tokens Bearer para clientes externos; los endpoints `/api/v1/*` **solo** aceptan Bearer (ADR-0013)
+- ✅ Semilla de roles y del Superadmin de arranque desde configuracion
+- ✅ Migracion `IdentitySchema` con su script en `docs/migraciones/002-IdentitySchema.sql`
+- ✅ 11 pruebas de extremo a extremo que arrancan la aplicacion real y hablan HTTP de verdad
 
-*Criterio de cierre*: se puede registrar un usuario y el Superadmin puede aprobar una tienda.
+*Criterio de cierre alcanzado*: un jugador se registra desde el navegador y el Superadmin aprueba
+una tienda.
 
 ### Hito 2 — Motor de torneo ⬜
 

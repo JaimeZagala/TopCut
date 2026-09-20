@@ -1,0 +1,39 @@
+@page "/privacidad"
+
+<PageTitle>Proteccion de datos - TopCut</PageTitle>
+
+<h1>Aviso de proteccion de datos</h1>
+
+<p>
+    Version <strong>@TopCutPolicies_Version</strong>. Este es el texto que aceptas al registrarte.
+</p>
+
+<h2>Que datos guardamos</h2>
+<ul>
+    <li>Tu <strong>correo electronico</strong>, para identificarte y poder darte acceso a tu cuenta.</li>
+    <li>El <strong>nombre</strong> con el que quieres aparecer en emparejamientos y clasificaciones.</li>
+    <li>Tu <strong>historial de torneos</strong>: en cuales te has inscrito, contra quien jugaste y que resultados hubo.</li>
+</ul>
+
+<h2>Para que los usamos</h2>
+<ul>
+    <li>Organizar los torneos: emparejarte, calcular la clasificacion y mostrar los resultados.</li>
+    <li>Que puedas consultar tu propio historial y tu puesto en las ligas activas.</li>
+</ul>
+
+<h2>Quien los ve</h2>
+<p>
+    La tienda que organiza cada torneo en el que participas, y el resto de jugadores de ese torneo,
+    que veran tu nombre y tus resultados en los emparejamientos y la clasificacion publica.
+    No cedemos tus datos a nadie mas ni los usamos para publicidad.
+</p>
+
+<h2>Tus derechos</h2>
+<p>
+    Puedes pedir que te mostremos, corrijamos o borremos tus datos escribiendo a la tienda
+    organizadora o al responsable de la plataforma.
+</p>
+
+@code {
+    private const string TopCutPolicies_Version = TopCut.Application.Abstractions.PrivacyNotice.CurrentVersion;
+}

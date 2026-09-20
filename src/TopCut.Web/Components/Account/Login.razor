@@ -1,0 +1,91 @@
+@page "/cuenta/acceso"
+@using System.ComponentModel.DataAnnotations
+@using TopCut.Api
+@using TopCut.Application.Abstractions
+@inject ISignInService SignIn
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+
+<PageTitle>Entrar - TopCut</PageTitle>
+
+<h1>Entrar</h1>
+
+@if (error is not null)
+{
+    <p class="errores" role="alert">@error</p>
+}
+
+<EditForm Model="Input!" FormName="acceso" OnValidSubmit="SignInAsync" method="post">
+    <DataAnnotationsValidator />
+
+    <p>
+        <label for="email">Email</label>
+        <InputText id="email" type="email" @bind-Value="Input!.Email" autocomplete="username" />
+        <ValidationMessage For="() => Input!.Email" />
+    </p>
+
+    <p>
+        <label for="password">Contrasena</label>
+        <InputText id="password" type="password" @bind-Value="Input!.Password" autocomplete="current-password" />
+        <ValidationMessage For="() => Input!.Password" />
+    </p>
+
+    <p>
+        <label><InputCheckbox @bind-Value="Input!.RememberMe" /> No cerrar sesion</label>
+    </p>
+
+    <button type="submit">Entrar</button>
+</EditForm>
+
+@if (googleAvailable)
+{
+    <form action="/cuenta/google" method="post">
+        <AntiforgeryToken />
+        <button type="submit">Entrar con Google</button>
+    </form>
+}
+
+<p>No tienes cuenta? <a href="/cuenta/registro">Registrate</a>.</p>
+
+@code {
+    private string? error;
+    private bool googleAvailable;
+
+    [SupplyParameterFromForm]
+    private LoginModel? Input { get; set; }
+
+    // The button only shows when credentials are configured, so the application runs fine before
+    // the Google Cloud project exists.
+    protected override void OnInitialized()
+    {
+        Input ??= new();
+        googleAvailable = DependencyInjection.IsGoogleConfigured(Configuration);
+    }
+
+    private async Task SignInAsync()
+    {
+        error = null;
+
+        var result = await SignIn.SignInWithCookieAsync(Input!.Email, Input!.Password, Input!.RememberMe);
+
+        if (!result.Succeeded)
+        {
+            error = string.Join(" ", result.Errors);
+            return;
+        }
+
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    private sealed class LoginModel
+    {
+        [Required(ErrorMessage = "Indica tu email.")]
+        [EmailAddress(ErrorMessage = "Ese email no parece valido.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Indica tu contrasena.")]
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; }
+    }
+}

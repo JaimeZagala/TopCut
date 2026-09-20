@@ -1,0 +1,73 @@
+@page "/cuenta/google/alta"
+@using System.ComponentModel.DataAnnotations
+@using TopCut.Application.Abstractions
+@inject IExternalSignInService External
+@inject NavigationManager Navigation
+
+@* Google verified who they are, but it cannot accept the data-protection notice on their behalf,
+   so the account is not created until this form is submitted. *@
+
+<PageTitle>Completar el alta - TopCut</PageTitle>
+
+<h1>Ya casi esta</h1>
+
+<p>Has entrado con Google. Solo faltan dos cosas para crear tu cuenta.</p>
+
+@if (error is not null)
+{
+    <p class="errores" role="alert">@error</p>
+}
+
+<EditForm Model="Input!" FormName="alta-google" OnValidSubmit="CompleteAsync" method="post">
+    <DataAnnotationsValidator />
+
+    <p>
+        <label for="displayName">Nombre para los emparejamientos</label>
+        <InputText id="displayName" @bind-Value="Input!.DisplayName" autocomplete="nickname" />
+        <ValidationMessage For="() => Input!.DisplayName" />
+    </p>
+
+    <p>
+        <label>
+            <InputCheckbox @bind-Value="Input!.ConsentAccepted" />
+            He leido y acepto el <a href="/privacidad" target="_blank">aviso de proteccion de datos</a>.
+        </label>
+        <ValidationMessage For="() => Input!.ConsentAccepted" />
+    </p>
+
+    <button type="submit">Crear cuenta</button>
+</EditForm>
+
+@code {
+    private string? error;
+
+    [SupplyParameterFromForm]
+    private GoogleSignUpModel? Input { get; set; }
+
+    protected override void OnInitialized() => Input ??= new();
+
+    private async Task CompleteAsync()
+    {
+        error = null;
+
+        var result = await External.CompleteRegistrationAsync(Input!.DisplayName, Input!.ConsentAccepted);
+
+        if (!result.Succeeded)
+        {
+            error = string.Join(" ", result.Errors);
+            return;
+        }
+
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    private sealed class GoogleSignUpModel
+    {
+        [Required(ErrorMessage = "Indica el nombre con el que quieres aparecer.")]
+        [StringLength(200, MinimumLength = 2, ErrorMessage = "El nombre debe tener entre 2 y 200 caracteres.")]
+        public string DisplayName { get; set; } = string.Empty;
+
+        [Range(typeof(bool), "true", "true", ErrorMessage = "Hay que aceptar el aviso de proteccion de datos.")]
+        public bool ConsentAccepted { get; set; }
+    }
+}

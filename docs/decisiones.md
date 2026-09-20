@@ -272,3 +272,37 @@ esquema desde cero al arrancar.
   container lo reutilice en vez de anidar un contenedor dentro de otro.
 - **Lo que no cambia**: el camino por defecto sigue siendo Testcontainers, y es el que debe
   ejecutarse antes de fusionar un cambio de esquema. LocalDB y Azure SQL no son identicos.
+
+---
+
+## ADR-0013 — Los endpoints de la API se autentican solo con Bearer
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: seguridad
+
+Las politicas con nombre (`IsSuperadmin`, `CanOrganize`, `IsPlayer`) aceptan **cookie y Bearer**,
+porque las paginas Blazor las necesitan. Los endpoints bajo `/api/v1/*`, en cambio, exigen
+**exclusivamente Bearer**.
+
+- **Por que**: si un endpoint de la API aceptase la cookie de sesion, un formulario alojado en otro
+  sitio podria hacer que el navegador de la victima enviase la peticion con su cookie adjunta, que
+  es exactamente un CSRF. Con Bearer no hay riesgo: el token va en una cabecera que solo puede
+  poner el cliente, nunca el navegador por su cuenta.
+- **Coste**: ninguno. La UI Blazor **no llama a la API**: invoca los mismos servicios de
+  `TopCut.Application` en el mismo proceso (ADR-0004). La API existe para clientes externos, que
+  usan Bearer de todas formas.
+- Los grupos de la API llevan ademas `DisableAntiforgery()`: son JSON y el middleware de
+  antiforgery solo tiene sentido para formularios con cookie.
+
+---
+
+## ADR-0014 — Las paginas de error amables no se aplican a `/api`
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo, pero corrige un fallo real
+
+`UseStatusCodePagesWithReExecute` reejecuta la tuberia contra una pagina Razor para cualquier
+respuesta de error sin cuerpo. Aplicado a toda la aplicacion convertia un **401 de la API en un 400
+con HTML**, inutil para un cliente que espera `problem+json`. Ahora va envuelto en un `UseWhen` que
+excluye las rutas `/api`.
+
+Lo detectaron las pruebas de integracion del hito 1c, no una revision del codigo: es el tipo de
+fallo que solo aparece cuando algo llama de verdad al endpoint y mira el codigo de estado.

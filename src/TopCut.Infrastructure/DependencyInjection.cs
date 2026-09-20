@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TopCut.Application.Abstractions;
+using TopCut.Infrastructure.Identity;
 using TopCut.Infrastructure.Persistence;
 using TopCut.Infrastructure.Persistence.Interceptors;
 
@@ -36,7 +38,42 @@ public static class DependencyInjection
                 provider.GetRequiredService<DomainEventDispatchInterceptor>());
         });
 
+        services.AddTopCutIdentity();
+
         return services;
+    }
+
+    /// <summary>
+    /// ASP.NET Core Identity over the same DbContext. Only the core services and the stores live
+    /// here; which authentication schemes are wired up (cookie, bearer, Google) is a decision of
+    /// the host and belongs to the presentation layer.
+    /// </summary>
+    private static void AddTopCutIdentity(this IServiceCollection services)
+    {
+        services.AddIdentityCore<TopCutUser>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.SignIn.RequireConfirmedAccount = false;
+
+                // Sensible for a local store: long enough to matter, short enough that nobody is
+                // locked out of a tournament they are standing in the queue for.
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+
+                options.Password.RequiredLength = 8;
+                options.Password.RequireNonAlphanumeric = false;
+            })
+            .AddRoles<IdentityRole>()
+            .AddEntityFrameworkStores<TopCutDbContext>()
+            .AddClaimsPrincipalFactory<TopCutUserClaimsPrincipalFactory>()
+            .AddSignInManager()
+            .AddDefaultTokenProviders();
+
+        services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<IStoreOnboarding, StoreOnboarding>();
+        services.AddScoped<ISignInService, SignInService>();
+        services.AddScoped<IExternalSignInService, ExternalSignInService>();
+        services.AddScoped<IStoreDirectory, StoreDirectory>();
     }
 
     private static void TryAddSingletonTimeProvider(this IServiceCollection services)

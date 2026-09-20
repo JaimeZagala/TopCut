@@ -44,6 +44,23 @@ los endpoints `/api/*` se sirven desde un unico proceso y un unico despliegue
 - SQL Server LocalDB (incluido con Visual Studio) para desarrollo local
 - Docker Desktop, solo para las pruebas de integracion con Testcontainers
 
+## Configuracion local
+
+La cadena de conexion de desarrollo apunta a LocalDB y ya viene en `appsettings.Development.json`.
+Lo demas son secretos y va en user-secrets, nunca en el repositorio:
+
+```bash
+dotnet user-secrets --project src/TopCut.Web set "Superadmin:Email" "tu@email.com"
+```
+
+```bash
+dotnet user-secrets --project src/TopCut.Web set "Superadmin:Password" "una-contrasena-larga"
+```
+
+Sin esas dos claves la aplicacion arranca igual, pero no habra ningun Superadmin y por tanto nadie
+que pueda aprobar la primera tienda. El login con Google se activa solo si existen
+`Authentication:Google:ClientId` y `Authentication:Google:ClientSecret`.
+
 ## Comandos
 
 ```bash

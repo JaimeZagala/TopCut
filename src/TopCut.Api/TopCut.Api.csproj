@@ -10,4 +10,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- TopCut.Api es una biblioteca, no una aplicacion (ADR-0004): TopCut.Web la aloja. Necesita
+         el framework de ASP.NET Core para declarar endpoints, controladores y hubs. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
+  </ItemGroup>
+
 </Project>

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "topcut-web",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/TopCut.Web", "--urls", "http://localhost:5280"],
+      "port": 5280
+    }
+  ]
+}

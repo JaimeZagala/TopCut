@@ -1,0 +1,103 @@
+@page "/cuenta/registro"
+@using System.ComponentModel.DataAnnotations
+@using TopCut.Application.Abstractions
+@inject IAccountService Accounts
+@inject ISignInService SignIn
+@inject NavigationManager Navigation
+
+@* Static SSR on purpose: a form post carries no interactive circuit, and signing in needs the
+   HttpContext that only a plain request has. The MudBlazor restyle lands in milestone 3. *@
+
+<PageTitle>Crear cuenta - TopCut</PageTitle>
+
+<h1>Crear cuenta</h1>
+
+@if (errors.Count > 0)
+{
+    <ul class="errores" role="alert">
+        @foreach (var error in errors)
+        {
+            <li>@error</li>
+        }
+    </ul>
+}
+
+<EditForm Model="Input!" FormName="registro" OnValidSubmit="RegisterAsync" method="post">
+    <DataAnnotationsValidator />
+
+    <p>
+        <label for="displayName">Nombre para los emparejamientos</label>
+        <InputText id="displayName" @bind-Value="Input!.DisplayName" autocomplete="nickname" />
+        <ValidationMessage For="() => Input!.DisplayName" />
+    </p>
+
+    <p>
+        <label for="email">Email</label>
+        <InputText id="email" type="email" @bind-Value="Input!.Email" autocomplete="username" />
+        <ValidationMessage For="() => Input!.Email" />
+    </p>
+
+    <p>
+        <label for="password">Contrasena</label>
+        <InputText id="password" type="password" @bind-Value="Input!.Password" autocomplete="new-password" />
+        <ValidationMessage For="() => Input!.Password" />
+    </p>
+
+    <p>
+        <label>
+            <InputCheckbox @bind-Value="Input!.ConsentAccepted" />
+            He leido y acepto el <a href="/privacidad" target="_blank">aviso de proteccion de datos</a>:
+            guardamos tu email y tu historial de torneos para organizar los eventos.
+        </label>
+        <ValidationMessage For="() => Input!.ConsentAccepted" />
+    </p>
+
+    <button type="submit">Crear cuenta</button>
+</EditForm>
+
+<p>Ya tienes cuenta? <a href="/cuenta/acceso">Entra</a>.</p>
+
+@code {
+    private readonly List<string> errors = [];
+
+    [SupplyParameterFromForm]
+    private RegisterModel? Input { get; set; }
+
+    protected override void OnInitialized() => Input ??= new();
+
+    private async Task RegisterAsync()
+    {
+        errors.Clear();
+
+        var result = await Accounts.RegisterPlayerAsync(
+            new RegistrationRequest(Input!.Email, Input!.Password, Input!.DisplayName, Input!.ConsentAccepted));
+
+        if (!result.Succeeded)
+        {
+            errors.AddRange(result.Errors);
+            return;
+        }
+
+        // Straight in: making someone log in again right after registering is pointless friction.
+        await SignIn.SignInWithCookieAsync(Input!.Email, Input!.Password, rememberMe: false);
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    private sealed class RegisterModel
+    {
+        [Required(ErrorMessage = "Indica el nombre con el que quieres aparecer.")]
+        [StringLength(200, MinimumLength = 2, ErrorMessage = "El nombre debe tener entre 2 y 200 caracteres.")]
+        public string DisplayName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Indica tu email.")]
+        [EmailAddress(ErrorMessage = "Ese email no parece valido.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Indica una contrasena.")]
+        [StringLength(100, MinimumLength = 8, ErrorMessage = "La contrasena necesita al menos 8 caracteres.")]
+        public string Password { get; set; } = string.Empty;
+
+        [Range(typeof(bool), "true", "true", ErrorMessage = "Hay que aceptar el aviso de proteccion de datos.")]
+        public bool ConsentAccepted { get; set; }
+    }
+}
