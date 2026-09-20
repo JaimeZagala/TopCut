@@ -603,4 +603,164 @@
   <data name="RenameTitle" xml:space="preserve">
     <value>Cambiar el nombre</value>
   </data>
+
+  <!-- Hito 3d: mesa de control -->
+  <data name="TabDesk" xml:space="preserve">
+    <value>Mesa de control</value>
+  </data>
+  <data name="DeskTitle" xml:space="preserve">
+    <value>Mesa de control</value>
+  </data>
+  <data name="DeskActivePlayers" xml:space="preserve">
+    <value>{0} jugadores en juego</value>
+    <comment>Cuenta a los inscritos que siguen activos, sin contar bajas.</comment>
+  </data>
+  <data name="DeskActivePlayerOne" xml:space="preserve">
+    <value>1 jugador en juego</value>
+  </data>
+  <data name="PhaseSwiss" xml:space="preserve">
+    <value>Suiza</value>
+  </data>
+  <data name="PhaseTopCut" xml:space="preserve">
+    <value>Top cut</value>
+  </data>
+  <data name="TiebreakerOwnMatchWin" xml:space="preserve">
+    <value>% propio</value>
+    <comment>Encabezado de columna: porcentaje de victorias del propio jugador.</comment>
+  </data>
+  <data name="TiebreakerOpponentsMatchWin" xml:space="preserve">
+    <value>% rivales</value>
+  </data>
+  <data name="TiebreakerGameWin" xml:space="preserve">
+    <value>% partidas</value>
+  </data>
+  <data name="TiebreakerOpponentsGameWin" xml:space="preserve">
+    <value>% partidas rivales</value>
+  </data>
+  <data name="TiebreakerHeadToHead" xml:space="preserve">
+    <value>Directo</value>
+    <comment>Encabezado de columna: enfrentamiento directo.</comment>
+  </data>
+  <data name="DeskNotStarted" xml:space="preserve">
+    <value>El torneo todavia no ha empezado.</value>
+  </data>
+  <data name="DeskNotPublished" xml:space="preserve">
+    <value>Publica el torneo para poder lanzar la primera ronda.</value>
+  </data>
+  <data name="DeskNeedsPlayers" xml:space="preserve">
+    <value>Apunta al menos a dos jugadores para poder empezar.</value>
+  </data>
+  <data name="DeskStartFirstRound" xml:space="preserve">
+    <value>Lanzar la primera ronda</value>
+  </data>
+  <data name="DeskStartRound" xml:space="preserve">
+    <value>Lanzar la ronda {0}</value>
+  </data>
+  <data name="DeskStartTopCut" xml:space="preserve">
+    <value>Lanzar el top {0}</value>
+  </data>
+  <data name="DeskCloseRound" xml:space="preserve">
+    <value>Cerrar la ronda</value>
+  </data>
+  <data name="DeskApplyTimeExpiry" xml:space="preserve">
+    <value>Resolver por fin de tiempo</value>
+  </data>
+  <data name="DeskComplete" xml:space="preserve">
+    <value>Finalizar el torneo</value>
+  </data>
+  <data name="DeskRoundLabel" xml:space="preserve">
+    <value>Ronda {0}</value>
+  </data>
+  <data name="DeskPendingCount" xml:space="preserve">
+    <value>{0} sin resultado</value>
+  </data>
+  <data name="DeskAllReported" xml:space="preserve">
+    <value>Todos los resultados estan puestos.</value>
+  </data>
+  <data name="DeskRoundClosed" xml:space="preserve">
+    <value>Ronda cerrada.</value>
+  </data>
+  <data name="DeskTimeLeft" xml:space="preserve">
+    <value>Termina a las {0}</value>
+    <comment>{0} es la hora de fin de la ronda.</comment>
+  </data>
+  <data name="DeskTimeOver" xml:space="preserve">
+    <value>Se acabo el tiempo.</value>
+  </data>
+  <data name="DeskNoRounds" xml:space="preserve">
+    <value>Todavia no se ha jugado ninguna ronda.</value>
+  </data>
+  <data name="DeskTournamentDone" xml:space="preserve">
+    <value>Torneo finalizado.</value>
+  </data>
+  <data name="DeskTournamentCancelled" xml:space="preserve">
+    <value>Este torneo esta cancelado.</value>
+  </data>
+  <data name="ColumnTable" xml:space="preserve">
+    <value>Mesa</value>
+  </data>
+  <data name="ColumnResult" xml:space="preserve">
+    <value>Resultado</value>
+  </data>
+  <data name="ColumnRank" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="ColumnRecord" xml:space="preserve">
+    <value>V-D-E</value>
+    <comment>Encabezado de columna: victorias, derrotas y empates.</comment>
+  </data>
+  <data name="ColumnPoints" xml:space="preserve">
+    <value>Puntos</value>
+  </data>
+  <data name="MatchBye" xml:space="preserve">
+    <value>Bye</value>
+  </data>
+  <data name="MatchDraw" xml:space="preserve">
+    <value>Empate</value>
+  </data>
+  <data name="MatchByTimeExpiry" xml:space="preserve">
+    <value>Por tiempo</value>
+  </data>
+  <data name="MatchAmended" xml:space="preserve">
+    <value>Corregido</value>
+  </data>
+  <data name="MatchAwaiting" xml:space="preserve">
+    <value>Sin resultado</value>
+  </data>
+  <data name="StandingsTitle" xml:space="preserve">
+    <value>Clasificacion</value>
+  </data>
+  <data name="StandingsEmpty" xml:space="preserve">
+    <value>La clasificacion aparece en cuanto se juegue la primera ronda.</value>
+  </data>
+  <data name="StandingsDropped" xml:space="preserve">
+    <value>Baja</value>
+  </data>
+  <data name="ConfirmTimeExpiryTitle" xml:space="preserve">
+    <value>Resolver por fin de tiempo</value>
+  </data>
+  <data name="ConfirmTimeExpiryBody" xml:space="preserve">
+    <value>Las partidas que sigan sin resultado se cierran segun la regla del torneo. Despues puedes corregir cualquiera a mano.</value>
+  </data>
+  <data name="ConfirmCompleteTitle" xml:space="preserve">
+    <value>Finalizar el torneo</value>
+  </data>
+  <data name="ConfirmCompleteBody" xml:space="preserve">
+    <value>El torneo queda cerrado y la clasificacion final es la que hay ahora.</value>
+  </data>
+  <data name="NoticeRoundStarted" xml:space="preserve">
+    <value>Ronda {0} en marcha.</value>
+  </data>
+  <data name="NoticeRoundClosed" xml:space="preserve">
+    <value>Ronda cerrada.</value>
+  </data>
+  <data name="NoticeResultSaved" xml:space="preserve">
+    <value>Resultado guardado.</value>
+  </data>
+  <data name="NoticeTimeExpiryApplied" xml:space="preserve">
+    <value>Resuelto por fin de tiempo.</value>
+  </data>
+  <data name="NoticeTournamentCompleted" xml:space="preserve">
+    <value>Torneo finalizado.</value>
+  </data>
 </root>

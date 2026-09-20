@@ -1,0 +1,380 @@
+@page "/tienda/torneos/{TournamentId:guid}/mesa"
+@layout StoreLayout
+@attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
+@using TopCut.Application.Tournaments
+@using TopCut.Domain.Standings
+@inject TournamentService Tournaments
+@inject LocalTime Clock
+@inject IDialogService Dialogs
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+@* La pantalla que se usa bajo presion, con la sala esperando (docs/arquitectura.md). Todo lo que
+   necesita sale de una sola lectura del torneo, para que los emparejamientos y la clasificacion no
+   puedan contradecirse. El tiempo real llega en el hito 4: por ahora la pagina se refresca sola
+   despues de cada accion. *@
+
+<PageTitle>@Textos.DeskTitle - @(desk?.Name ?? Textos.AppName)</PageTitle>
+
+@if (loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@Textos.Loading" />
+}
+else if (desk is null)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-6">@Textos.TournamentNotFound</MudAlert>
+    <MudButton Href="/tienda/torneos" Variant="Variant.Filled" Color="Color.Primary">@Textos.ActionBack</MudButton>
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Spacing="3">
+        <MudText Typo="Typo.h1">@desk.Name</MudText>
+        <MudChip T="string" Size="Size.Small" Color="@Labels.ColourFor(desk.Status)">
+            @Labels.For(desk.Status)
+        </MudChip>
+    </MudStack>
+
+    <MudText Typo="Typo.caption" Class="d-block mb-6">
+        @Labels.Structure(desk.SwissRounds, desk.TopCutSize) ·
+        @(desk.ActivePlayers == 1
+            ? Textos.DeskActivePlayerOne
+            : string.Format(Textos.DeskActivePlayers, desk.ActivePlayers))
+    </MudText>
+
+    <TournamentTabs TournamentId="TournamentId" Current="TournamentTab.Desk" />
+
+    @if (errors.Count > 0)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@string.Join(" ", errors)</MudAlert>
+    }
+
+    @* --- Lo que se puede hacer ahora mismo ------------------------------------------------- *@
+    <MudPaper Class="pa-4 mb-6" Elevation="0" Outlined="true">
+        <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            @if (desk.Status == TournamentStatus.Cancelled)
+            {
+                <MudText Typo="Typo.body2">@Textos.DeskTournamentCancelled</MudText>
+            }
+            else if (desk.Status == TournamentStatus.Completed)
+            {
+                <MudText Typo="Typo.body2">@Textos.DeskTournamentDone</MudText>
+            }
+            else if (desk.Status == TournamentStatus.Draft)
+            {
+                <MudText Typo="Typo.body2">@Textos.DeskNotPublished</MudText>
+                <MudSpacer />
+                <MudButton Href="@($"/tienda/torneos/{TournamentId}")" Variant="Variant.Outlined">
+                    @Textos.TabDetails
+                </MudButton>
+            }
+            else
+            {
+                @if (desk.CanStartNextRound)
+                {
+                    @if (desk.ActivePlayers < 2)
+                    {
+                        <MudText Typo="Typo.body2">@Textos.DeskNeedsPlayers</MudText>
+                    }
+                    else
+                    {
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Size="Size.Large"
+                                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                                   Disabled="busy"
+                                   OnClick="StartRoundAsync">
+                            @StartLabel
+                        </MudButton>
+                    }
+                }
+
+                @if (desk.CanCloseRound)
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Success"
+                               StartIcon="@Icons.Material.Filled.DoneAll"
+                               Disabled="busy"
+                               OnClick="CloseRoundAsync">
+                        @Textos.DeskCloseRound
+                    </MudButton>
+                }
+
+                @if (desk.CanApplyTimeExpiry)
+                {
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Warning"
+                               StartIcon="@Icons.Material.Filled.Timer"
+                               Disabled="busy"
+                               OnClick="ApplyTimeExpiryAsync">
+                        @Textos.DeskApplyTimeExpiry
+                    </MudButton>
+                }
+
+                @if (desk.CanComplete && !desk.CanStartNextRound)
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.EmojiEvents"
+                               Disabled="busy"
+                               OnClick="CompleteAsync">
+                        @Textos.DeskComplete
+                    </MudButton>
+                }
+
+                @if (desk.Round is { } open && open.IsOpen)
+                {
+                    <MudSpacer />
+                    <MudText Typo="Typo.body2">
+                        @(open.Pending > 0
+                            ? string.Format(Textos.DeskPendingCount, open.Pending)
+                            : Textos.DeskAllReported)
+                    </MudText>
+                    @if (open.RegularTimeEndsAt is { } endsAt)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="@(open.ExtraTimeExpired ? Color.Error : Color.Default)">
+                            @(open.ExtraTimeExpired
+                                ? Textos.DeskTimeOver
+                                : string.Format(Textos.DeskTimeLeft, Clock.ToLocal(endsAt).ToString("HH:mm")))
+                        </MudChip>
+                    }
+                }
+            }
+        </MudStack>
+    </MudPaper>
+
+    @* --- Rondas ---------------------------------------------------------------------------- *@
+    @if (desk.Rounds.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-6" Dense="true">
+            @Textos.DeskNoRounds
+        </MudAlert>
+    }
+    else
+    {
+        <MudStack Row="true" Spacing="2" Class="mb-4" Wrap="Wrap.Wrap">
+            @foreach (var link in desk.Rounds)
+            {
+                <MudButton Size="Size.Small"
+                           Variant="@(desk.Round?.Number == link.Number ? Variant.Filled : Variant.Outlined)"
+                           Color="@(link.Status == RoundStatus.InProgress ? Color.Success : Color.Default)"
+                           OnClick="@(() => ShowRound(link.Number))">
+                    @string.Format(Textos.DeskRoundLabel, link.Number)
+                    @if (link.Phase == Phase.TopCut)
+                    {
+                        @(" · ")
+                        @Labels.For(link.Phase)
+                    }
+                </MudButton>
+            }
+        </MudStack>
+
+        @if (desk.Round is { } board)
+        {
+            <MudTable Items="board.Matches" Hover="true" Elevation="0" Outlined="true" Class="mb-6"
+                      Breakpoint="Breakpoint.Xs">
+                <HeaderContent>
+                    <MudTh Style="width: 4rem">@Textos.ColumnTable</MudTh>
+                    <MudTh>@Textos.ColumnPlayer</MudTh>
+                    <MudTh Class="text-center">@Textos.ColumnResult</MudTh>
+                    <MudTh Class="text-right">@Textos.ColumnPlayer</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="match">
+                    <MatchRow Match="match"
+                              Format="board.Format"
+                              Editing="@(match.Pending || amending.Contains(match.PairingId))"
+                              CanAmend="@(!match.IsBye && desk.Status != TournamentStatus.Completed)"
+                              Busy="busy"
+                              OnReport="ReportAsync"
+                              OnAmend="StartAmend" />
+                </RowTemplate>
+            </MudTable>
+        }
+    }
+
+    @* --- Clasificacion ----------------------------------------------------------------------- *@
+    <MudText Typo="Typo.h4" GutterBottom="true">@Textos.StandingsTitle</MudText>
+
+    @if (desk.Standings.Count == 0)
+    {
+        <MudPaper Class="pa-6" Elevation="0" Outlined="true">
+            <MudText Typo="Typo.body2">@Textos.StandingsEmpty</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudTable Items="desk.Standings" Hover="true" Elevation="0" Outlined="true" Dense="true"
+                  Breakpoint="Breakpoint.Xs">
+            <HeaderContent>
+                <MudTh Style="width: 3rem">@Textos.ColumnRank</MudTh>
+                <MudTh>@Textos.ColumnPlayer</MudTh>
+                <MudTh>@Textos.ColumnPoints</MudTh>
+                <MudTh>@Textos.ColumnRecord</MudTh>
+                @foreach (var tiebreaker in desk.Tiebreakers)
+                {
+                    <MudTh>@Labels.For(tiebreaker)</MudTh>
+                }
+            </HeaderContent>
+            <RowTemplate Context="row">
+                <MudTd DataLabel="@Textos.ColumnRank">@row.Rank</MudTd>
+                <MudTd DataLabel="@Textos.ColumnPlayer">
+                    @row.Name
+                    @if (row.Dropped)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@Textos.StandingsDropped</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="@Textos.ColumnPoints">@row.MatchPoints</MudTd>
+                <MudTd DataLabel="@Textos.ColumnRecord">@row.Record</MudTd>
+                @foreach (var tiebreaker in desk.Tiebreakers)
+                {
+                    <MudTd DataLabel="@Labels.For(tiebreaker)">@Tiebreak(row, tiebreaker)</MudTd>
+                }
+            </RowTemplate>
+        </MudTable>
+    }
+}
+
+@code {
+    private readonly List<string> errors = [];
+    private readonly HashSet<Guid> amending = [];
+
+    [Parameter]
+    public Guid TournamentId { get; set; }
+
+    /// <summary>Which round to show, so a reload or a shared link lands on the same one.</summary>
+    [SupplyParameterFromQuery(Name = "ronda")]
+    private int? RoundNumber { get; set; }
+
+    private TournamentDesk? desk;
+    private bool loading = true;
+    private bool busy;
+
+    private string StartLabel => desk switch
+    {
+        { NextPhase: Phase.TopCut, TopCutSize: { } size } => string.Format(Textos.DeskStartTopCut, size),
+        { Rounds.Count: 0 } => Textos.DeskStartFirstRound,
+        { NextRoundNumber: var number } => string.Format(Textos.DeskStartRound, number),
+        _ => Textos.DeskStartFirstRound
+    };
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        desk = await Tournaments.GetDeskAsync(TournamentId, RoundNumber);
+        loading = false;
+    }
+
+    private void ShowRound(int number) =>
+        Navigation.NavigateTo($"/tienda/torneos/{TournamentId}/mesa?ronda={number}");
+
+    private Task StartRoundAsync() => Run(
+        async () =>
+        {
+            var result = await Tournaments.StartNextRoundAsync(TournamentId);
+
+            // Jump to the round just opened, whatever was being looked at before.
+            if (result.Succeeded)
+            {
+                RoundNumber = null;
+            }
+
+            return result;
+        },
+        () => string.Format(Textos.NoticeRoundStarted, desk?.Round?.Number ?? 0));
+
+    private Task CloseRoundAsync() => Run(
+        () => Tournaments.CloseRoundAsync(TournamentId, desk!.Round!.RoundId),
+        () => Textos.NoticeRoundClosed);
+
+    private async Task ApplyTimeExpiryAsync()
+    {
+        var confirmed = await Dialogs.ShowMessageBoxAsync(
+            Textos.ConfirmTimeExpiryTitle,
+            Textos.ConfirmTimeExpiryBody,
+            yesText: Textos.ActionConfirm,
+            cancelText: Textos.ActionCancel);
+
+        if (confirmed is true)
+        {
+            await Run(
+                () => Tournaments.ApplyTimeExpiryAsync(TournamentId, desk!.Round!.RoundId),
+                () => Textos.NoticeTimeExpiryApplied);
+        }
+    }
+
+    private async Task CompleteAsync()
+    {
+        var confirmed = await Dialogs.ShowMessageBoxAsync(
+            Textos.ConfirmCompleteTitle,
+            Textos.ConfirmCompleteBody,
+            yesText: Textos.ActionConfirm,
+            cancelText: Textos.ActionCancel);
+
+        if (confirmed is true)
+        {
+            await Run(() => Tournaments.CompleteAsync(TournamentId), () => Textos.NoticeTournamentCompleted);
+        }
+    }
+
+    private void StartAmend(DeskMatch match) => amending.Add(match.PairingId);
+
+    private Task ReportAsync((DeskMatch Match, MatchOutcome Outcome) entry)
+    {
+        var roundId = desk!.Round!.RoundId;
+        var wasReported = !entry.Match.Pending;
+
+        return Run(
+            () =>
+            {
+                amending.Remove(entry.Match.PairingId);
+
+                // Amending is a different operation from reporting: it leaves a mark on the match,
+                // so the standings can be explained later without guesswork.
+                return wasReported
+                    ? Tournaments.AmendResultAsync(TournamentId, roundId, entry.Match.PairingId, entry.Outcome.Games)
+                    : Tournaments.ReportResultAsync(
+                        TournamentId,
+                        roundId,
+                        entry.Match.PairingId,
+                        entry.Outcome.Games,
+                        reportedBy: null);
+            },
+            () => Textos.NoticeResultSaved);
+    }
+
+    private async Task Run(Func<Task<OperationResult>> operation, Func<string> notice)
+    {
+        errors.Clear();
+        busy = true;
+
+        try
+        {
+            var result = await operation();
+
+            if (!result.Succeeded)
+            {
+                errors.AddRange(result.Errors);
+                return;
+            }
+
+            await LoadAsync();
+            Snackbar.Add(notice(), Severity.Success);
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private static string Tiebreak(Standing row, Tiebreaker tiebreaker) => tiebreaker switch
+    {
+        Tiebreaker.OwnMatchWinPercentage => Labels.Percentage(row.OwnMatchWinPercentage),
+        Tiebreaker.OpponentsMatchWinPercentage => Labels.Percentage(row.OpponentsMatchWinPercentage),
+        Tiebreaker.GameWinPercentage => Labels.Percentage(row.GameWinPercentage),
+        Tiebreaker.OpponentsGameWinPercentage => Labels.Percentage(row.OpponentsGameWinPercentage),
+        // Head to head only separates two players tied on everything else; there is no column value.
+        _ => "—"
+    };
+}

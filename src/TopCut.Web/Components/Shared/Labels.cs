@@ -49,6 +49,30 @@ public static class Labels
         _ => policy.ToString()
     };
 
+    public static string For(Phase phase) => phase switch
+    {
+        Phase.Swiss => Textos.PhaseSwiss,
+        Phase.TopCut => Textos.PhaseTopCut,
+        _ => phase.ToString()
+    };
+
+    /// <summary>
+    /// The tiebreaker column headings. Short on purpose: the standings table has one column per
+    /// tiebreaker and the organiser reads it sideways at a glance.
+    /// </summary>
+    public static string For(Tiebreaker tiebreaker) => tiebreaker switch
+    {
+        Tiebreaker.OwnMatchWinPercentage => Textos.TiebreakerOwnMatchWin,
+        Tiebreaker.OpponentsMatchWinPercentage => Textos.TiebreakerOpponentsMatchWin,
+        Tiebreaker.GameWinPercentage => Textos.TiebreakerGameWin,
+        Tiebreaker.OpponentsGameWinPercentage => Textos.TiebreakerOpponentsGameWin,
+        Tiebreaker.HeadToHead => Textos.TiebreakerHeadToHead,
+        _ => tiebreaker.ToString()
+    };
+
+    /// <summary>A tiebreaker's value for one player, as a percentage.</summary>
+    public static string Percentage(decimal value) => value.ToString("P1");
+
     /// <summary>"Top 8", or "sin top cut" when the tournament is Swiss only.</summary>
     public static string TopCut(int? size) =>
         size is { } players ? string.Format(Textos.TopCutOf, players) : Textos.TopCutNone;

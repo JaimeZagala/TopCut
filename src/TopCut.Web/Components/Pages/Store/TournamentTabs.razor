@@ -15,6 +15,12 @@
                Color="Color.Primary">
         @Textos.TabParticipants
     </MudButton>
+    <MudButton Href="@($"/tienda/torneos/{TournamentId}/mesa")"
+               StartIcon="@Icons.Material.Filled.PlayCircle"
+               Variant="@VariantFor(TournamentTab.Desk)"
+               Color="Color.Primary">
+        @Textos.TabDesk
+    </MudButton>
 </MudStack>
 
 @code {

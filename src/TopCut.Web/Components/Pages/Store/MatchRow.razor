@@ -1,0 +1,92 @@
+@using TopCut.Application.Tournaments
+
+@* Una mesa. El marcador se lee siempre desde el jugador de la izquierda, que es como el organizador
+   mira la hoja: nombre, resultado, nombre. *@
+
+<MudTd DataLabel="@Textos.ColumnTable">@Match.Table</MudTd>
+
+<MudTd DataLabel="@Textos.ColumnPlayer">
+    <MudText Typo="Typo.body2" Class="@WinnerClass(Match.PlayerAWins > Match.PlayerBWins)">
+        @Match.PlayerAName
+    </MudText>
+</MudTd>
+
+<MudTd DataLabel="@Textos.ColumnResult" Class="text-center">
+    @if (Match.IsBye)
+    {
+        <MudChip T="string" Size="Size.Small" Color="Color.Default">@Textos.MatchBye</MudChip>
+    }
+    else if (Editing)
+    {
+        <MudStack Row="true" Spacing="1" Justify="Justify.Center" Wrap="Wrap.Wrap">
+            @foreach (var outcome in MatchOutcome.For(Format))
+            {
+                <MudButton Size="Size.Small"
+                           Variant="Variant.Outlined"
+                           Color="@(outcome.IsDraw ? Color.Default : Color.Primary)"
+                           Disabled="Busy"
+                           OnClick="@(() => OnReport.InvokeAsync((Match, outcome)))">
+                    @outcome.Label
+                </MudButton>
+            }
+        </MudStack>
+    }
+    else
+    {
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.Center">
+            <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                @(Match.PlayerAWins == Match.PlayerBWins ? Textos.MatchDraw : Match.Score)
+            </MudChip>
+            @if (Match.DecidedByTimeExpiry)
+            {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@Textos.MatchByTimeExpiry</MudChip>
+            }
+            @if (Match.AmendedByOrganizer)
+            {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@Textos.MatchAmended</MudChip>
+            }
+            @if (CanAmend)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Size="Size.Small"
+                               aria-label="@Textos.ActionRename"
+                               title="@Textos.ActionRename"
+                               Disabled="Busy"
+                               OnClick="@(() => OnAmend.InvokeAsync(Match))" />
+            }
+        </MudStack>
+    }
+</MudTd>
+
+<MudTd DataLabel="@Textos.ColumnPlayer" Class="text-right">
+    <MudText Typo="Typo.body2" Class="@WinnerClass(Match.PlayerBWins > Match.PlayerAWins)">
+        @(Match.PlayerBName ?? string.Empty)
+    </MudText>
+</MudTd>
+
+@code {
+    [Parameter, EditorRequired]
+    public DeskMatch Match { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public MatchFormat Format { get; set; }
+
+    /// <summary>Showing the result buttons, either because it is pending or because it is being fixed.</summary>
+    [Parameter]
+    public bool Editing { get; set; }
+
+    /// <summary>A closed round's results can still be corrected; a bye's cannot.</summary>
+    [Parameter]
+    public bool CanAmend { get; set; }
+
+    [Parameter]
+    public bool Busy { get; set; }
+
+    [Parameter]
+    public EventCallback<(DeskMatch Match, MatchOutcome Outcome)> OnReport { get; set; }
+
+    [Parameter]
+    public EventCallback<DeskMatch> OnAmend { get; set; }
+
+    private string WinnerClass(bool won) => won ? "font-weight-bold" : string.Empty;
+}

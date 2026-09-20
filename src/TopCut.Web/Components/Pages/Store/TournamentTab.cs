@@ -4,5 +4,6 @@ namespace TopCut.Web.Components.Pages.Store;
 public enum TournamentTab
 {
     Details,
-    Participants
+    Participants,
+    Desk
 }

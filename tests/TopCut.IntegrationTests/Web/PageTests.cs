@@ -338,6 +338,59 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         Assert.Contains("No quedan plazas", html);
     }
 
+    [Fact]
+    public async Task The_desk_offers_the_first_round_once_the_tournament_is_published()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+        var tournamentId = await CreateTournament(storeId, "Torneo de mesa");
+
+        await SignUp(storeId, tournamentId, "Ana", "Bruno", "Carla", "Diego");
+        await Publish(storeId, tournamentId);
+
+        var html = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}/mesa");
+
+        Assert.Contains("Lanzar la primera ronda", html);
+        Assert.Contains("Todavia no se ha jugado ninguna ronda", html);
+    }
+
+    [Fact]
+    public async Task The_desk_shows_the_tables_and_the_standings_once_a_round_is_under_way()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+        var tournamentId = await CreateTournament(storeId, "Torneo de mesa");
+
+        await SignUp(storeId, tournamentId, "Ana", "Bruno", "Carla", "Diego");
+        await Publish(storeId, tournamentId);
+        await StartRound(storeId, tournamentId);
+
+        var html = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}/mesa");
+
+        Assert.Contains("Ronda 1", html);
+        Assert.Contains("Ana", html);
+        Assert.Contains("Clasificacion", html);
+
+        // Two tables, both waiting on a result.
+        Assert.Contains("2 sin resultado", html);
+    }
+
+    [Fact]
+    public async Task A_draft_tournament_says_to_publish_it_before_playing()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+        var tournamentId = await CreateTournament(storeId, "Sin publicar");
+
+        var html = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}/mesa");
+
+        Assert.Contains("Publica el torneo", html);
+        Assert.DoesNotContain("Lanzar la primera ronda", html);
+    }
+
     // --- Helpers ----------------------------------------------------------------------------------------
 
     /// <summary>Where a redirect points, as a path, whether the header is absolute or relative.</summary>
@@ -391,6 +444,30 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
             var outcome = await players.RegisterAsync(tournamentId, name);
             Assert.True(outcome.Succeeded, string.Join(" ", outcome.Errors));
         }
+    }
+
+    private async Task Publish(Guid storeId, Guid tournamentId)
+    {
+        using var scope = _app.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<ITenantScope>().Set(storeId);
+
+        var result = await scope.ServiceProvider
+            .GetRequiredService<TournamentSetupService>()
+            .PublishAsync(tournamentId);
+
+        Assert.True(result.Succeeded, string.Join(" ", result.Errors));
+    }
+
+    private async Task StartRound(Guid storeId, Guid tournamentId)
+    {
+        using var scope = _app.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<ITenantScope>().Set(storeId);
+
+        var result = await scope.ServiceProvider
+            .GetRequiredService<TournamentService>()
+            .StartNextRoundAsync(tournamentId);
+
+        Assert.True(result.Succeeded, string.Join(" ", result.Errors));
     }
 
     private async Task<Guid> CreateTournament(Guid storeId, string name, int capacity = 16)

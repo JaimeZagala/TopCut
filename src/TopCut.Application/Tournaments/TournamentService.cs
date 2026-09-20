@@ -1,5 +1,6 @@
 using TopCut.Application.Abstractions;
 using TopCut.Domain.Common;
+using TopCut.Domain.Catalog;
 using TopCut.Domain.Pairings;
 using TopCut.Domain.Standings;
 using TopCut.Domain.Tournaments;
@@ -89,6 +90,86 @@ public sealed class TournamentService(ITournamentRepository tournaments, TimePro
             TournamentEngine.HasNextRound,
             whenMissing: false,
             cancellationToken);
+
+    /// <summary>
+    /// The whole control desk in one read: the round on screen, the standings, and which of the
+    /// organiser's buttons should be live right now.
+    /// </summary>
+    /// <param name="roundNumber">
+    /// Which round to show. Left out, it picks the one in progress, or the last one played — which
+    /// is what the organiser wants nine times out of ten.
+    /// </param>
+    public Task<TournamentDesk?> GetDeskAsync(
+        Guid tournamentId,
+        int? roundNumber = null,
+        CancellationToken cancellationToken = default) =>
+        tournaments.ReadAsync<TournamentDesk?>(
+            tournamentId,
+            tournament => BuildDesk(tournament, roundNumber, clock.GetUtcNow()),
+            whenMissing: null,
+            cancellationToken);
+
+    private static TournamentDesk BuildDesk(Tournament tournament, int? roundNumber, DateTimeOffset now)
+    {
+        var names = tournament.Participants.ToDictionary(participant => participant.Id, participant => participant.Name);
+
+        var selected = roundNumber is { } number
+            ? tournament.Rounds.FirstOrDefault(round => round.Number == number)
+            : tournament.CurrentRound ?? tournament.Rounds.LastOrDefault();
+
+        var hasNext = TournamentEngine.HasNextRound(tournament);
+        var everyRoundClosed = tournament.Rounds.All(round => round.Status == RoundStatus.Closed);
+
+        return new TournamentDesk(
+            tournament.Id,
+            tournament.Name,
+            tournament.Status,
+            tournament.SwissRounds,
+            tournament.TopCutSize,
+            tournament.ActiveParticipants.Count(),
+            [.. tournament.Rounds.Select(round => new DeskRoundLink(round.Number, round.Phase, round.Status))],
+            selected is null ? null : Board(selected, names, now),
+            StandingsCalculator.For(tournament),
+            tournament.Settings.Tiebreakers,
+            CanStartNextRound:
+                hasNext
+                && tournament.CurrentRound is null
+                && tournament.Status is TournamentStatus.Published or TournamentStatus.InProgress,
+            NextPhase: hasNext ? TournamentEngine.NextPhase(tournament) : null,
+            NextRoundNumber: tournament.Rounds.Count + 1,
+            CanApplyTimeExpiry:
+                tournament.CurrentRound is { } open
+                && open.ExtraTimeExpired(now)
+                && !open.AllResultsReported,
+            CanComplete: tournament.Status == TournamentStatus.InProgress && everyRoundClosed,
+            CanCloseRound: tournament.CurrentRound is { AllResultsReported: true });
+    }
+
+    private static DeskRound Board(Round round, Dictionary<Guid, string> names, DateTimeOffset now) => new(
+        round.Id,
+        round.Number,
+        round.Phase,
+        round.Status,
+        round.Format,
+        round.RegularTimeEndsAt,
+        round.ExtraTimeEndsAt,
+        round.ExtraTimeExpired(now),
+        [
+            .. round.Pairings
+                .OrderBy(pairing => pairing.Table)
+                .Select(pairing => new DeskMatch(
+                    pairing.Id,
+                    pairing.Table,
+                    pairing.PlayerAId,
+                    names.GetValueOrDefault(pairing.PlayerAId, string.Empty),
+                    pairing.PlayerBId,
+                    pairing.PlayerBId is { } b ? names.GetValueOrDefault(b, string.Empty) : null,
+                    pairing.Status,
+                    pairing.PlayerAWins,
+                    pairing.PlayerBWins,
+                    pairing.DecidedByTimeExpiry,
+                    pairing.AmendedByOrganizer))
+        ]);
 
     private Task<OperationResult> Mutate(
         Guid tournamentId,

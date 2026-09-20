@@ -95,7 +95,7 @@ una tienda.
 *Criterio de cierre alcanzado*: torneos completos simulados con campos pares e impares, con bajas,
 con y sin top cut, verificando emparejamientos y clasificacion.
 
-### Hito 3 — UI de gestion de torneo (tienda) 🔨
+### Hito 3 — UI de gestion de torneo (tienda) ✅
 
 Partido en cuatro tramos para que cada uno sea revisable por separado.
 
@@ -162,10 +162,26 @@ Partido en cuatro tramos para que cada uno sea revisable por separado.
 - ✅ Un choque de concurrencia al guardar deja de ser un error de servidor y se explica
 - ✅ **15 pruebas nuevas**, 13 sobre el roster contra SQL Server real y 2 sobre las pantallas
 
-#### 3d — Mesa de control del torneo ⬜
+#### 3d — Mesa de control del torneo ✅
 
-Lanzar rondas, ver emparejamientos, registrar y corregir resultados, clasificacion en vivo y cerrar
-el torneo. Todavia sin tiempo real: eso es el hito 4.
+- ✅ **Una pantalla, un boton**: la mesa ensena en cada momento lo unico que toca hacer — lanzar la
+  ronda, cerrarla, resolver por fin de tiempo o finalizar el torneo
+- ✅ **Emparejamientos** con los nombres puestos, ordenados por mesa, con el bye ya resuelto
+- ✅ **Resultados por marcador**: los botones son los que el reglamento del torneo admite (1-0 /
+  empate / 0-1 en Bo1, y 2-0 / 2-1 / empate / 1-2 / 0-2 en Bo3), leidos siempre desde el jugador de
+  la izquierda. Nadie teclea partida a partida
+- ✅ **Corregir** cualquier resultado, tambien de una ronda ya cerrada, y queda marcado como corregido
+- ✅ **Clasificacion en vivo** con una columna por desempate **del ruleset del torneo**: Magic ensena
+  OMW%, GW% y OGW%; One Piece, su porcentaje propio, el de los rivales y el enfrentamiento directo
+- ✅ **Fin de tiempo** en un paso, aplicando la politica del torneo a lo que siga sin reportar
+- ✅ **Rondas anteriores** consultables, cada una con su direccion, para poder volver a una y corregir
+- ✅ Todo sale de **una sola lectura** del torneo, para que emparejamientos y clasificacion no puedan
+  contradecirse
+- ✅ **16 pruebas nuevas**, entre ellas la que comprueba que **cada boton que ensena la pantalla es un
+  resultado que las reglas aceptan** y que se guarda con el marcador que promete
+
+*Criterio de cierre del hito 3 alcanzado*: una tienda crea un torneo, apunta a los jugadores, lanza
+rondas, registra y corrige resultados y lo cierra, todo desde el navegador.
 
 ### Hito 4 — Tiempo real: pantalla en vivo y cronometro ⬜
 
