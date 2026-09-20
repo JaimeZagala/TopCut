@@ -62,6 +62,34 @@ Sin esas dos claves la aplicacion arranca igual, pero no habra ningun Superadmin
 que pueda aprobar la primera tienda. El login con Google se activa solo si existen
 `Authentication:Google:ClientId` y `Authentication:Google:ClientSecret`.
 
+## Si LocalDB se atraganta
+
+Sintoma al arrancar la web: `Cannot create file 'C:\Users\<tu-usuario>\TopCut.mdf' because it
+already exists`, o al reves, `Database 'TopCut' already exists`.
+
+Es un vicio de LocalDB, no de la aplicacion: el registro de la base en la instancia y los ficheros
+en disco se desincronizan tras un cierre sucio. La base **existe**, y suele bastar con reiniciar la
+instancia para que la vuelva a adjuntar:
+
+```bash
+sqllocaldb stop MSSQLLocalDB
+```
+
+```bash
+sqllocaldb start MSSQLLocalDB
+```
+
+Para ver que tiene registrado ahora mismo:
+
+```bash
+sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "SELECT name, state_desc FROM sys.databases WHERE database_id > 4"
+```
+
+Si sigue sin cuadrar, `DROP DATABASE [TopCut]` y borrar despues los `.mdf` y `.ldf` del perfil de
+usuario deja la pizarra limpia: la aplicacion recrea el esquema y el catalogo al siguiente arranque.
+**No muevas ni renombres esos ficheros mientras la base siga registrada**, porque entonces la
+instancia apunta a rutas que ya no existen y el error se vuelve mas confuso.
+
 ## Comandos
 
 ```bash
