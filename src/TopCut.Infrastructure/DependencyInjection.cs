@@ -47,6 +47,7 @@ public static class DependencyInjection
 
         services.AddScoped<ITournamentRepository, TournamentRepository>();
         services.AddScoped<ITournamentQueries, TournamentQueries>();
+        services.AddScoped<IPublicTournaments, PublicTournaments>();
         services.AddScoped<ITcgCatalog, TcgCatalog>();
         services.AddScoped<TournamentService>();
         services.AddScoped<TournamentSetupService>();

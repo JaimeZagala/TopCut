@@ -671,3 +671,56 @@ diferencia entre los dos relojes y a partir de ahí lleva la cuenta atrás el so
   una vez, el cronómetro es correcto aunque el reloj del equipo no lo sea.
 - El primer valor se pinta **desde el servidor**, así que la sala ve un tiempo antes de que el
   JavaScript tome el relevo, y la página sigue diciendo algo útil sin JavaScript.
+
+---
+
+## ADR-0029 — La búsqueda pública es el único sitio que cruza la frontera entre tiendas
+
+**Fecha**: 2026-09-21 · **Estado**: aceptada · **Impacto**: alto
+
+Hasta el hito 5 toda consulta pasaba por el filtro de tenant, que **falla cerrado** (ADR-0011): sin
+tienda en contexto no se ve nada. La cara pública es justo lo contrario — un jugador anónimo tiene
+que ver los torneos de **todas** las tiendas — así que en algún punto hay que apagar el filtro.
+
+- **Decisión**: se apaga en **un solo sitio**, `PublicTournaments` (infraestructura), con
+  `IgnoreQueryFilters()`. Es la única clase de la aplicación que lo hace a propósito.
+- **Y se sustituye por una regla escrita a mano**, en un único método privado (`Visible`) del que
+  parten los tres métodos públicos. Un filtro que vive en un sitio no se puede aplicar a medias:
+  - el torneo está **publicado** — un borrador es el cuaderno de la tienda;
+  - la tienda está **aprobada ahora mismo**, comprobado con un join y no con una copia del estado,
+    para que revocar una tienda le quite los torneos de la lista en la petición siguiente;
+  - y **no es una tienda de pruebas**, que es lo que hace de entorno de preproducción mientras el
+    nivel gratuito de Azure SQL no dé para tener uno de verdad (`Store.IsTestStore`).
+- **Un torneo cancelado sigue siendo público.** Esconderlo dejaría a quien se apuntó mirando un
+  enlace roto la mañana del torneo; lo que se quita es el botón de inscribirse, no la información.
+- **Los participantes llevan el mismo filtro**, así que la ficha necesita el mismo `IgnoreQueryFilters`
+  para contar plazas. Sin él, los contadores saldrían a cero sin dar ningún error: exactamente el
+  tipo de fallo silencioso contra el que el filtro existe. Hay una prueba solo para eso.
+- **Alternativa descartada**: una vista o una tabla aparte con los torneos publicados. Duplicaría el
+  dato y abriría la puerta a que la copia y el original no dijeran lo mismo.
+- **Alternativa descartada**: resolver la tienda desde la dirección (`/tienda/{slug}/torneos`) y
+  seguir usando el filtro. No sirve para buscar por ciudad, que es justo lo que pide el hito 5.
+- **Escrituras**: esto es solo lectura. Inscribirse es una escritura contra el torneo de otra
+  tienda, y eso se decide en el tramo 5b, aparte.
+
+---
+
+## ADR-0030 — Una página pública que no encuentra nada devuelve 404 y deja el cuerpo a `/not-found`
+
+**Fecha**: 2026-09-21 · **Estado**: aceptada · **Impacto**: bajo
+
+`/torneos/{id}` es una dirección pública: la va a seguir un buscador antes que una persona, así que
+un torneo que no existe —o que su tienda no ha publicado— tiene que responder **404 de verdad**, no
+un 200 con cara de disculpa.
+
+- **Lo que se intentó primero**: poner el 404 y pintar un mensaje propio ("o no existe, o la tienda
+  no lo ha publicado"). **No funciona**: en SSR estático, Blazor **descarta el cuerpo** de una
+  página que cambia el código de estado. La respuesta salía con 404 y **cero bytes**.
+- **Segundo intento**: apagar `IStatusCodePagesFeature` para que la tubería no reejecutase. Peor
+  todavía: sin reejecución no había nada que enseñar, y quedaba la página en blanco.
+- **Decisión**: poner el 404 y no pintar nada. `UseStatusCodePagesWithReExecute("/not-found")`
+  reejecuta y devuelve la pantalla de "aquí no hay nada" que ya existe desde el hito 3a, con el 404
+  puesto. Se pierde un mensaje más concreto y se gana que **todo el sitio conteste igual** a una
+  dirección que no lleva a ningún sitio.
+- **La prueba comprueba las dos cosas**: que el código es 404 y que el cuerpo **no está vacío**, que
+  es el fallo que esto estuvo a punto de introducir.

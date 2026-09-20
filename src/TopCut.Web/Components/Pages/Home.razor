@@ -24,15 +24,23 @@
     </MudItem>
 </MudGrid>
 
-<AuthorizeView>
-    <NotAuthorized>
-        <MudStack Row="true" Spacing="3" Class="mt-8">
-            <MudButton Href="/cuenta/registro" Variant="Variant.Filled" Color="Color.Primary">
+<MudStack Row="true" Spacing="3" Class="mt-8" Wrap="Wrap.Wrap">
+    <MudButton Href="/torneos"
+               Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Search">
+        @Textos.HomeFind
+    </MudButton>
+
+    @* Mirar torneos no pide cuenta, así que el registro es el segundo botón y no el primero. *@
+    <AuthorizeView>
+        <NotAuthorized>
+            <MudButton Href="/cuenta/registro" Variant="Variant.Outlined" Color="Color.Primary">
                 @Textos.NavSignUp
             </MudButton>
             <MudButton Href="/cuenta/acceso" Variant="Variant.Text" Color="Color.Primary">
                 @Textos.NavSignIn
             </MudButton>
-        </MudStack>
-    </NotAuthorized>
-</AuthorizeView>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudStack>

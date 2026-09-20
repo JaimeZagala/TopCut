@@ -41,6 +41,18 @@ public sealed class LocalTime
 
     public string Format(DateTimeOffset instant) => ToLocal(instant).ToString("g");
 
+    /// <summary>
+    /// The same instant written out for a player rather than for a table: "Sabado, 26 de septiembre
+    /// de 2026, 18:00". Spelling out the weekday is the point — somebody deciding whether to go
+    /// reads the day of the week first, and a tournament sheet is not a spreadsheet.
+    /// </summary>
+    public string FormatLong(DateTimeOffset instant)
+    {
+        var text = ToLocal(instant).ToString("dddd, d 'de' MMMM 'de' yyyy, HH:mm");
+
+        return text.Length == 0 ? text : char.ToUpper(text[0]) + text[1..];
+    }
+
     private static TimeZoneInfo? TryFind(string id)
     {
         try

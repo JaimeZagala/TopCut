@@ -1,5 +1,5 @@
-/* Estilos globales. Casi todo lo aporta MudBlazor: aqui solo queda lo que la libreria no cubre.
-   El aviso de error de Blazor vive en las dos cascaras (MainLayout y StoreLayout), asi que su
+/* Estilos globales. Casi todo lo aporta MudBlazor: aquí solo queda lo que la librería no cubre.
+   El aviso de error de Blazor vive en las dos cáscaras (MainLayout y StoreLayout), así que su
    estilo es global y no CSS aislado de componente. */
 
 #blazor-error-ui {
@@ -32,8 +32,8 @@ h1:focus {
     outline: none;
 }
 
-/* Mensajes de validacion de Blazor. Las paginas de cuenta son SSR estatico y se validan en el
-   servidor, asi que el mensaje lo pinta <ValidationMessage> y no el campo de MudBlazor: aqui se
+/* Mensajes de validación de Blazor. Las páginas de cuenta son SSR estático y se validan en el
+   servidor, así que el mensaje lo pinta <ValidationMessage> y no el campo de MudBlazor: aquí se
    le da el aspecto del texto de ayuda de MudBlazor para que no desentone. */
 .validation-message {
     color: var(--mud-palette-error);
@@ -42,7 +42,7 @@ h1:focus {
     margin: 0.25rem 0 0 1rem;
 }
 
-/* Casilla de SsrCheckBox: la nativa de Blazor, vestida con el color de la aplicacion. */
+/* Casilla de SsrCheckBox: la nativa de Blazor, vestida con el color de la aplicación. */
 .ssr-check {
     align-items: flex-start;
     cursor: pointer;
@@ -64,8 +64,8 @@ h1:focus {
 }
 
 /* --- Pantalla en vivo (hito 4) --------------------------------------------------------------
-   Se proyecta en la sala, asi que se lee de lejos: tipografia grande, mucho contraste y ningun
-   adorno. Las medidas van en vw para que la misma pagina sirva en un portatil y en un televisor. */
+   Se proyecta en la sala, así que se lee de lejos: tipografía grande, mucho contraste y ningún
+   adorno. Las medidas van en vw para que la misma página sirva en un portátil y en un televisor. */
 
 .topcut-live {
     background: var(--mud-palette-background);
@@ -105,7 +105,7 @@ h1:focus {
     white-space: nowrap;
 }
 
-/* La prorroga avisa, y el tiempo agotado grita. */
+/* La prórroga avisa, y el tiempo agotado grita. */
 .topcut-clock[data-state="extra"] {
     color: var(--mud-palette-warning);
 }
@@ -163,7 +163,7 @@ h1:focus {
 }
 
 /* Una fila por jugador. En varias columnas el orden se lee en zigzag —el 1 arriba a la izquierda
-   y el 2 a su derecha— que es justo lo que una clasificacion no puede permitirse. */
+   y el 2 a su derecha— que es justo lo que una clasificación no puede permitirse. */
 .topcut-live-standings {
     display: flex;
     flex-direction: column;
@@ -191,4 +191,78 @@ h1:focus {
 
 .topcut-live-standing .record {
     color: var(--mud-palette-text-secondary);
+}
+
+/* --- Filtro de la busqueda publica (hito 5a) --------------------------------------------------
+   Controles nativos del navegador, no de MudBlazor: la página es SSR estático, así que un
+   desplegable que necesita JavaScript para abrirse no se abriría (ver SsrSelect). Se visten aquí
+   con las variables del tema para que la fila no desentone con el resto.
+
+   La fila se reparte con flex-wrap en vez de columnas fijas para que en un móvil cada filtro caiga
+   en su renglón sin que la página se desplace de lado. */
+
+.topcut-filters {
+    align-items: flex-end;
+    background: var(--mud-palette-surface);
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: var(--mud-default-borderradius);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    padding: 1rem;
+}
+
+.topcut-filters .field {
+    display: flex;
+    flex: 1 1 10rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+/* El cuadro de texto libre se queda con el hueco que sobra: es el que lleva frases. */
+.topcut-filters .field.grow {
+    flex: 3 1 16rem;
+}
+
+.topcut-filters label {
+    color: var(--mud-palette-text-secondary);
+    font-size: 0.75rem;
+    line-height: 1.66;
+}
+
+.topcut-filters input,
+.topcut-filters select {
+    background: var(--mud-palette-background);
+    border: 1px solid var(--mud-palette-lines-inputs);
+    border-radius: var(--mud-default-borderradius);
+    color: var(--mud-palette-text-primary);
+    font: inherit;
+    /* 16px o más: por debajo, Safari en iPhone hace zoom al enfocar el campo y descoloca la página. */
+    font-size: 1rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    width: 100%;
+}
+
+.topcut-filters input:focus,
+.topcut-filters select:focus {
+    border-color: var(--mud-palette-primary);
+    outline: 1px solid var(--mud-palette-primary);
+}
+
+.topcut-filters .go {
+    background: var(--mud-palette-primary);
+    border: none;
+    border-radius: var(--mud-default-borderradius);
+    color: var(--mud-palette-primary-text);
+    cursor: pointer;
+    font: inherit;
+    font-weight: 500;
+    min-height: 2.75rem;
+    padding: 0.5rem 1.5rem;
+}
+
+.topcut-filters .go:hover {
+    background: var(--mud-palette-primary-darken);
 }

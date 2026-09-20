@@ -2,6 +2,7 @@
 @layout StoreLayout
 @attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
 @inject ITournamentQueries Tournaments
+@inject LocalTime Clock
 
 <PageTitle>@Textos.TournamentsTitle - @Textos.AppName</PageTitle>
 
@@ -47,7 +48,7 @@ else
                 <MudText Typo="Typo.caption" Class="d-block">@row.City</MudText>
             </MudTd>
             <MudTd DataLabel="@Textos.ColumnGame">@row.TcgName</MudTd>
-            <MudTd DataLabel="@Textos.ColumnDate">@row.StartsAt.LocalDateTime.ToString("g")</MudTd>
+            <MudTd DataLabel="@Textos.ColumnDate">@Clock.Format(row.StartsAt)</MudTd>
             <MudTd DataLabel="@Textos.ColumnFormat">@Labels.Structure(row.SwissRounds, row.TopCutSize)</MudTd>
             <MudTd DataLabel="@Textos.ColumnPlayers">
                 @string.Format(Textos.RegisteredSummary, row.Registered, row.Capacity)

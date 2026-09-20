@@ -1,6 +1,6 @@
 # Roadmap
 
-> Última actualización: 2026-09-20
+> Última actualización: 2026-09-21
 >
 > Leyenda: ✅ hecho · 🔨 en curso · ⏸ pendiente de confirmar · ⬜ no empezado
 
@@ -200,15 +200,42 @@ rondas, registra y corrige resultados y lo cierra, todo desde el navegador.
   Server y **ya tiene su WebSocket**; un hub aparte serían dos conexiones por espectador cuando el
   plan gratuito de App Service permite cinco en total. El hub sigue teniendo sentido para clientes
   **externos** (la app móvil), y va con la Web API externa del hito 8
-- ⏸ **Pantalla móvil del jugador para reportar en un par de toques**: necesita que un jugador este
-  vinculado a su participante, y ese vínculo lo crea la inscripción, que es el hito 5. Pendiente de
-  confirmar si se hace al principio del hito 5 o se adelanta atando la cuenta a mano
+- 🔁 **Pantalla móvil del jugador para reportar en un par de toques**: necesita que un jugador este
+  vinculado a su participante, y ese vínculo lo crea la inscripción. Confirmado que se hace **dentro
+  del hito 5**, en el tramo 5c, en cuanto el 5b cree el vínculo
 
-### Hito 5 — Cara pública: búsqueda, inscripción y lista de espera ⬜
+### Hito 5 — Cara pública: búsqueda, inscripción y lista de espera 🔨
 
-Búsqueda por ciudad / tienda / TCG / fecha en SSR estático, inscripción y baja, **lista de espera
-con promoción automática** (con concurrencia optimista al ocupar la última plaza), historial del
-jugador.
+Partido en tres tramos. El último recoge lo que quedó pendiente del hito 4, porque la pantalla del
+jugador necesita el vínculo entre cuenta y participante que crea la inscripción.
+
+#### 5a — Búsqueda pública y ficha del torneo ✅
+
+- ✅ **`/torneos`**: búsqueda por texto (nombre del torneo o de la tienda), juego, ciudad y rango de
+  fechas, con los próximos por defecto y los ya jugados a un desplegable de distancia
+- ✅ **Formulario GET en SSR estático**: la búsqueda queda en la barra de direcciones, así que se
+  puede guardar en favoritos, compartir y volver atrás; y mirar torneos no gasta una de las ~20
+  conexiones del nivel gratuito de Azure SignalR (ADR-0020)
+- ✅ **`/torneos/{id}`**: ficha con cuándo, dónde, plazas y **las reglas con las que se va a jugar**,
+  que son la copia que el torneo guardó al crearse y no el reglamento de hoy
+- ✅ **La única lectura que cruza tiendas** (ADR-0029), con el filtro de tenant apagado en un solo
+  sitio y sustituido por una regla explícita: torneo publicado, tienda aprobada **ahora** y que no
+  sea tienda de pruebas. Un torneo cancelado sigue viéndose: alguien lo tenía en su agenda
+- ✅ **404 de verdad** para un enlace que no lleva a ningún torneo público (ADR-0030)
+- ✅ Corregido de paso: el listado de la tienda formateaba la fecha con la zona horaria de la
+  máquina en vez de la configurada (ADR-0025), que en Azure habría sido UTC
+- ✅ **20 pruebas nuevas**: 14 sobre que se ve y que no se ve entre tiendas contra SQL Server real, y
+  6 que recorren las dos pantallas por HTTP
+
+#### 5b — Inscripción, baja y lista de espera ⬜
+
+El jugador se apunta y se borra desde la ficha, con **promoción automática** desde la lista de
+espera y concurrencia optimista al ocupar la última plaza. Historial del jugador.
+
+#### 5c — Pantalla móvil del jugador ⬜
+
+Reportar el resultado en un par de toques. Es lo que quedó del hito 4: necesita el vínculo entre
+cuenta y participante, que lo crea la inscripción del 5b.
 
 ### Hito 6 — Ligas por temporada ⬜
 

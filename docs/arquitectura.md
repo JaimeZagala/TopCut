@@ -138,6 +138,17 @@ De donde sale la tienda en contexto depende de por donde entre la petición (ADR
 `HttpContext` en una petición HTTP, y fijada por `StoreLayout` desde el principal autenticado cuando
 se trata de una página interactiva, porque **dentro de un circuito de SignalR no hay `HttpContext`**.
 
+### La única puerta que cruza la frontera
+
+La cara pública necesita lo contrario que todo lo demás: un jugador anónimo tiene que ver los
+torneos de **todas** las tiendas. Ese cruce está concentrado en **una sola clase**,
+`PublicTournaments`, que apaga el filtro con `IgnoreQueryFilters()` y lo sustituye por una regla
+escrita a mano en un único método (ADR-0029): torneo publicado, tienda aprobada en este momento y
+que no sea tienda de pruebas. Cualquier otro `IgnoreQueryFilters` en el código es sospechoso por
+definición, y por eso hay pruebas que tiran en las dos direcciones: que un visitante sin tienda en
+contexto **si** ve los torneos ajenos publicados, y que no ve borradores, tiendas sin aprobar ni
+tiendas de prueba.
+
 ## Autenticación
 
 - **Blazor Web App**: cookie de sesión de ASP.NET Core Identity.

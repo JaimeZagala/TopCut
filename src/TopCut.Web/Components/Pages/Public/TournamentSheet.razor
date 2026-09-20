@@ -1,0 +1,151 @@
+@page "/torneos/{Id:guid}"
+@attribute [ExcludeFromInteractiveRouting]
+@inject IPublicTournaments Tournaments
+@inject LocalTime Clock
+
+@* Ficha pública de un torneo: lo que hace falta para decidir si ir, sin cuenta y sin circuito.
+
+   Incluye las reglas con las que se va a jugar (formato, reloj y que pasa al acabarse el tiempo),
+   que es justo lo que se discute en la mesa cuando nadie las miró antes. Salen de la copia que el
+   torneo guardó al crearse, no del reglamento actual del juego, así que lo que se lee aquí es lo
+   que se va a aplicar aunque el reglamento cambie mañana. *@
+
+@* Sin ficha no se pinta nada: la página ya ha puesto un 404 y de ahí se encarga /not-found. *@
+@if (sheet is not null)
+{
+    <PageTitle>@sheet.Name - @Textos.AppName</PageTitle>
+
+    <MudStack Row="true" Spacing="2" Class="mb-2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
+        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
+            @sheet.TcgName
+        </MudChip>
+        <MudChip T="string" Size="Size.Small" Color="@Labels.ColourFor(sheet.Status)">
+            @Labels.For(sheet.Status)
+        </MudChip>
+    </MudStack>
+
+    <MudText Typo="Typo.h1" GutterBottom="true">@sheet.Name</MudText>
+    <MudText Typo="Typo.h6" Class="mud-text-secondary mb-6">@sheet.StoreName</MudText>
+
+    <MudGrid Spacing="4">
+        <MudItem xs="12" md="7">
+            <MudPaper Outlined="true" Elevation="0" Class="pa-4">
+                <MudList T="string" Dense="true">
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Event">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Textos.SheetWhen</MudText>
+                        <MudText Typo="Typo.body1">@Clock.FormatLong(sheet.StartsAt)</MudText>
+                    </MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Place">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Textos.SheetWhere</MudText>
+                        <MudText Typo="Typo.body1">@sheet.Venue.Street</MudText>
+                        <MudText Typo="Typo.body2">
+                            @sheet.Venue.PostalCode @sheet.Venue.City (@sheet.Venue.Province)
+                        </MudText>
+                    </MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.EmojiEvents">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Textos.SheetStructure</MudText>
+                        <MudText Typo="Typo.body1">@Labels.Structure(sheet.SwissRounds, sheet.TopCutSize)</MudText>
+                    </MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Groups">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Textos.SheetSeats</MudText>
+                        <MudText Typo="Typo.body1">
+                            @string.Format(Textos.RegisteredSummary, sheet.Registered, sheet.Capacity)
+                        </MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">@SeatsLine</MudText>
+                    </MudListItem>
+                </MudList>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="5">
+            <MudPaper Outlined="true" Elevation="0" Class="pa-4">
+                <MudText Typo="Typo.subtitle1" GutterBottom="true">@Textos.SheetRules</MudText>
+
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@Textos.PhaseSwiss</MudText>
+                <MudText Typo="Typo.body2" Class="mb-3">@PhaseLine(sheet.SwissPhase)</MudText>
+
+                @if (sheet.HasTopCut)
+                {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@Textos.PhaseTopCut</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">@PhaseLine(sheet.TopCutPhase)</MudText>
+                }
+
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@Textos.SheetTimeExpiry</MudText>
+                <MudText Typo="Typo.body2" Class="mb-3">@Labels.For(sheet.TimeExpiry)</MudText>
+
+                <MudDivider Class="my-3" />
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    @string.Format(Textos.SheetRulesVersion, sheet.RulesVersion)
+                </MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudButton Href="/torneos"
+               Variant="Variant.Text"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.ArrowBack"
+               Class="mt-6">
+        @Textos.SearchBack
+    </MudButton>
+}
+
+@code {
+    private PublicTournamentInfo? sheet;
+    private Guid loaded;
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [CascadingParameter]
+    private HttpContext? Request { get; set; }
+
+    private string SeatsLine => sheet switch
+    {
+        null => string.Empty,
+        { IsFull: true } => Textos.SeatsFull,
+        { SeatsLeft: 1 } => Textos.SeatsLeftOne,
+        var full => string.Format(Textos.SeatsLeft, full.SeatsLeft)
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loaded == Id)
+        {
+            return;
+        }
+
+        loaded = Id;
+        sheet = await Tournaments.FindAsync(Id);
+
+        // Un enlace a un torneo que no existe —o que su tienda nunca publicó— responde 404 de
+        // verdad, no un 200 con cara de error: es una dirección pública y la va a seguir un
+        // buscador antes que una persona.
+        //
+        // A partir de ahí manda la tubería. Blazor descarta el cuerpo de una página que en SSR
+        // estático cambia el código de estado, así que lo que se ve es la pantalla de "aquí no hay
+        // nada" reejecutada desde /not-found: la misma en todo el sitio, que para esto es
+        // justo lo que hace falta.
+        if (sheet is null && Request is not null)
+        {
+            Request.Response.StatusCode = StatusCodes.Status404NotFound;
+        }
+    }
+
+    /// <summary>"Bo3, rondas de 50 min (+5 de prórroga)" — lo que se pregunta antes de sentarse.</summary>
+    private static string PhaseLine(PhaseSettings phase)
+    {
+        var format = Labels.For(phase.Format);
+
+        if (phase.RoundLength is not { } length)
+        {
+            return $"{format}, {Textos.SheetNoClock}";
+        }
+
+        var clock = string.Format(Textos.SheetRoundLength, (int)length.TotalMinutes);
+
+        return phase.ExtraTime > TimeSpan.Zero
+            ? $"{format}, {clock} {string.Format(Textos.SheetExtraTime, (int)phase.ExtraTime.TotalMinutes)}"
+            : $"{format}, {clock}";
+    }
+}

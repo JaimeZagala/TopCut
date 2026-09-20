@@ -1,0 +1,33 @@
+@* Desplegable para formularios de SSR estático.
+
+   MudSelect no sirve aquí. No es un <select> del navegador sino un menú que se dibuja con
+   JavaScript al pulsarlo, así que en una página sin circuito no se abre, y lo que envía el
+   formulario es un campo oculto que nadie ha llegado a rellenar. El <select> nativo, en cambio,
+   funciona sin una sola línea de script y lo entiende cualquier teléfono.
+
+   Se viste en app.css con las variables de MudBlazor (.topcut-filters) para que no desentone con
+   el resto de la aplicación. Mismo motivo que SsrCheckBox: la pieza rara vive en un sitio y se
+   explica una vez. *@
+
+<div class="field @Class">
+    <label for="@Name">@Label</label>
+    <select id="@Name" name="@Name">
+        @ChildContent
+    </select>
+</div>
+
+@code {
+    /// <summary>Nombre del parámetro en la cadena de consulta, por ejemplo <c>juego</c>.</summary>
+    [Parameter, EditorRequired]
+    public string Name { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>Las <c>&lt;option&gt;</c>, que las pone quien sabe cuál va marcada.</summary>
+    [Parameter, EditorRequired]
+    public RenderFragment ChildContent { get; set; } = null!;
+
+    [Parameter]
+    public string? Class { get; set; }
+}

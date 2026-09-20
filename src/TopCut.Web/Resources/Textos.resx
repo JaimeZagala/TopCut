@@ -790,4 +790,94 @@
   <data name="LiveDone" xml:space="preserve">
     <value>Torneo finalizado</value>
   </data>
+
+  <!-- Hito 5a: cara publica -->
+  <data name="SearchTitle" xml:space="preserve">
+    <value>Torneos</value>
+  </data>
+  <data name="SearchIntro" xml:space="preserve">
+    <value>Busca torneos por juego, ciudad o fecha. No hace falta cuenta para mirar.</value>
+  </data>
+  <data name="SearchText" xml:space="preserve">
+    <value>Torneo o tienda</value>
+    <comment>Etiqueta del campo de texto libre. Distinta del botón, que también dice "Buscar".</comment>
+  </data>
+  <data name="SearchTextHint" xml:space="preserve">
+    <value>Prerelease, Kraken Cards...</value>
+  </data>
+  <data name="SearchAnyGame" xml:space="preserve">
+    <value>Todos los juegos</value>
+  </data>
+  <data name="SearchCity" xml:space="preserve">
+    <value>Ciudad</value>
+  </data>
+  <data name="SearchAnyCity" xml:space="preserve">
+    <value>Todas</value>
+  </data>
+  <data name="SearchFrom" xml:space="preserve">
+    <value>Desde</value>
+  </data>
+  <data name="SearchUntil" xml:space="preserve">
+    <value>Hasta</value>
+  </data>
+  <data name="SearchWhen" xml:space="preserve">
+    <value>Cuándo</value>
+  </data>
+  <data name="SearchUpcoming" xml:space="preserve">
+    <value>Próximos</value>
+  </data>
+  <data name="SearchPast" xml:space="preserve">
+    <value>Ya jugados</value>
+  </data>
+  <data name="SearchGo" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="SearchOneResult" xml:space="preserve">
+    <value>1 torneo</value>
+  </data>
+  <data name="SearchResultCount" xml:space="preserve">
+    <value>{0} torneos</value>
+  </data>
+  <data name="SearchNoResults" xml:space="preserve">
+    <value>No hay ningún torneo que encaje con esa búsqueda. Prueba a quitar algún filtro.</value>
+  </data>
+  <data name="SearchNoPast" xml:space="preserve">
+    <value>No hay torneos jugados que encajen con esa búsqueda.</value>
+  </data>
+  <data name="SearchBack" xml:space="preserve">
+    <value>Volver a la búsqueda</value>
+  </data>
+  <data name="SheetWhen" xml:space="preserve">
+    <value>Cuándo</value>
+  </data>
+  <data name="SheetWhere" xml:space="preserve">
+    <value>Dónde</value>
+  </data>
+  <data name="SheetStructure" xml:space="preserve">
+    <value>Estructura</value>
+  </data>
+  <data name="SheetSeats" xml:space="preserve">
+    <value>Plazas</value>
+  </data>
+  <data name="SheetRules" xml:space="preserve">
+    <value>Reglas de este torneo</value>
+  </data>
+  <data name="SheetTimeExpiry" xml:space="preserve">
+    <value>Al acabarse el tiempo</value>
+  </data>
+  <data name="SheetRulesVersion" xml:space="preserve">
+    <value>Reglamento: {0}</value>
+  </data>
+  <data name="SheetNoClock" xml:space="preserve">
+    <value>rondas sin reloj</value>
+  </data>
+  <data name="SheetRoundLength" xml:space="preserve">
+    <value>rondas de {0} min</value>
+  </data>
+  <data name="SheetExtraTime" xml:space="preserve">
+    <value>(+{0} de prórroga)</value>
+  </data>
+  <data name="HomeFind" xml:space="preserve">
+    <value>Buscar torneos</value>
+  </data>
 </root>

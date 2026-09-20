@@ -457,6 +457,123 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         Assert.Contains("Clasificación", html);
     }
 
+    // --- Cara publica (hito 5a) --------------------------------------------------------------
+
+    [Fact]
+    public async Task The_public_search_is_open_to_anybody_and_spends_no_live_connection()
+    {
+        var response = await Browser().GetAsync("/torneos");
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // The one page strangers land on. A circuit each would empty the free SignalR tier by
+        // teatime, so there must be no interactive island here at all.
+        Assert.DoesNotContain("<!--Blazor:", html);
+
+        // A plain GET form: these are the names the page reads back off the query string, and the
+        // reason the search survives a bookmark and the back button.
+        Assert.Contains("method=\"get\"", html);
+
+        foreach (var field in new[] { "texto", "ciudad", "juego", "desde", "hasta", "cuando" })
+        {
+            Assert.Contains($"name=\"{field}\"", html);
+        }
+    }
+
+    [Fact]
+    public async Task A_visitor_with_no_account_finds_a_published_tournament_from_a_store_they_do_not_know()
+    {
+        var store = Browser();
+        var (email, storeId) = await RegisterApprovedStore(store);
+        var city = NewCity();
+        var tournamentId = await CreateTournament(storeId, "Prerelease de invierno", city: city);
+
+        await Publish(storeId, tournamentId);
+
+        // A different client with no cookie at all: nobody, from another store's point of view.
+        var html = await Browser().GetStringAsync($"/torneos?ciudad={Uri.EscapeDataString(city)}");
+
+        Assert.Contains("Prerelease de invierno", html);
+        Assert.Contains("Kraken Cards", html);
+        Assert.Contains($"/torneos/{tournamentId}", html);
+    }
+
+    [Fact]
+    public async Task A_tournament_the_store_has_not_published_is_not_on_the_public_search()
+    {
+        var store = Browser();
+        var (email, storeId) = await RegisterApprovedStore(store);
+        var city = NewCity();
+
+        await CreateTournament(storeId, "Todavia en borrador", city: city);
+
+        var html = await Browser().GetStringAsync($"/torneos?ciudad={Uri.EscapeDataString(city)}");
+
+        Assert.DoesNotContain("Todavia en borrador", html);
+        Assert.Contains("No hay ningún torneo", html);
+    }
+
+    [Fact]
+    public async Task The_tournament_sheet_says_where_when_and_under_which_rules()
+    {
+        var store = Browser();
+        var (email, storeId) = await RegisterApprovedStore(store);
+        var city = NewCity();
+        var tournamentId = await CreateTournament(storeId, "Prerelease de invierno", city: city);
+
+        await Publish(storeId, tournamentId);
+
+        var html = await Browser().GetStringAsync($"/torneos/{tournamentId}");
+
+        Assert.Contains("Prerelease de invierno", html);
+        Assert.Contains("Kraken Cards", html);
+        Assert.Contains("Calle Mayor 1", html);
+        Assert.Contains(city, html);
+
+        // The rules the tournament copied when it was created, which are the ones that will be
+        // applied — not whatever the rulebook says by the time somebody reads this.
+        Assert.Contains("Al mejor de tres", html);
+        Assert.Contains("rondas de 50 min", html);
+        Assert.Contains("Magic Tournament Rules", html);
+
+        Assert.DoesNotContain("<!--Blazor:", html);
+    }
+
+    [Fact]
+    public async Task A_link_to_a_tournament_that_is_not_public_answers_404_and_never_a_blank_page()
+    {
+        var store = Browser();
+        var (email, storeId) = await RegisterApprovedStore(store);
+        var draft = await CreateTournament(storeId, "Todavia en borrador", city: NewCity());
+
+        // A real 404 and not a 200 with an apology: these addresses are public, and a search engine
+        // follows them long before a person does. The body is the site's own not-found screen,
+        // re-executed by the pipeline — the one thing it must not be is empty, which is what a
+        // page that sets the status code and then renders its own markup would have produced.
+        foreach (var url in new[] { $"/torneos/{Guid.CreateVersion7()}", $"/torneos/{draft}" })
+        {
+            var response = await Browser().GetAsync(url);
+            var html = await response.Content.ReadAsStringAsync();
+
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+            Assert.Contains("Aquí no hay nada", html);
+        }
+    }
+
+    [Fact]
+    public async Task A_query_string_that_makes_no_sense_is_a_search_without_filters_and_not_an_error()
+    {
+        // Anybody can type into a public address, and a browser sends every empty box along too.
+        var response = await Browser().GetAsync("/torneos?juego=&desde=&hasta=&cuando=quizas&texto=");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var nonsense = await Browser().GetAsync("/torneos?juego=magic&desde=ayer&hasta=nunca");
+
+        Assert.Equal(HttpStatusCode.OK, nonsense.StatusCode);
+    }
+
     // --- Helpers ----------------------------------------------------------------------------------------
 
     /// <summary>Where a redirect points, as a path, whether the header is absolute or relative.</summary>
@@ -536,7 +653,14 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         Assert.True(result.Succeeded, string.Join(" ", result.Errors));
     }
 
-    private async Task<Guid> CreateTournament(Guid storeId, string name, int capacity = 16)
+    /// <summary>A city nobody else's test is using, so a public search can be pinned to one store.</summary>
+    private static string NewCity() => $"Villa {Guid.CreateVersion7():N}";
+
+    private async Task<Guid> CreateTournament(
+        Guid storeId,
+        string name,
+        int capacity = 16,
+        string city = "Valencia")
     {
         using var scope = _app.Services.CreateScope();
 
@@ -552,7 +676,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
             name,
             DateTimeOffset.UtcNow.AddDays(7),
             "Calle Mayor 1",
-            "Valencia",
+            city,
             "Valencia",
             "46001",
             capacity,

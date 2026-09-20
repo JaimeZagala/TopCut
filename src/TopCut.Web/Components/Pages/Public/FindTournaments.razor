@@ -1,0 +1,175 @@
+@page "/torneos"
+@attribute [ExcludeFromInteractiveRouting]
+@inject IPublicTournaments Tournaments
+@inject ITcgCatalog Catalog
+@inject LocalTime Clock
+
+@* Búsqueda pública. Es la única pantalla de TopCut que puede recibir visitas que no vienen de
+   nadie conocido, así que se sirve en SSR estático (ADR-0020): un buscador que abre un WebSocket
+   por curioso se come el nivel gratuito de Azure SignalR en una tarde.
+
+   Por eso el filtro es un formulario GET de toda la vida, sin un solo controlador de eventos. Lo
+   bueno de que sea GET no es solo el ahorro: la búsqueda queda en la barra de direcciones, así que
+   se puede guardar en favoritos, compartir por WhatsApp y volver atrás sin que el navegador
+   pregunte si reenviar el formulario. *@
+
+<PageTitle>@Textos.SearchTitle - @Textos.AppName</PageTitle>
+
+<MudText Typo="Typo.h1" GutterBottom="true">@Textos.SearchTitle</MudText>
+<MudText Typo="Typo.body1" Class="mb-6">@Textos.SearchIntro</MudText>
+
+<form method="get" action="/torneos" class="topcut-filters mb-6">
+    <div class="field grow">
+        <label for="texto">@Textos.SearchText</label>
+        <input id="texto" name="texto" type="search" value="@Text" placeholder="@Textos.SearchTextHint" />
+    </div>
+
+    <SsrSelect Name="juego" Label="@Textos.ColumnGame">
+        <option value="">@Textos.SearchAnyGame</option>
+        @foreach (var game in games)
+        {
+            <option value="@game.Id" selected="@(TcgId == game.Id)">@game.Name</option>
+        }
+    </SsrSelect>
+
+    <SsrSelect Name="ciudad" Label="@Textos.SearchCity">
+        <option value="">@Textos.SearchAnyCity</option>
+        @foreach (var name in cities)
+        {
+            <option value="@name" selected="@(name == City)">@name</option>
+        }
+    </SsrSelect>
+
+    <div class="field">
+        <label for="desde">@Textos.SearchFrom</label>
+        <input id="desde" name="desde" type="date" value="@From?.ToString("yyyy-MM-dd")" />
+    </div>
+
+    <div class="field">
+        <label for="hasta">@Textos.SearchUntil</label>
+        <input id="hasta" name="hasta" type="date" value="@Until?.ToString("yyyy-MM-dd")" />
+    </div>
+
+    <SsrSelect Name="cuando" Label="@Textos.SearchWhen">
+        <option value="@UpcomingMode" selected="@(!Past)">@Textos.SearchUpcoming</option>
+        <option value="@PastMode" selected="@Past">@Textos.SearchPast</option>
+    </SsrSelect>
+
+    <button type="submit" class="go">@Textos.SearchGo</button>
+</form>
+
+@if (results.Count == 0)
+{
+    <MudPaper Class="pa-8 text-center" Elevation="0" Outlined="true">
+        <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Primary" Class="mb-3" />
+        <MudText Typo="Typo.body1">@(Past ? Textos.SearchNoPast : Textos.SearchNoResults)</MudText>
+    </MudPaper>
+}
+else
+{
+    <MudText Typo="Typo.caption" Class="mb-3 d-block">
+        @(results.Count == 1 ? Textos.SearchOneResult : string.Format(Textos.SearchResultCount, results.Count))
+    </MudText>
+
+    <MudStack Spacing="3">
+        @foreach (var row in results)
+        {
+            <MudPaper Outlined="true" Elevation="0" Class="pa-4">
+                <MudStack Row="true" Spacing="3" Wrap="Wrap.Wrap" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudLink Href="@($"/torneos/{row.Id}")" Typo="Typo.h6" Underline="Underline.Hover">
+                            @row.Name
+                        </MudLink>
+                        <MudText Typo="Typo.body2" Class="mt-1">
+                            @row.StoreName · @row.City
+                        </MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            @Clock.FormatLong(row.StartsAt)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            @row.TcgName · @Labels.Structure(row.SwissRounds, row.TopCutSize)
+                        </MudText>
+                    </div>
+
+                    <MudStack Spacing="1" AlignItems="AlignItems.End" Justify="Justify.Center">
+                        <MudChip T="string" Size="Size.Small" Color="@Labels.ColourFor(row.Status)">
+                            @Labels.For(row.Status)
+                        </MudChip>
+                        <MudText Typo="Typo.body2">
+                            @string.Format(Textos.RegisteredSummary, row.Registered, row.Capacity)
+                        </MudText>
+                        @if (row.Waitlisted > 0)
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                @string.Format(Textos.WaitlistCount, row.Waitlisted)
+                            </MudText>
+                        }
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
+}
+
+@code {
+    private const string UpcomingMode = "proximos";
+    private const string PastMode = "pasados";
+
+    private IReadOnlyList<PublicTournamentRow> results = [];
+    private IReadOnlyList<TcgOption> games = [];
+    private IReadOnlyList<string> cities = [];
+
+    // Todo llega como texto y se interpreta aquí, en vez de dejar que Blazor convierta a int? o a
+    // DateOnly? por su cuenta. Dos motivos: un formulario GET envía igualmente los campos que el
+    // visitante dejó en blanco ("?juego=&desde="), y esta dirección es pública, así que cualquiera
+    // puede escribirla a mano. Una cadena que no se entiende es un filtro que no se aplica, no un
+    // error de servidor.
+
+    [SupplyParameterFromQuery(Name = "texto")]
+    private string? Text { get; set; }
+
+    [SupplyParameterFromQuery(Name = "ciudad")]
+    private string? City { get; set; }
+
+    [SupplyParameterFromQuery(Name = "juego")]
+    private string? Game { get; set; }
+
+    [SupplyParameterFromQuery(Name = "desde")]
+    private string? FromText { get; set; }
+
+    [SupplyParameterFromQuery(Name = "hasta")]
+    private string? UntilText { get; set; }
+
+    [SupplyParameterFromQuery(Name = "cuando")]
+    private string? When { get; set; }
+
+    private int? TcgId => int.TryParse(Game, out var id) ? id : null;
+
+    private DateOnly? From => AsDate(FromText);
+
+    private DateOnly? Until => AsDate(UntilText);
+
+    private bool Past => When == PastMode;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        games = await Catalog.ActiveAsync();
+        cities = await Tournaments.CitiesAsync();
+
+        results = await Tournaments.SearchAsync(new TournamentSearch
+        {
+            Text = Text,
+            City = City,
+            TcgId = TcgId,
+            // La fecha se teclea en el calendario del navegador, que no sabe nada de husos: "desde
+            // el 26" significa desde las 00:00 de ese día en la tienda, y "hasta el 26", hasta el
+            // final de ese día (ADR-0025).
+            From = From is { } from ? Clock.ToInstant(from.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero) : null,
+            Until = Until is { } until ? Clock.ToInstant(until.ToDateTime(TimeOnly.MinValue), TimeSpan.FromDays(1)) : null,
+            Past = Past
+        });
+    }
+
+    private static DateOnly? AsDate(string? value) =>
+        DateOnly.TryParse(value, System.Globalization.CultureInfo.InvariantCulture, out var date) ? date : null;
+}
