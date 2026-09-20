@@ -268,6 +268,51 @@ public class DeskTests(SqlServerFixture fixture)
     }
 
     [Fact]
+    public async Task The_rounds_come_back_in_the_order_they_were_played()
+    {
+        // Four rounds, so the database has room to hand them back in whatever order it likes. It
+        // did exactly that: the desk showed the buttons as 2, 4, 3, 1.
+        var (store, tournament) = await ReadyTournament(players: 4, swissRounds: 4);
+
+        for (var round = 0; round < 4; round++)
+        {
+            await PlayRound(store, tournament);
+        }
+
+        var desk = (await Desk(store, tournament))!;
+
+        Assert.Equal([1, 2, 3, 4], desk.Rounds.Select(round => round.Number));
+
+        // And with no round asked for, the desk opens on the last one played, not on whichever
+        // row came back first.
+        Assert.Equal(4, desk.Round!.Number);
+    }
+
+    [Fact]
+    public async Task A_bracket_of_several_rounds_always_pairs_from_the_one_just_played()
+    {
+        // Eight players into a top 8: quarters, semis, final. Each bracket round is built from the
+        // previous one, so picking the wrong "previous" would pair the wrong people — quietly.
+        var (store, tournament) = await ReadyTournament(players: 8, swissRounds: 1, topCut: 8);
+
+        await PlayRound(store, tournament);
+
+        await PlayRound(store, tournament);
+        Assert.Equal(4, (await Desk(store, tournament))!.Round!.Matches.Count);
+
+        await PlayRound(store, tournament);
+        Assert.Equal(2, (await Desk(store, tournament))!.Round!.Matches.Count);
+
+        await PlayRound(store, tournament);
+
+        var desk = (await Desk(store, tournament))!;
+
+        Assert.Single(desk.Round!.Matches);
+        Assert.Equal([1, 2, 3, 4], desk.Rounds.Select(round => round.Number));
+        Assert.False(desk.CanStartNextRound);
+    }
+
+    [Fact]
     public async Task Another_stores_desk_is_not_reachable()
     {
         var (_, tournament) = await ReadyTournament(players: 4);

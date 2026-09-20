@@ -113,9 +113,12 @@ public sealed class TournamentService(ITournamentRepository tournaments, TimePro
     {
         var names = tournament.Participants.ToDictionary(participant => participant.Id, participant => participant.Name);
 
+        // By number, never by position: the collection's order is whatever the database returned.
+        var rounds = tournament.Rounds.OrderBy(round => round.Number).ToList();
+
         var selected = roundNumber is { } number
-            ? tournament.Rounds.FirstOrDefault(round => round.Number == number)
-            : tournament.CurrentRound ?? tournament.Rounds.LastOrDefault();
+            ? rounds.FirstOrDefault(round => round.Number == number)
+            : tournament.CurrentRound ?? rounds.LastOrDefault();
 
         var hasNext = TournamentEngine.HasNextRound(tournament);
         var everyRoundClosed = tournament.Rounds.All(round => round.Status == RoundStatus.Closed);
@@ -127,7 +130,7 @@ public sealed class TournamentService(ITournamentRepository tournaments, TimePro
             tournament.SwissRounds,
             tournament.TopCutSize,
             tournament.ActiveParticipants.Count(),
-            [.. tournament.Rounds.Select(round => new DeskRoundLink(round.Number, round.Phase, round.Status))],
+            [.. rounds.Select(round => new DeskRoundLink(round.Number, round.Phase, round.Status))],
             selected is null ? null : Board(selected, names, now),
             StandingsCalculator.For(tournament),
             tournament.Settings.Tiebreakers,

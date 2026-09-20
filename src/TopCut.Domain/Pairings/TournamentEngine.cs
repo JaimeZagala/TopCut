@@ -65,6 +65,13 @@ public static class TournamentEngine
             ? TopCutBracket.NextRound(previous)
             : TopCutBracket.FirstRound(tournament);
 
+    /// <summary>
+    /// The bracket round played most recently. By round number, not by position in the collection:
+    /// which round is "last" decides who gets paired next, and that must not depend on the order
+    /// the database happened to hand the rounds back in.
+    /// </summary>
     private static Round? LastBracketRound(Tournament tournament) =>
-        tournament.Rounds.LastOrDefault(round => round.Phase == Phase.TopCut);
+        tournament.Rounds
+            .Where(round => round.Phase == Phase.TopCut)
+            .MaxBy(round => round.Number);
 }

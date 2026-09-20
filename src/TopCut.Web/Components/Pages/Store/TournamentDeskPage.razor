@@ -257,7 +257,21 @@ else
         _ => Textos.DeskStartFirstRound
     };
 
-    protected override async Task OnParametersSetAsync() => await LoadAsync();
+    private (Guid Tournament, int? Round) loaded;
+
+    /// <summary>
+    /// Aqui si cambia la ronda por la direccion, asi que la recarga depende de las dos cosas.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loaded == (TournamentId, RoundNumber))
+        {
+            return;
+        }
+
+        loaded = (TournamentId, RoundNumber);
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {

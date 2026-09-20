@@ -1,34 +1,34 @@
 @* Las pestanas de un torneo. Son enlaces de verdad, no un control de pestanas: cada una es una
-   pagina con su propia direccion, asi que se puede recargar y compartir. Crecen con los tramos:
-   la mesa de control llega en el 3d. *@
+   pagina con su propia direccion, asi que se puede recargar y compartir.
+
+   La pestana en la que ya estas **no lleva enlace**. Navegar a la direccion en la que ya estas
+   vuelve a cargar la pantalla desde la base de datos, asi que pulsar "Datos" estando en Datos
+   descartaba en silencio lo que hubieras cambiado sin guardar. *@
 
 <MudStack Row="true" Spacing="2" Class="mb-6" Wrap="Wrap.Wrap">
-    <MudButton Href="@($"/tienda/torneos/{TournamentId}")"
-               StartIcon="@Icons.Material.Filled.Tune"
-               Variant="@VariantFor(TournamentTab.Details)"
-               Color="Color.Primary">
-        @Textos.TabDetails
-    </MudButton>
-    <MudButton Href="@($"/tienda/torneos/{TournamentId}/participantes")"
-               StartIcon="@Icons.Material.Filled.Groups"
-               Variant="@VariantFor(TournamentTab.Participants)"
-               Color="Color.Primary">
-        @Textos.TabParticipants
-    </MudButton>
-    <MudButton Href="@($"/tienda/torneos/{TournamentId}/mesa")"
-               StartIcon="@Icons.Material.Filled.PlayCircle"
-               Variant="@VariantFor(TournamentTab.Desk)"
-               Color="Color.Primary">
-        @Textos.TabDesk
-    </MudButton>
+    @foreach (var tab in Tabs)
+    {
+        <MudButton Href="@(tab.Key == Current ? null : $"/tienda/torneos/{TournamentId}{tab.Suffix}")"
+                   StartIcon="@tab.Icon"
+                   Variant="@(tab.Key == Current ? Variant.Filled : Variant.Text)"
+                   Color="Color.Primary"
+                   aria-current="@(tab.Key == Current ? "page" : null)">
+            @tab.Label
+        </MudButton>
+    }
 </MudStack>
 
 @code {
+    private static (TournamentTab Key, string Suffix, string Icon, string Label)[] Tabs =>
+    [
+        (TournamentTab.Details, "", Icons.Material.Filled.Tune, Textos.TabDetails),
+        (TournamentTab.Participants, "/participantes", Icons.Material.Filled.Groups, Textos.TabParticipants),
+        (TournamentTab.Desk, "/mesa", Icons.Material.Filled.PlayCircle, Textos.TabDesk)
+    ];
+
     [Parameter, EditorRequired]
     public Guid TournamentId { get; set; }
 
     [Parameter, EditorRequired]
     public TournamentTab Current { get; set; }
-
-    private Variant VariantFor(TournamentTab tab) => tab == Current ? Variant.Filled : Variant.Text;
 }

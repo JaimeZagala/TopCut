@@ -99,7 +99,24 @@ else
     private bool loading = true;
     private bool busy;
 
-    protected override async Task OnParametersSetAsync() => await LoadAsync();
+    private Guid loaded;
+
+    /// <summary>
+    /// Solo recarga cuando cambia el torneo que se esta mirando. Recargar cada vez que se fijan los
+    /// parametros pisaba el formulario con lo que hay en la base de datos, de modo que cualquier
+    /// cosa que volviera a pasar por aqui —navegar a la direccion en la que ya estas, por ejemplo—
+    /// tiraba los cambios sin guardar sin decir nada.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loaded == TournamentId)
+        {
+            return;
+        }
+
+        loaded = TournamentId;
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {

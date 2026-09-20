@@ -391,6 +391,28 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         Assert.DoesNotContain("Lanzar la primera ronda", html);
     }
 
+    [Fact]
+    public async Task The_tab_you_are_already_on_is_not_a_link_to_itself()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+        var tournamentId = await CreateTournament(storeId, "Con pestanas");
+
+        var details = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}");
+
+        // Navigating to the page you are already on reloads the form from the database and throws
+        // away whatever was typed, so the current tab must not offer to do that.
+        Assert.DoesNotContain($"href=\"/tienda/torneos/{tournamentId}\"", details);
+        Assert.Contains($"href=\"/tienda/torneos/{tournamentId}/participantes\"", details);
+        Assert.Contains($"href=\"/tienda/torneos/{tournamentId}/mesa\"", details);
+
+        var roster = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}/participantes");
+
+        Assert.DoesNotContain($"href=\"/tienda/torneos/{tournamentId}/participantes\"", roster);
+        Assert.Contains($"href=\"/tienda/torneos/{tournamentId}\"", roster);
+    }
+
     // --- Helpers ----------------------------------------------------------------------------------------
 
     /// <summary>Where a redirect points, as a path, whether the header is absolute or relative.</summary>

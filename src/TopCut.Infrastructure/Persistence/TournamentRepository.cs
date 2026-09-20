@@ -71,6 +71,10 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
     /// loading would turn one operation into dozens of round trips against a database that, on the
     /// free tier, is charged by the second.
     /// <para>
+    /// <b>Ordered on purpose.</b> Without it SQL Server returns the rows in whatever order suits it,
+    /// which is not the order they were created in: the round buttons came out as 2, 4, 3, 1.
+    /// </para>
+    /// <para>
     /// No <c>IgnoreQueryFilters</c> here: the tenant filter is exactly what stops a store from
     /// reaching another store's tournament by guessing its id.
     /// </para>
@@ -85,9 +89,9 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
 
         return tournaments
             .Include(tournament => tournament.Participants)
-            .Include(tournament => tournament.Rounds)
-                .ThenInclude(round => round.Pairings)
-                    .ThenInclude(pairing => pairing.Games)
+            .Include(tournament => tournament.Rounds.OrderBy(round => round.Number))
+                .ThenInclude(round => round.Pairings.OrderBy(pairing => pairing.Table))
+                    .ThenInclude(pairing => pairing.Games.OrderBy(game => game.Number))
             .AsSplitQuery()
             .SingleOrDefaultAsync(tournament => tournament.Id == tournamentId, cancellationToken);
     }

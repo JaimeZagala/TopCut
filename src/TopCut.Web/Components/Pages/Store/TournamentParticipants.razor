@@ -192,7 +192,19 @@ else
         var left => string.Format(Textos.SeatsLeft, left)
     };
 
-    protected override async Task OnParametersSetAsync() => await LoadAsync();
+    private Guid loaded;
+
+    /// <summary>Solo al cambiar de torneo: recargar sin mas vaciaria el nombre a medio escribir.</summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loaded == TournamentId)
+        {
+            return;
+        }
+
+        loaded = TournamentId;
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {
