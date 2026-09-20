@@ -47,8 +47,8 @@ Partido en tres tramos para que cada uno sea revisable por separado.
 - ✅ Seed idempotente del catalogo
 - ✅ Migracion `InitialSchema` y su script revisable en `docs/migraciones/001-InitialSchema.sql`
 - ✅ 20 pruebas de integracion, incluida la que confirma que una tienda no ve los datos de otra
-- ⏸ Verificacion con Testcontainers pendiente de que Docker Desktop arranque en la maquina; la
-  bateria se valido contra LocalDB usando la valvula del ADR-0012
+- ✅ Verificadas **contra SQL Server real en Docker via Testcontainers**, que es el camino por
+  defecto; tambien pasan contra LocalDB con la valvula del ADR-0012
 
 #### 1c — Identidad ⬜
 
