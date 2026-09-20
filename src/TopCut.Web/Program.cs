@@ -1,8 +1,5 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using TopCut.Api;
 using TopCut.Infrastructure;
-using TopCut.Infrastructure.Identity;
 using TopCut.Infrastructure.Persistence;
 using TopCut.Web.Account;
 using TopCut.Web.Components;
@@ -51,34 +48,16 @@ app.MapRazorComponents<App>()
 app.MapTopCutApi();
 app.MapAccountEndpoints();
 
-await ApplyMigrationsAndSeedAsync(app);
-
-app.Run();
-
-/// <summary>
-/// Brings a fresh database up to date and puts the catalog, the roles and the bootstrap Superadmin
-/// in place. Safe to run on every start: all three steps are idempotent.
-/// <para>
-/// Migrating on startup suits a single-instance free App Service. If TopCut ever scales out, this
-/// moves to a deploy step so two instances cannot migrate at once.
-/// </para>
-/// </summary>
-static async Task ApplyMigrationsAndSeedAsync(WebApplication app)
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
-    var services = scope.ServiceProvider;
-
-    var db = services.GetRequiredService<TopCutDbContext>();
-    await db.Database.MigrateAsync();
-
-    await CatalogSeeder.SeedAsync(db);
-
-    await IdentitySeeder.SeedRolesAsync(services.GetRequiredService<RoleManager<IdentityRole>>());
-    await IdentitySeeder.SeedSuperadminAsync(
-        services.GetRequiredService<UserManager<TopCutUser>>(),
+    await DatabaseInitializer.InitializeAsync(
+        scope.ServiceProvider,
+        connectionString,
         app.Configuration["Superadmin:Email"],
         app.Configuration["Superadmin:Password"]);
 }
+
+app.Run();
 
 /// <summary>Exposed so the integration tests can boot the real application.</summary>
 public partial class Program;
