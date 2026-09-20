@@ -336,3 +336,48 @@ y el `DesignTimeDbContextFactory` apuntan ahi.
   esquema (ADR-0005).
 - **Lo que no cambia**: las pruebas de integracion siguen usando Testcontainers, con su propio
   contenedor efimero. La base de desarrollo y la de las pruebas no se tocan entre si.
+
+---
+
+## ADR-0016 — Emparejamiento suizo por backtracking con preferencia Dutch
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: alto en correccion, contenido en una clase
+
+El emparejador ordena a los jugadores por clasificacion y los empareja recorriendo la lista con
+**backtracking**. El orden en que prueba a los candidatos es lo que lo hace Dutch: el rival
+preferido del primer jugador es el que le corresponde en la otra mitad de su grupo de puntuacion, y
+a partir de ahi prueba hacia los lados.
+
+- **Alternativa descartada**: emparejar de una pasada, dividiendo cada grupo en dos mitades y
+  cruzandolas directamente. Es lo que describe el metodo Dutch, y es mas simple.
+- **Por que no**: esa pasada unica falla cuando el cruce que toca ya se jugo. Entonces hay que
+  improvisar intercambios, y con grupos impares que descuelgan jugadores al grupo siguiente el
+  parcheo se vuelve un nido de casos. El backtracking **garantiza encontrar un emparejamiento sin
+  repeticiones siempre que exista alguno**, y como explora en orden de preferencia Dutch, el
+  resultado coincide con la pasada simple cuando esta funcionaria.
+- **Repeticiones**: se hace una primera pasada que las prohibe por completo. Solo si esa pasada
+  agota todas las combinaciones sin exito se repite permitiendolas. Eso es literalmente "evitar
+  repetir mientras existan alternativas": con 4 jugadores y 4 rondas no hay alternativa posible, y
+  el torneo tiene que poder continuar igualmente.
+- **Coste**: el backtracking es exponencial en el peor caso teorico. En la practica la primera
+  combinacion que prueba suele valer, porque la preferencia Dutch es justamente la que casi siempre
+  funciona. Las pruebas cubren hasta 23 jugadores y la bateria entera tarda 126 ms.
+
+---
+
+## ADR-0017 — El enfrentamiento directo solo desempata a dos jugadores aislados
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo, pero es una limitacion consciente
+
+El criterio `HeadToHead` solo se aplica cuando quedan **exactamente dos** jugadores igualados en
+todo lo anterior y no hay nadie mas con sus mismos puntos. En grupos de tres o mas, no se aplica.
+
+- **Por que**: el enfrentamiento directo **puede ser circular**. Si A gano a B, B gano a C y C gano
+  a A, no existe ningun orden coherente que respete los tres resultados, y cualquier algoritmo que
+  lo intente acaba dependiendo del orden en que mire las parejas.
+- **Que dice el reglamento**: el manual de One Piece envia esos casos a **jugar otra partida** y, si
+  no hay tiempo, a un metodo aleatorio decidido por el juez. Es decir, reconoce que el algoritmo se
+  acaba ahi.
+- **Consecuencia practica**: un triple empate exacto queda en el orden que dejaron los criterios
+  numericos, y el organizador decide. Es lo correcto, no una carencia: fabricar un desempate donde
+  el reglamento dice que no lo hay seria peor que no fabricarlo.

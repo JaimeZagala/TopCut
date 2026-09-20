@@ -187,7 +187,21 @@ lugar de crear tablas aparte, porque nunca se consultan por separado y un join n
 usa la aplicacion, en lugar de `HasData`, que lleva mal los tipos propiedad. Es idempotente, asi que
 puede ejecutarse en cada arranque.
 
+## El motor (hito 2)
+
+No anade tablas: son funciones puras sobre el agregado ya cargado, en `src/TopCut.Domain`.
+
+| Pieza | Que hace |
+|---|---|
+| `StandingsCalculator` | Puntos y los cuatro porcentajes de desempate, aplicando el orden, el suelo y el trato del bye que declare el ruleset. |
+| `SwissPairer` | Emparejamiento Dutch por backtracking (ADR-0016) y asignacion del bye. |
+| `TopCutBracket` | Sembrado del cuadro desde la clasificacion final y estrechamiento por rondas. |
+| `TournamentEngine` | Decide que fase toca y lanza la ronda. Es el unico punto de entrada que necesita la aplicacion. |
+
+`Standing` es un registro de solo lectura, no una entidad: se recalcula a partir de los resultados
+cada vez que se pide. Guardarlo seria una copia que puede quedar desincronizada de los
+enfrentamientos, que son la verdad.
+
 ## Pendiente
 
-- **Hito 1c**: tablas de ASP.NET Core Identity y el vinculo `Participant.UserId`.
-- **Hito 2**: emparejador suizo y calculo de clasificacion con los desempates del ruleset.
+- **Hito 6**: acumulacion de puntos de liga entre torneos, que si necesitara consultas propias.

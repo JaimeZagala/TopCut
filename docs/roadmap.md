@@ -70,20 +70,25 @@ Partido en tres tramos para que cada uno sea revisable por separado.
 *Criterio de cierre alcanzado*: un jugador se registra desde el navegador y el Superadmin aprueba
 una tienda.
 
-### Hito 2 — Motor de torneo ⬜
+### Hito 2 — Motor de torneo ✅
 
-La pieza critica y la que mas pruebas necesita, sin UI pulida:
+- ✅ **Emparejador suizo Dutch** por backtracking (ADR-0016): agrupacion por puntuacion, mitad
+  superior contra mitad inferior, y repeticion de cruce solo cuando no queda alternativa
+- ✅ **Byes** al jugador peor clasificado que aun no tenga uno; nadie repite mientras alguien este sin
+- ✅ **Clasificacion** con los desempates del ruleset aplicados en su orden, con su suelo, y con el
+  bye contando o no segun el TCG
+- ✅ **Enfrentamiento directo** como ultimo recurso entre dos jugadores aislados (ADR-0017)
+- ✅ **Top cut** opcional: sembrado 1-contra-ultimo desde la clasificacion final, y el bracket se
+  estrecha emparejando ganadores; el empate en eliminatoria se rechaza en vez de inventarse
+- ✅ **Bajas** a mitad de torneo: fuera de los emparejamientos, dentro de la clasificacion
+- ✅ `TournamentEngine`, punto de entrada unico que decide que fase toca y lanza la ronda
+- ✅ `TournamentService` en Application, con las invariantes rotas devueltas como mensaje
+- ✅ **121 pruebas de dominio**, incluidas simulaciones completas de 4, 7, 8, 11, 16 y 23 jugadores
+- ✅ **6 pruebas de integracion** que recorren torneos enteros recargando el agregado desde SQL
+  Server entre cada operacion, como haria la aplicacion entre peticiones
 
-- Emparejador suizo "Dutch": agrupacion por puntuacion, sin repetir cruces mientras haya
-  alternativas, **byes** al de menor puntuacion que aun no tenga uno.
-- Clasificacion con puntos y **desempates configurables por ruleset** y en su orden.
-- **Top cut** opcional: generacion del bracket, activable/desactivable y de tamano variable hasta
-  que se lanza la primera ronda.
-- Bajas a mitad de torneo y **empate automatico al agotarse el tiempo de ronda**.
-- Casos de uso en Application y **eventos de dominio publicados por un mediador, sin suscriptores**.
-
-*Criterio de cierre*: bateria de tests que simula torneos completos (pares e impares, con bajas,
-con y sin top cut) y verifica emparejamientos y clasificacion.
+*Criterio de cierre alcanzado*: torneos completos simulados con campos pares e impares, con bajas,
+con y sin top cut, verificando emparejamientos y clasificacion.
 
 ### Hito 3 — UI de gestion de torneo (tienda) ⬜
 

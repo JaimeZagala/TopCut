@@ -42,7 +42,9 @@
 Reglas de dependencia:
 
 - **Domain** no referencia nada. Entidades y reglas de negocio puras (torneo, ronda,
-  emparejamiento, ruleset, clasificacion).
+  emparejamiento, ruleset), mas el **motor**: `SwissPairer`, `StandingsCalculator`,
+  `TopCutBracket` y `TournamentEngine`, que son funciones puras sobre el agregado y por eso se
+  pueden probar simulando torneos enteros sin base de datos.
 - **Application** referencia Domain. Casos de uso independientes de si se invocan desde Blazor o
   desde HTTP.
 - **Infrastructure** referencia Application. EF Core, acceso a SQL Server, Identity, integraciones.

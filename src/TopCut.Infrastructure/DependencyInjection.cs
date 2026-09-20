@@ -5,6 +5,7 @@ using TopCut.Application.Abstractions;
 using TopCut.Infrastructure.Identity;
 using TopCut.Infrastructure.Persistence;
 using TopCut.Infrastructure.Persistence.Interceptors;
+using TopCut.Application.Tournaments;
 
 namespace TopCut.Infrastructure;
 
@@ -37,6 +38,9 @@ public static class DependencyInjection
                 provider.GetRequiredService<AuditingInterceptor>(),
                 provider.GetRequiredService<DomainEventDispatchInterceptor>());
         });
+
+        services.AddScoped<ITournamentRepository, TournamentRepository>();
+        services.AddScoped<TournamentService>();
 
         services.AddTopCutIdentity();
 
