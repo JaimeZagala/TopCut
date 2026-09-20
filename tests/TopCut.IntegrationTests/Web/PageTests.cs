@@ -326,7 +326,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         var browser = Browser();
         var (email, storeId) = await RegisterApprovedStore(browser);
         await SubmitSignIn(browser, email, "/tienda");
-        var tournamentId = await CreateTournament(storeId, "Torneo pequeno", capacity: 2);
+        var tournamentId = await CreateTournament(storeId, "Torneo pequeño", capacity: 2);
 
         await SignUp(storeId, tournamentId, "Ana", "Bruno", "Carla");
 
@@ -397,7 +397,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         var browser = Browser();
         var (email, storeId) = await RegisterApprovedStore(browser);
         await SubmitSignIn(browser, email, "/tienda");
-        var tournamentId = await CreateTournament(storeId, "Con pestanas");
+        var tournamentId = await CreateTournament(storeId, "Con pestañas");
 
         var details = await browser.GetStringAsync($"/tienda/torneos/{tournamentId}");
 

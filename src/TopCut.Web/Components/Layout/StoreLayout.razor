@@ -1,14 +1,14 @@
 @inherits LayoutComponentBase
 @inject ITenantScope TenantScope
 
-@* Cascara de gestion. Solo la usan paginas interactivas, asi que aqui si hay cajon lateral que se
+@* Cáscara de gestión. Solo la usan páginas interactivas, así que aquí si hay cajón lateral que se
    abre y se cierra, dialogos y avisos emergentes.
 
-   Ademas fija la tienda en contexto (ADR-0024): dentro de un circuito de SignalR no hay
-   HttpContext del que sacarla, y sin ella el filtro de tenant —que falla cerrado— dejaria a la
+   Además fija la tienda en contexto (ADR-0024): dentro de un circuito de SignalR no hay
+   HttpContext del que sacarla, y sin ella el filtro de tenant —que falla cerrado— dejaría a la
    tienda sin ver sus propios datos. Se lee del claim del usuario ya autenticado, que es
    exactamente lo mismo que lee el camino HTTP, y ocurre en el layout porque este se renderiza
-   entero antes que la pagina que lleva dentro. *@
+   entero antes que la página que lleva dentro. *@
 
 <MudThemeProvider Theme="TopCutTheme.Default" />
 <MudPopoverProvider />
@@ -30,8 +30,8 @@
     </MudAppBar>
 
     @* Mini: contraer no esconde la navegacion, la reduce a los iconos, que en una mesa de control
-       es lo que se quiere — mas sitio para la tabla sin perder de vista donde esta uno. Por debajo
-       de su breakpoint MudBlazor lo trata como temporal, asi que en un movil si desaparece. *@
+       es lo que se quiere — más sitio para la tabla sin perder de vista dónde está uno. Por debajo
+       de su breakpoint MudBlazor lo trata como temporal, así que en un móvil si desaparece. *@
     <MudDrawer @bind-Open="drawerOpen"
                Elevation="1"
                ClipMode="DrawerClipMode.Always"

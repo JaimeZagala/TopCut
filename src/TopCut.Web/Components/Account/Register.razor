@@ -5,9 +5,9 @@
 @inject ISignInService SignIn
 @inject NavigationManager Navigation
 
-@* SSR estatico a proposito: el alta es un envio de formulario normal, y entrar justo despues
-   necesita el HttpContext que solo existe en una peticion de verdad. Los campos no usan
-   @@bind-Value porque en SSR estatico no hay eventos: el valor llega en el POST y el enlace de
+@* SSR estático a propósito: el alta es un envio de formulario normal, y entrar justo después
+   necesita el HttpContext que solo existe en una petición de verdad. Los campos no usan
+   @@bind-Value porque en SSR estático no hay eventos: el valor llega en el POST y el enlace de
    formulario del servidor lo escribe en el modelo. *@
 
 <PageTitle>@Textos.SignUpTitle - @Textos.AppName</PageTitle>

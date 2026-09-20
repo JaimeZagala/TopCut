@@ -12,10 +12,10 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
-@* La pantalla que se usa bajo presion, con la sala esperando (docs/arquitectura.md). Todo lo que
-   necesita sale de una sola lectura del torneo, para que los emparejamientos y la clasificacion no
-   puedan contradecirse. El tiempo real llega en el hito 4: por ahora la pagina se refresca sola
-   despues de cada accion. *@
+@* La pantalla que se usa bajo presión, con la sala esperando (docs/arquitectura.md). Todo lo que
+   necesita sale de una sola lectura del torneo, para que los emparejamientos y la clasificación no
+   puedan contradecirse. El tiempo real llega en el hito 4: por ahora la página se refresca sola
+   después de cada accion. *@
 
 <PageTitle>@Textos.DeskTitle - @(desk?.Name ?? Textos.AppName)</PageTitle>
 
@@ -199,7 +199,7 @@ else
         }
     }
 
-    @* --- Clasificacion ----------------------------------------------------------------------- *@
+    @* --- Clasificación ----------------------------------------------------------------------- *@
     <MudText Typo="Typo.h4" GutterBottom="true">@Textos.StandingsTitle</MudText>
 
     @if (desk.Standings.Count == 0)
@@ -272,7 +272,7 @@ else
     private (Guid Tournament, int? Round) loaded;
 
     /// <summary>
-    /// Aqui si cambia la ronda por la direccion, asi que la recarga depende de las dos cosas.
+    /// Aquí si cambia la ronda por la dirección, así que la recarga depende de las dos cosas.
     /// </summary>
     protected override async Task OnParametersSetAsync()
     {

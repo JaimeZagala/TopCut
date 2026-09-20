@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <ResourcePreloader />
-    @* MudBlazor trae su propia hoja de estilos; no se carga ninguna fuente externa a proposito
+    @* MudBlazor trae su propia hoja de estilos; no se carga ninguna fuente externa a propósito
        (ver TopCutTheme). Bootstrap se retiro al entrar MudBlazor en el hito 3. *@
     <link rel="stylesheet" href="@Assets["_content/MudBlazor/MudBlazor.min.css"]" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
@@ -32,18 +32,18 @@
     private HttpContext HttpContext { get; set; } = default!;
 
     /// <summary>
-    /// Interactividad global, salvo en las paginas que se excluyen con
-    /// <c>[ExcludeFromInteractiveRouting]</c>, que se sirven en SSR estatico.
+    /// Interactividad global, salvo en las páginas que se excluyen con
+    /// <c>[ExcludeFromInteractiveRouting]</c>, que se sirven en SSR estático.
     /// <para>
-    /// Hace falta que sea global porque un <b>layout</b> no hereda el modo de render de su pagina:
-    /// si la interactividad se declara pagina a pagina, la pagina es interactiva pero su cascara no,
-    /// y el boton del cajon lateral se queda pintado sin hacer nada.
+    /// Hace falta que sea global porque un <b>layout</b> no hereda el modo de render de su página:
+    /// si la interactividad se declara página a página, la página es interactiva pero su cáscara no,
+    /// y el botón del cajón lateral se queda pintado sin hacer nada.
     /// </para>
     /// <para>
-    /// Las paginas publicas y las de cuenta se excluyen: las de cuenta porque entrar necesita el
-    /// <c>HttpContext</c> de una peticion de verdad, y las publicas para no abrir un circuito de
+    /// Las páginas públicas y las de cuenta se excluyen: las de cuenta porque entrar necesita el
+    /// <c>HttpContext</c> de una petición de verdad, y las públicas para no abrir un circuito de
     /// SignalR por cada visita anonima, que en el nivel gratuito de Azure SignalR son ~20
-    /// conexiones simultaneas en total.
+    /// conexiones simultáneas en total.
     /// </para>
     /// </summary>
     private IComponentRenderMode? PageRenderMode =>

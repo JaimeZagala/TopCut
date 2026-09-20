@@ -1,9 +1,9 @@
 @page "/privacidad"
 @attribute [ExcludeFromInteractiveRouting]
 
-@* El texto del aviso no va en el .resx (ADR-0019): es contenido legal versionado, no rotulo de
-   interfaz. Traducirlo seria un acto juridico, no un cambio de cadena, y tendria su propia
-   version. Lo que si sale de recursos son los rotulos que lo rodean. *@
+@* El texto del aviso no va en el .resx (ADR-0019): es contenido legal versionado, no rótulo de
+   interfaz. Traducirlo sería un acto jurídico, no un cambio de cadena, y tendría su propia
+   versión. Lo que si sale de recursos son los rotulos que lo rodean. *@
 
 <PageTitle>@Textos.PrivacyTitle - @Textos.AppName</PageTitle>
 
@@ -42,6 +42,6 @@
 </MudText>
 
 @code {
-    // Nombre completo: este componente tambien se llama PrivacyNotice.
+    // Nombre completo: este componente también se llama PrivacyNotice.
     private const string PrivacyNoticeVersion = TopCut.Application.Abstractions.PrivacyNotice.CurrentVersion;
 }

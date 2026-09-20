@@ -48,10 +48,10 @@ else
         <MudPaper Class="pa-6 mb-6" Elevation="0" Outlined="true">
             <MudText Typo="Typo.h4" GutterBottom="true">@Textos.ParticipantAdd</MudText>
 
-            @* Dar de alta a dieciseis personas en el mostrador tiene que ser escribir, Intro,
-               escribir, Intro, sin tocar el raton. El Intro se escucha en el contenedor, donde el
+            @* Dar de alta a dieciséis personas en el mostrador tiene que ser escribir, Intro,
+               escribir, Intro, sin tocar el ratón. El Intro se escucha en el contenedor, donde el
                evento burbujea, y no en el propio campo: MudBlazor ya usa esa tecla para confirmar
-               el valor que se esta escribiendo, y asi no dependemos de como la trate por dentro. *@
+               el valor que se esta escribiendo, y así no dependemos de como la trate por dentro. *@
             <div @onkeydown="OnKeyDown">
                 <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Start">
                     <MudTextField @bind-Value="quickAdd.Name"
@@ -202,7 +202,7 @@ else
 
     private Guid loaded;
 
-    /// <summary>Solo al cambiar de torneo: recargar sin mas vaciaria el nombre a medio escribir.</summary>
+    /// <summary>Solo al cambiar de torneo: recargar sin más vaciaria el nombre a medio escribir.</summary>
     protected override async Task OnParametersSetAsync()
     {
         if (loaded == TournamentId)

@@ -4,11 +4,11 @@ Plataforma multi-tenant para organizar y gestionar torneos y ligas de juegos de 
 coleccionables (TCG). La v1 arranca con **Magic: The Gathering** y **One Piece Card Game**.
 
 > Estado: **hito 4 (en curso)** — la tienda lleva un torneo entero desde el navegador y las
-> pantallas se actualizan solas, con cronometro de ronda ([`docs/roadmap.md`](docs/roadmap.md)).
+> pantallas se actualizan solas, con cronómetro de ronda ([`docs/roadmap.md`](docs/roadmap.md)).
 
-## Documentacion
+## Documentación
 
-La documentacion viva vive en [`/docs`](docs/) y se actualiza en cada hito:
+La documentación viva vive en [`/docs`](docs/) y se actualiza en cada hito:
 
 | Documento | Contenido |
 |---|---|
@@ -35,16 +35,16 @@ tests/
   TopCut.IntegrationTests/
 ```
 
-`TopCut.Api` es una **biblioteca**, no una aplicacion: `TopCut.Web` la aloja, de modo que la UI y
-los endpoints `/api/*` se sirven desde un unico proceso y un unico despliegue
+`TopCut.Api` es una **biblioteca**, no una aplicación: `TopCut.Web` la aloja, de modo que la UI y
+los endpoints `/api/*` se sirven desde un único proceso y un único despliegue
 (ver [`docs/decisiones.md`](docs/decisiones.md) ADR-0004).
 
 ## Requisitos
 
 - .NET SDK **10.0.401** o superior (ver [`global.json`](global.json))
-- **Docker Desktop**, para la base de datos de desarrollo y para las pruebas de integracion
+- **Docker Desktop**, para la base de datos de desarrollo y para las pruebas de integración
 
-## Configuracion local
+## Configuración local
 
 Arranca primero la base de datos:
 
@@ -52,11 +52,11 @@ Arranca primero la base de datos:
 docker compose up -d
 ```
 
-Levanta un SQL Server 2022 en el puerto **11433** con los datos en un volumen, asi que sobreviven
-entre sesiones. La cadena de conexion ya apunta ahi en `appsettings.Development.json`.
+Levanta un SQL Server 2022 en el puerto **11433** con los datos en un volumen, así que sobreviven
+entre sesiones. La cadena de conexión ya apunta ahí en `appsettings.Development.json`.
 
-Lo demas son secretos y va en user-secrets, nunca en el repositorio. El `UserSecretsId` ya esta en
-`TopCut.Web.csproj`, asi que no hace falta inicializarlo:
+Lo demás son secretos y va en user-secrets, nunca en el repositorio. El `UserSecretsId` ya está en
+`TopCut.Web.csproj`, así que no hace falta inicializarlo:
 
 ```bash
 dotnet user-secrets --project src/TopCut.Web set "Superadmin:Email" "tu@email.com"
@@ -66,7 +66,7 @@ dotnet user-secrets --project src/TopCut.Web set "Superadmin:Email" "tu@email.co
 dotnet user-secrets --project src/TopCut.Web set "Superadmin:Password" "una-contrasena-larga"
 ```
 
-Sin esas dos claves la aplicacion arranca igual, pero no habra ningun Superadmin y por tanto nadie
+Sin esas dos claves la aplicación arranca igual, pero no habrá ningún Superadmin y por tanto nadie
 que pueda aprobar la primera tienda. El login con Google se activa solo si existen
 `Authentication:Google:ClientId` y `Authentication:Google:ClientSecret`.
 
@@ -79,7 +79,7 @@ que pueda aprobar la primera tienda. El login con Google se activa solo si exist
 | Empezar de cero | `docker compose down -v` |
 | Ver los logs | `docker compose logs -f sqlserver` |
 
-Tras un `down -v`, la aplicacion recrea el esquema y siembra el catalogo al siguiente arranque.
+Tras un `down -v`, la aplicación recrea el esquema y siembra el catálogo al siguiente arranque.
 
 Para mirar dentro sin salir de la terminal:
 
@@ -87,13 +87,13 @@ Para mirar dentro sin salir de la terminal:
 docker exec -it topcut-sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "TopCut-Local-2026" -C -d TopCut
 ```
 
-La contrasena esta en claro en `compose.yaml` a proposito: esa base solo escucha en tu localhost y
-no contiene nada real. **No la reutilices en ningun otro sitio.**
+La contraseña está en claro en `compose.yaml` a propósito: esa base solo escucha en tu localhost y
+no contiene nada real. **No la reutilices en ningún otro sitio.**
 
-> **Por que no LocalDB** (ADR-0015): funcionaba, pero es un motor distinto al de produccion, se
-> apaga solo cuando lleva rato sin uso y su estado vive en el registro de Windows, donde es facil
+> **Por qué no LocalDB** (ADR-0015): funcionaba, pero es un motor distinto al de producción, se
+> apaga solo cuando lleva rato sin uso y su estado vive en el registro de Windows, donde es fácil
 > que se desincronice del disco y deje errores desconcertantes. El contenedor es el mismo SQL Server
-> que usan las pruebas de integracion y el que hay detras de Azure SQL.
+> que usan las pruebas de integración y el que hay detras de Azure SQL.
 
 ## Comandos
 

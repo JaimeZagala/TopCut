@@ -1,10 +1,10 @@
-// Cuenta atras de la ronda.
+// Cuenta atrás de la ronda.
 //
 // El servidor manda el instante de fin en UTC y su propia hora; el navegador calcula una sola vez
-// la diferencia entre los dos relojes y a partir de ahi cuenta solo. Asi:
-//  - recargar la pagina no reinicia nada, porque el fin es un instante, no unos segundos restantes;
-//  - un portatil con la hora mal puesta sigue viendo el tiempo correcto;
-//  - y el cronometro no gasta ni un mensaje del circuito por segundo.
+// la diferencia entre los dos relojes y a partir de ahí cuenta solo. Así:
+//  - recargar la página no reinicia nada, porque el fin es un instante, no unos segundos restantes;
+//  - un portátil con la hora mal puesta sigue viendo el tiempo correcto;
+//  - y el cronómetro no gasta ni un mensaje del circuito por segundo.
 
 const timers = new WeakMap();
 
@@ -22,7 +22,7 @@ export function start(element, options) {
             return;
         }
 
-        // Pasado el tiempo normal viene la prorroga, si el juego la tiene.
+        // Pasado el tiempo normal viene la prórroga, si el juego la tiene.
         const extra = options.extraEndsAtMs - (Date.now() + skew);
 
         if (extra > 0) {

@@ -1,6 +1,6 @@
 # SQL Server para desarrollo local.
 #
-# Sustituye a LocalDB (ADR-0015): el mismo motor que usan las pruebas de integracion y el mismo
+# Sustituye a LocalDB (ADR-0015): el mismo motor que usan las pruebas de integración y el mismo
 # que hay detras de Azure SQL, en vez de una variante de escritorio con sus propias manias.
 #
 #   docker compose up -d      arranca
@@ -12,12 +12,12 @@ services:
     container_name: topcut-sqlserver
     environment:
       ACCEPT_EULA: "Y"
-      # Contrasena de desarrollo, deliberadamente en claro: esta base solo existe en tu maquina,
-      # solo escucha en localhost y no contiene nada real. Nunca la reutilices en ningun otro sitio.
+      # Contraseña de desarrollo, deliberadamente en claro: esta base solo existe en tu máquina,
+      # solo escucha en localhost y no contiene nada real. Nunca la reutilices en ningún otro sitio.
       MSSQL_SA_PASSWORD: "TopCut-Local-2026"
       MSSQL_PID: Developer
     ports:
-      # 11433 y no 1433 para no chocar con una instalacion de SQL Server que ya tengas.
+      # 11433 y no 1433 para no chocar con una instalación de SQL Server que ya tengas.
       - "11433:1433"
     volumes:
       # Volumen con nombre: los datos sobreviven a "docker compose down".

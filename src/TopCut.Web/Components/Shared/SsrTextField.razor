@@ -1,14 +1,14 @@
 @using System.Linq.Expressions
 
-@* Campo de texto para formularios de SSR estatico (registro, acceso, alta con Google).
+@* Campo de texto para formularios de SSR estático (registro, acceso, alta con Google).
 
-   MudBlazor no es InputText de Blazor, asi que hay dos cosas que no pone solo:
+   MudBlazor no es InputText de Blazor, así que hay dos cosas que no pone solo:
    - `name`, que es por donde el enlace de formulario del servidor recoge el valor enviado;
-   - `Text`, que es lo unico que hace que se dibuje el atributo `value`, y sin el un error de
-     validacion devolveria el formulario con todos los campos vacios.
+   - `Text`, que es lo único que hace que se dibuje el atributo `value`, y sin el un error de
+     validación devolvería el formulario con todos los campos vacíos.
 
-   Van aqui y no repetidas en cada pagina. tests/TopCut.IntegrationTests/Web/StaticRenderingTests
-   fija las dos cosas por si una version futura de MudBlazor deja de hacerlas. *@
+   Van aquí y no repetidas en cada página. tests/TopCut.IntegrationTests/Web/StaticRenderingTests
+   fija las dos cosas por si una versión futura de MudBlazor deja de hacerlas. *@
 
 <MudTextField T="string"
               name="@Name"

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
   <!--
-    Textos de interfaz en espanol (ADR-0019). El codigo esta en ingles (ADR-0008), asi que las
-    claves tambien. MSBuild genera la clase `TopCut.Web.Resources.Textos` a partir de este archivo
-    en cada compilacion: una clave mal escrita es un error de compilacion, no una cadena rara en
-    pantalla. Anadir un idioma sera anadir `Textos.<cultura>.resx` al lado, sin tocar las vistas.
+    Textos de interfaz en español (ADR-0019). El código está en inglés (ADR-0008), así que las
+    claves también. MSBuild genera la clase `TopCut.Web.Resources.Textos` a partir de este archivo
+    en cada compilación: una clave mal escrita es un error de compilación, no una cadena rara en
+    pantalla. Añadir un idioma será añadir `Textos.<cultura>.resx` al lado, sin tocar las vistas.
   -->
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -773,7 +773,7 @@
   </data>
   <data name="LiveOpen" xml:space="preserve">
     <value>En vivo</value>
-    <comment>Boton de la fila de pestanas. El texto largo va en el tooltip.</comment>
+    <comment>Botón de la fila de pestañas. El texto largo va en el tooltip.</comment>
   </data>
   <data name="LiveOpenHint" xml:space="preserve">
     <value>Abrir la pantalla en vivo en otra pestaña</value>

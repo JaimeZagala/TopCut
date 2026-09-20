@@ -17,17 +17,17 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 
-// La v1 es solo en espanol, pero los textos ya salen de .resx (ADR-0019) y las fechas y los
-// numeros se formatean con la cultura, no a mano. Anadir un idioma sera anadir la cultura aqui.
+// La v1 es solo en español, pero los textos ya salen de .resx (ADR-0019) y las fechas y los
+// números se formatean con la cultura, no a mano. Añadir un idioma será añadir la cultura aquí.
 builder.Services.AddLocalization();
 
-// Por defecto ASP.NET Core escapa todo lo que no sea Basic Latin, asi que "Clasificacion" salia al
-// HTML como "Clasificaci&#xF3;n": correcto pero ilegible en el fuente y mas pesado. La pagina es
-// UTF-8 y el idioma es espanol, asi que se deja pasar el Latin-1, donde viven las tildes, la ene y
+// Por defecto ASP.NET Core escapa todo lo que no sea Basic Latin, así que "Clasificación" salía al
+// HTML como "Clasificaci&#xF3;n": correcto pero ilegible en el fuente y más pesado. La página es
+// UTF-8 y el idioma es español, así que se deja pasar el Latin-1, donde viven las tildes, la ene y
 // los signos de apertura. Lo que importa (< > & " ') se sigue escapando igual.
 builder.Services.AddSingleton(HtmlEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Latin1Supplement));
 
-// La zona horaria de la tienda, para que la hora que se teclea signifique lo mismo en el portatil
+// La zona horaria de la tienda, para que la hora que se teclea signifique lo mismo en el portátil
 // de desarrollo y en un servidor que corre en UTC (ADR-0025).
 builder.Services.AddSingleton<LocalTime>();
 
@@ -66,9 +66,9 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     SupportedUICultures = [spanish]
 });
 
-// Enrutado explicito y despues de las paginas de error a proposito. Si no se pide aqui, ASP.NET lo
-// coloca al principio de la tuberia, y entonces la reejecucion de /not-found cambia la ruta cuando
-// el enrutado ya ha pasado: el navegador recibia un 404 con el cuerpo vacio.
+// Enrutado explicito y después de las páginas de error a propósito. Si no se pide aquí, ASP.NET lo
+// coloca al principio de la tuberia, y entonces la reejecución de /not-found cambia la ruta cuando
+// el enrutado ya ha pasado: el navegador recibia un 404 con el cuerpo vacío.
 app.UseRouting();
 
 app.UseAuthentication();

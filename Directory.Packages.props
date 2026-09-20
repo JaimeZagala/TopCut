@@ -1,6 +1,6 @@
 <Project>
-  <!-- Gestion centralizada de versiones de paquetes NuGet (Central Package Management).
-       Los .csproj declaran <PackageReference Include="..." /> sin Version. -->
+  <!-- Gessión centralizada de versiones de paquetes NuGet (Central Package Management).
+       Los .csproj declaran <PackageReference Include="..." /> sin Versión. -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>

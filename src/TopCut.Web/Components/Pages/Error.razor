@@ -7,8 +7,8 @@
 <MudText Typo="Typo.h1" GutterBottom="true">@Textos.ErrorTitle</MudText>
 <MudText Typo="Typo.body1" Class="mb-6">@Textos.ErrorBody</MudText>
 
-@* El identificador es lo unico tecnico que se muestra: sirve para cruzar el fallo con el log sin
-   ensenar la excepcion a quien esta usando la aplicacion. *@
+@* El identificador es lo único tecnico que se muestra: sirve para cruzar el fallo con el log sin
+   ensenar la excepcion a quien esta usando la aplicación. *@
 @if (requestId is not null)
 {
     <MudAlert Severity="Severity.Info" Class="mb-6">

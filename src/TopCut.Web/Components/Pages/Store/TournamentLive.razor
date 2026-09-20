@@ -7,7 +7,7 @@
 @inject ITournamentWatch Live
 
 @* La pantalla que se proyecta en la sala. Se repinta sola cuando pasa algo en el torneo: no hace
-   falta que nadie vuelva a este portatil a darle a recargar entre ronda y ronda (ADR-0027). *@
+   falta que nadie vuelva a este portátil a darle a recargar entre ronda y ronda (ADR-0027). *@
 
 <PageTitle>@(desk?.Name ?? Textos.LiveTitle)</PageTitle>
 
@@ -21,8 +21,8 @@ else
         <div>
             <h1>@desk.Name</h1>
             <p>
-                @* Solo la ronda que se esta jugando: con una cerrada debajo, poner su numero aqui
-                   hacia pensar que seguia en marcha. *@
+                @* Solo la ronda que se esta jugando: con una cerrada debajo, poner su número aquí
+                   hacia pensar que seguía en marcha. *@
                 @if (desk.Round is { IsOpen: true } current)
                 {
                     @string.Format(Textos.LiveRoundHeading, current.Number)
@@ -84,7 +84,7 @@ else
     }
     else if (desk.Standings.Count > 0)
     {
-        @* Entre rondas la sala quiere ver la clasificacion, no una pantalla vacia. *@
+        @* Entre rondas la sala quiere ver la clasificación, no una pantalla vacía. *@
         <h2 class="topcut-live-subheading">
             @(desk.Rounds.Count > 0
                 ? string.Format(Textos.LiveStandingsHeading, desk.Rounds.Max(round => round.Number))

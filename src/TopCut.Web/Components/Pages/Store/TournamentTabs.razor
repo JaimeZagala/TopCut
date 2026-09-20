@@ -1,8 +1,8 @@
-@* Las pestanas de un torneo. Son enlaces de verdad, no un control de pestanas: cada una es una
-   pagina con su propia direccion, asi que se puede recargar y compartir.
+@* Las pestañas de un torneo. Son enlaces de verdad, no un control de pestañas: cada una es una
+   página con su propia dirección, así que se puede recargar y compartir.
 
-   La pestana en la que ya estas **no lleva enlace**. Navegar a la direccion en la que ya estas
-   vuelve a cargar la pantalla desde la base de datos, asi que pulsar "Datos" estando en Datos
+   La pestaña en la que ya estás **no lleva enlace**. Navegar a la dirección en la que ya estás
+   vuelve a cargar la pantalla desde la base de datos, así que pulsar "Datos" estando en Datos
    descartaba en silencio lo que hubieras cambiado sin guardar. *@
 
 <MudStack Row="true" Spacing="2" Class="mb-6" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
@@ -17,8 +17,8 @@
         </MudButton>
     }
 
-    @* Abre en otra pestana, asi que no es una de estas: se distingue con el contorno en gris, sin
-       competir por color con la pestana activa ni con las acciones. *@
+    @* Abre en otra pestaña, así que no es una de estas: se distingue con el contorno en gris, sin
+       competir por color con la pestaña activa ni con las acciones. *@
     <MudButton Href="@($"/tienda/torneos/{TournamentId}/en-vivo")"
                Target="_blank"
                StartIcon="@Icons.Material.Filled.Cast"
@@ -30,8 +30,8 @@
 
     <MudSpacer />
 
-    @* Anclada al otro extremo, lo mas lejos posible de la navegacion: es la unica accion de aqui
-       que no tiene vuelta atras. Pide confirmacion igualmente. *@
+    @* Anclada al otro extremo, lo más lejos posible de la navegacion: es la única accion de aquí
+       que no tiene vuelta atrás. Pide confirmación igualmente. *@
     @if (CanCancel)
     {
         <MudButton StartIcon="@Icons.Material.Filled.Cancel"

@@ -3,9 +3,9 @@
 
 <Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(NotFound)">
     <Found Context="routeData">
-        @* AuthorizeRouteView en vez de RouteView: una pagina con [Authorize] que no se cumple
-           manda a la pantalla de acceso si no hay sesion, y explica el porque si la hay. Sin
-           esto, Blazor renderiza la pagina vacia y parece que la aplicacion se ha roto. *@
+        @* AuthorizeRouteView en vez de RouteView: una página con [Authorize] que no se cumple
+           manda a la pantalla de acceso si no hay sesión, y explica el porque si la hay. Sin
+           esto, Blazor renderiza la página vacía y parece que la aplicación se ha roto. *@
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
             <NotAuthorized Context="authentication">
                 @if (authentication.User.Identity?.IsAuthenticated is true)
