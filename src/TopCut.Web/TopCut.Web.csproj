@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\TopCut.Application\TopCut.Application.csproj" />
@@ -8,6 +8,21 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
+    <PackageReference Include="MudBlazor" />
+  </ItemGroup>
+
+  <!-- MSBuild genera la clase fuertemente tipada a partir del .resx en cada compilacion
+       (ADR-0019). No hay archivo .Designer.cs en el repositorio que se pueda desincronizar,
+       y una clave mal escrita es un error de compilacion, no una cadena rara en pantalla. -->
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Textos.resx">
+      <Generator></Generator>
+      <StronglyTypedFileName>$(IntermediateOutputPath)Textos.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>TopCut.Web.Resources</StronglyTypedNamespace>
+      <StronglyTypedClassName>Textos</StronglyTypedClassName>
+      <PublicClass>true</PublicClass>
+    </EmbeddedResource>
   </ItemGroup>
 
   <PropertyGroup>

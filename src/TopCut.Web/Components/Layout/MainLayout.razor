@@ -1,23 +1,40 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@* Cascara publica. Se renderiza tambien en SSR estatico (portada, acceso, registro, y la busqueda
+   publica del hito 5), asi que aqui no hay nada que dependa de un circuito abierto: ni cajon
+   lateral que se abra, ni menus desplegables. La gestion de la tienda usa StoreLayout. *@
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<MudThemeProvider Theme="TopCutTheme.Default" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-        <article class="content px-4">
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudLink Href="/" Color="Color.Inherit" Underline="Underline.None" Typo="Typo.h6">
+            @Textos.AppName
+        </MudLink>
+        <MudText Typo="Typo.caption" Class="ml-3 d-none d-md-flex">@Textos.AppTagline</MudText>
+        <MudSpacer />
+        <AccountBar />
+    </MudAppBar>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="my-8">
             @Body
-        </article>
-    </main>
-</div>
+        </MudContainer>
+
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="my-8">
+            <MudDivider Class="mb-3" />
+            <MudStack Row="true" Spacing="4" Justify="Justify.Center">
+                <MudLink Href="/privacidad" Typo="Typo.caption">@Textos.NavPrivacy</MudLink>
+            </MudStack>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
+    @Textos.ErrorTitle
+    <a href="." class="reload">@Textos.BackHome</a>
     <span class="dismiss">🗙</span>
 </div>

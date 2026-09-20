@@ -1,0 +1,18 @@
+@* Tarjeta de las tres de la portada. Existe para no repetir el mismo bloque tres veces. *@
+
+<MudPaper Class="pa-5 h-100" Elevation="0" Outlined="true">
+    <MudIcon Icon="@Icon" Color="Color.Primary" Size="Size.Large" Class="mb-3" />
+    <MudText Typo="Typo.h4" GutterBottom="true">@Title</MudText>
+    <MudText Typo="Typo.body2">@Body</MudText>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Icon { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Body { get; set; } = string.Empty;
+}

@@ -1,0 +1,49 @@
+@inherits LayoutComponentBase
+
+@* Cascara de gestion. Solo la usan paginas interactivas (InteractiveServer), asi que aqui si hay
+   cajon lateral que se abre y se cierra, dialogos y avisos emergentes. Un layout hereda el modo
+   de render de la pagina que lo usa: separar las dos cascaras es lo que evita pintar botones que
+   en SSR estatico no harian nada. *@
+
+<MudThemeProvider Theme="TopCutTheme.Default" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       aria-label="@Textos.NavMenuToggle"
+                       OnClick="@(() => drawerOpen = !drawerOpen)" />
+        <MudLink Href="/" Color="Color.Inherit" Underline="Underline.None" Typo="Typo.h6">
+            @Textos.AppName
+        </MudLink>
+        <MudSpacer />
+        <AccountBar />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="drawerOpen"
+               Elevation="1"
+               ClipMode="DrawerClipMode.Always"
+               Variant="DrawerVariant.Responsive">
+        <StoreNav />
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="my-6">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+<div id="blazor-error-ui" data-nosnippet>
+    @Textos.ErrorTitle
+    <a href="." class="reload">@Textos.BackHome</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private bool drawerOpen = true;
+}

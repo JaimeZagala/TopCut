@@ -1,0 +1,44 @@
+@* Lado derecho de la barra superior. Todo son enlaces y un formulario normal: esta pieza aparece
+   tambien en paginas de SSR estatico, donde no hay circuito y un menu desplegable no se abriria. *@
+
+<AuthorizeView Policy="@TopCutPolicies.CanOrganize">
+    <MudButton Href="/tienda"
+               Color="Color.Inherit"
+               StartIcon="@Icons.Material.Filled.Storefront"
+               Class="ml-2">
+        @Textos.NavStore
+    </MudButton>
+</AuthorizeView>
+
+<AuthorizeView>
+    <Authorized>
+        <MudText Typo="Typo.body2" Class="mx-3 d-none d-sm-flex" title="@Textos.NavUserMenu">
+            @DisplayNameOf(context)
+        </MudText>
+        <form method="post" action="/cuenta/salir">
+            <AntiforgeryToken />
+            <MudButton ButtonType="ButtonType.Submit"
+                       Color="Color.Inherit"
+                       StartIcon="@Icons.Material.Filled.Logout">
+                @Textos.NavSignOut
+            </MudButton>
+        </form>
+    </Authorized>
+    <NotAuthorized>
+        <MudButton Href="/cuenta/acceso" Color="Color.Inherit">@Textos.NavSignIn</MudButton>
+        <MudButton Href="/cuenta/registro"
+                   Variant="Variant.Outlined"
+                   Color="Color.Inherit"
+                   Class="ml-2 d-none d-sm-flex">
+            @Textos.NavSignUp
+        </MudButton>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    // El nombre para emparejamientos, que es como el jugador se reconoce; el email solo si falta.
+    private static string DisplayNameOf(AuthenticationState authentication) =>
+        authentication.User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value
+        ?? authentication.User.Identity?.Name
+        ?? string.Empty;
+}

@@ -16,11 +16,16 @@ namespace TopCut.Api;
 public static class DependencyInjection
 {
     /// <summary>
-    /// Both schemes are accepted everywhere: the Blazor UI arrives with a session cookie and the
-    /// future Android app with a bearer token, and neither should need its own set of policies.
+    /// The named policies belong to the browser, so they authenticate with the session cookie and
+    /// nothing else (ADR-0020). External clients arrive by bearer token and every API endpoint says
+    /// so explicitly (ADR-0013), which keeps each door to exactly one key.
+    /// <para>
+    /// Listing both schemes on one policy looked tidier but was not: a rejected page challenged
+    /// both handlers, and the answer came back as a 401 <i>with</i> a redirect header attached,
+    /// which no browser can do anything sensible with.
+    /// </para>
     /// </summary>
-    private static readonly string[] BothSchemes =
-        [IdentityConstants.ApplicationScheme, IdentityConstants.BearerScheme];
+    private static readonly string[] BrowserScheme = [IdentityConstants.ApplicationScheme];
 
     public static IServiceCollection AddTopCutApi(this IServiceCollection services, IConfiguration configuration)
     {
@@ -34,22 +39,30 @@ public static class DependencyInjection
             options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
         });
 
-        authentication.AddIdentityCookies();
+        // Where the cookie handler sends someone who is missing a session or a permission. Without
+        // this it would aim at the ASP.NET template's own /Account/Login, which does not exist here.
+        authentication.AddIdentityCookies(cookies => cookies.ApplicationCookie?.Configure(options =>
+        {
+            options.LoginPath = "/cuenta/acceso";
+            options.AccessDeniedPath = "/sin-permiso";
+            options.ReturnUrlParameter = "volver";
+        }));
+
         authentication.AddBearerToken(IdentityConstants.BearerScheme);
         authentication.AddGoogleIfConfigured(configuration);
 
         services.AddAuthorizationBuilder()
-            .SetDefaultPolicy(new AuthorizationPolicyBuilder(BothSchemes)
+            .SetDefaultPolicy(new AuthorizationPolicyBuilder(BrowserScheme)
                 .RequireAuthenticatedUser()
                 .Build())
             .AddPolicy(TopCutPolicies.IsSuperadmin, policy => policy
-                .AddAuthenticationSchemes(BothSchemes)
+                .AddAuthenticationSchemes(BrowserScheme)
                 .RequireRole(TopCutRoles.Superadmin))
             .AddPolicy(TopCutPolicies.IsPlayer, policy => policy
-                .AddAuthenticationSchemes(BothSchemes)
+                .AddAuthenticationSchemes(BrowserScheme)
                 .RequireRole(TopCutRoles.Player))
             .AddPolicy(TopCutPolicies.CanOrganize, policy => policy
-                .AddAuthenticationSchemes(BothSchemes)
+                .AddAuthenticationSchemes(BrowserScheme)
                 .AddRequirements(new ApprovedStoreRequirement()));
 
         services.AddProblemDetails();

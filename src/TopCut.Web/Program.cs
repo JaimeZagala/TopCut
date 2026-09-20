@@ -1,3 +1,6 @@
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
+using MudBlazor.Services;
 using TopCut.Api;
 using TopCut.Infrastructure;
 using TopCut.Infrastructure.Persistence;
@@ -8,6 +11,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddMudServices();
+
+// La v1 es solo en espanol, pero los textos ya salen de .resx (ADR-0019) y las fechas y los
+// numeros se formatean con la cultura, no a mano. Anadir un idioma sera anadir la cultura aqui.
+builder.Services.AddLocalization();
 
 var connectionString = builder.Configuration.GetConnectionString("TopCut")
     ?? throw new InvalidOperationException("Falta la cadena de conexion 'TopCut'.");
@@ -35,6 +44,19 @@ app.UseWhen(
     context => !context.Request.Path.StartsWithSegments("/api"),
     branch => branch.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true));
 app.UseHttpsRedirection();
+
+var spanish = new CultureInfo("es-ES");
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(spanish, spanish),
+    SupportedCultures = [spanish],
+    SupportedUICultures = [spanish]
+});
+
+// Enrutado explicito y despues de las paginas de error a proposito. Si no se pide aqui, ASP.NET lo
+// coloca al principio de la tuberia, y entonces la reejecucion de /not-found cambia la ruta cuando
+// el enrutado ya ha pasado: el navegador recibia un 404 con el cuerpo vacio.
+app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();

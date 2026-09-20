@@ -1,0 +1,13 @@
+@page "/sin-permiso"
+@attribute [ExcludeFromInteractiveRouting]
+@layout MainLayout
+
+@* Tambien se renderiza desde Routes.razor cuando una pagina con [Authorize] rechaza a alguien que
+   si tiene sesion: mejor decirlo que dejar la pagina en blanco. *@
+
+<PageTitle>@Textos.AccessDeniedTitle - @Textos.AppName</PageTitle>
+
+<MudText Typo="Typo.h1" GutterBottom="true">@Textos.AccessDeniedTitle</MudText>
+<MudText Typo="Typo.body1" Class="mb-6">@Textos.AccessDeniedBody</MudText>
+
+<MudButton Href="/" Variant="Variant.Filled" Color="Color.Primary">@Textos.BackHome</MudButton>

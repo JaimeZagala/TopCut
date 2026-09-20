@@ -1,42 +1,53 @@
 @page "/cuenta/google/alta"
+@attribute [ExcludeFromInteractiveRouting]
 @using System.ComponentModel.DataAnnotations
-@using TopCut.Application.Abstractions
 @inject IExternalSignInService External
 @inject NavigationManager Navigation
 
-@* Google verified who they are, but it cannot accept the data-protection notice on their behalf,
-   so the account is not created until this form is submitted. *@
+@* Google ha verificado quien es, pero no puede aceptar el aviso de proteccion de datos en su
+   nombre, asi que la cuenta no se crea hasta que se envia este formulario. *@
 
-<PageTitle>Completar el alta - TopCut</PageTitle>
+<PageTitle>@Textos.GoogleSignUpTitle - @Textos.AppName</PageTitle>
 
-<h1>Ya casi esta</h1>
+<MudPaper Class="pa-8 mx-auto" MaxWidth="460px" Elevation="0" Outlined="true">
+    <MudText Typo="Typo.h1" GutterBottom="true">@Textos.GoogleSignUpTitle</MudText>
+    <MudText Typo="Typo.body1" Class="mb-6">@Textos.GoogleSignUpIntro</MudText>
 
-<p>Has entrado con Google. Solo faltan dos cosas para crear tu cuenta.</p>
+    @if (error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4" role="alert">
+            <MudText Typo="Typo.body2">@error</MudText>
+        </MudAlert>
+    }
 
-@if (error is not null)
-{
-    <p class="errores" role="alert">@error</p>
-}
+    <EditForm Model="Input!" FormName="alta-google" OnValidSubmit="CompleteAsync" method="post">
+        <DataAnnotationsValidator />
 
-<EditForm Model="Input!" FormName="alta-google" OnValidSubmit="CompleteAsync" method="post">
-    <DataAnnotationsValidator />
+        <SsrTextField Name="Input.DisplayName"
+                      Label="@Textos.FieldDisplayName"
+                      Value="@Input!.DisplayName"
+                      For="() => Input!.DisplayName"
+                      Autocomplete="nickname" />
 
-    <p>
-        <label for="displayName">Nombre para los emparejamientos</label>
-        <InputText id="displayName" @bind-Value="Input!.DisplayName" autocomplete="nickname" />
-        <ValidationMessage For="() => Input!.DisplayName" />
-    </p>
+        <div class="mt-4">
+            <SsrCheckBox @bind-Value="Input!.ConsentAccepted" For="() => Input!.ConsentAccepted">
+                @Textos.SignUpConsent
+            </SsrCheckBox>
+            <MudText Typo="Typo.caption">
+                @Textos.SignUpConsentDetail
+                <MudLink Href="/privacidad" Target="_blank" Typo="Typo.caption">@Textos.PrivacyLink</MudLink>
+            </MudText>
+        </div>
 
-    <p>
-        <label>
-            <InputCheckbox @bind-Value="Input!.ConsentAccepted" />
-            He leido y acepto el <a href="/privacidad" target="_blank">aviso de proteccion de datos</a>.
-        </label>
-        <ValidationMessage For="() => Input!.ConsentAccepted" />
-    </p>
-
-    <button type="submit">Crear cuenta</button>
-</EditForm>
+        <MudButton ButtonType="ButtonType.Submit"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   FullWidth="true"
+                   Class="mt-6">
+            @Textos.SignUpSubmit
+        </MudButton>
+    </EditForm>
+</MudPaper>
 
 @code {
     private string? error;
@@ -63,11 +74,11 @@
 
     private sealed class GoogleSignUpModel
     {
-        [Required(ErrorMessage = "Indica el nombre con el que quieres aparecer.")]
-        [StringLength(200, MinimumLength = 2, ErrorMessage = "El nombre debe tener entre 2 y 200 caracteres.")]
+        [Required(ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationDisplayNameRequired))]
+        [StringLength(200, MinimumLength = 2, ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationDisplayNameLength))]
         public string DisplayName { get; set; } = string.Empty;
 
-        [Range(typeof(bool), "true", "true", ErrorMessage = "Hay que aceptar el aviso de proteccion de datos.")]
+        [Range(typeof(bool), "true", "true", ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationConsentRequired))]
         public bool ConsentAccepted { get; set; }
     }
 }

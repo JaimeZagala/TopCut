@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using TopCut.Application.Abstractions;
 using TopCut.Domain.Tenancy;
 using TopCut.Infrastructure.Persistence;
@@ -47,12 +48,26 @@ public sealed class SignInService(SignInManager<TopCutUser> signInManager) : ISi
     }
 }
 
-public sealed class StoreDirectory(TopCutDbContext db) : IStoreDirectory
+/// <summary>
+/// Reads store approval on its own <see cref="TopCutDbContext"/>, in a scope of its own.
+/// <para>
+/// It cannot borrow the request's context: the authorization policy runs from every
+/// <c>AuthorizeView</c> on the page as well as from the endpoint, Blazor renders those in parallel,
+/// and a DbContext used by two of them at once throws "a second operation was started on this
+/// context instance". The query is a single indexed read, so a short-lived context is cheap.
+/// </para>
+/// </summary>
+public sealed class StoreDirectory(IServiceScopeFactory scopes) : IStoreDirectory
 {
-    public Task<bool> IsApprovedAsync(Guid storeId, CancellationToken cancellationToken = default) =>
+    public async Task<bool> IsApprovedAsync(Guid storeId, CancellationToken cancellationToken = default)
+    {
+        using var scope = scopes.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TopCutDbContext>();
+
         // Crosses the tenant boundary on purpose: this is the check that decides the tenant's own
         // permissions, so it cannot depend on the filter it is about to enable (ADR-0011).
-        db.Stores
+        return await db.Stores
             .IgnoreQueryFilters()
             .AnyAsync(store => store.Id == storeId && store.Status == StoreStatus.Approved, cancellationToken);
+    }
 }

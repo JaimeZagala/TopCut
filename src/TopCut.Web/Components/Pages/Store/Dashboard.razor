@@ -1,0 +1,14 @@
+@page "/tienda"
+@layout StoreLayout
+@attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
+
+@* Primera pagina de la zona de gestion. La politica no mira solo el rol: comprueba contra la base
+   de datos que la tienda sigue aprobada, asi que revocarla cierra esta pantalla en la peticion
+   siguiente y no cuando caduque la cookie. *@
+
+<PageTitle>@Textos.StoreDashboardTitle - @Textos.AppName</PageTitle>
+
+<MudText Typo="Typo.h1" GutterBottom="true">@Textos.StoreDashboardTitle</MudText>
+<MudText Typo="Typo.body1" Class="mb-6">@Textos.StoreDashboardIntro</MudText>
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined">@Textos.StoreTournamentsSoon</MudAlert>

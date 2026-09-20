@@ -1,61 +1,75 @@
 @page "/cuenta/registro"
+@attribute [ExcludeFromInteractiveRouting]
 @using System.ComponentModel.DataAnnotations
-@using TopCut.Application.Abstractions
 @inject IAccountService Accounts
 @inject ISignInService SignIn
 @inject NavigationManager Navigation
 
-@* Static SSR on purpose: a form post carries no interactive circuit, and signing in needs the
-   HttpContext that only a plain request has. The MudBlazor restyle lands in milestone 3. *@
+@* SSR estatico a proposito: el alta es un envio de formulario normal, y entrar justo despues
+   necesita el HttpContext que solo existe en una peticion de verdad. Los campos no usan
+   @@bind-Value porque en SSR estatico no hay eventos: el valor llega en el POST y el enlace de
+   formulario del servidor lo escribe en el modelo. *@
 
-<PageTitle>Crear cuenta - TopCut</PageTitle>
+<PageTitle>@Textos.SignUpTitle - @Textos.AppName</PageTitle>
 
-<h1>Crear cuenta</h1>
+<MudPaper Class="pa-8 mx-auto" MaxWidth="460px" Elevation="0" Outlined="true">
+    <MudText Typo="Typo.h1" GutterBottom="true">@Textos.SignUpTitle</MudText>
 
-@if (errors.Count > 0)
-{
-    <ul class="errores" role="alert">
-        @foreach (var error in errors)
-        {
-            <li>@error</li>
-        }
-    </ul>
-}
+    @if (errors.Count > 0)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4" role="alert">
+            <MudText Typo="Typo.body2">@string.Join(" ", errors)</MudText>
+        </MudAlert>
+    }
 
-<EditForm Model="Input!" FormName="registro" OnValidSubmit="RegisterAsync" method="post">
-    <DataAnnotationsValidator />
+    <EditForm Model="Input!" FormName="registro" OnValidSubmit="RegisterAsync" method="post">
+        <DataAnnotationsValidator />
 
-    <p>
-        <label for="displayName">Nombre para los emparejamientos</label>
-        <InputText id="displayName" @bind-Value="Input!.DisplayName" autocomplete="nickname" />
-        <ValidationMessage For="() => Input!.DisplayName" />
-    </p>
+        <SsrTextField Name="Input.DisplayName"
+                      Label="@Textos.FieldDisplayName"
+                      Value="@Input!.DisplayName"
+                      For="() => Input!.DisplayName"
+                      Autocomplete="nickname" />
 
-    <p>
-        <label for="email">Email</label>
-        <InputText id="email" type="email" @bind-Value="Input!.Email" autocomplete="username" />
-        <ValidationMessage For="() => Input!.Email" />
-    </p>
+        <SsrTextField Name="Input.Email"
+                      Label="@Textos.FieldEmail"
+                      Value="@Input!.Email"
+                      For="() => Input!.Email"
+                      InputType="InputType.Email"
+                      Autocomplete="username"
+                      Class="mt-4" />
 
-    <p>
-        <label for="password">Contrasena</label>
-        <InputText id="password" type="password" @bind-Value="Input!.Password" autocomplete="new-password" />
-        <ValidationMessage For="() => Input!.Password" />
-    </p>
+        <SsrTextField Name="Input.Password"
+                      Label="@Textos.FieldPassword"
+                      Value="@Input!.Password"
+                      For="() => Input!.Password"
+                      InputType="InputType.Password"
+                      Autocomplete="new-password"
+                      Class="mt-4" />
 
-    <p>
-        <label>
-            <InputCheckbox @bind-Value="Input!.ConsentAccepted" />
-            He leido y acepto el <a href="/privacidad" target="_blank">aviso de proteccion de datos</a>:
-            guardamos tu email y tu historial de torneos para organizar los eventos.
-        </label>
-        <ValidationMessage For="() => Input!.ConsentAccepted" />
-    </p>
+        <div class="mt-4">
+            <SsrCheckBox @bind-Value="Input!.ConsentAccepted" For="() => Input!.ConsentAccepted">
+                @Textos.SignUpConsent
+            </SsrCheckBox>
+            <MudText Typo="Typo.caption">
+                @Textos.SignUpConsentDetail
+                <MudLink Href="/privacidad" Target="_blank" Typo="Typo.caption">@Textos.PrivacyLink</MudLink>
+            </MudText>
+        </div>
 
-    <button type="submit">Crear cuenta</button>
-</EditForm>
+        <MudButton ButtonType="ButtonType.Submit"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   FullWidth="true"
+                   Class="mt-6">
+            @Textos.SignUpSubmit
+        </MudButton>
+    </EditForm>
 
-<p>Ya tienes cuenta? <a href="/cuenta/acceso">Entra</a>.</p>
+    <MudText Typo="Typo.body2" Class="mt-6">
+        @Textos.SignUpHaveAccount <MudLink Href="/cuenta/acceso">@Textos.NavSignIn</MudLink>
+    </MudText>
+</MudPaper>
 
 @code {
     private readonly List<string> errors = [];
@@ -85,19 +99,19 @@
 
     private sealed class RegisterModel
     {
-        [Required(ErrorMessage = "Indica el nombre con el que quieres aparecer.")]
-        [StringLength(200, MinimumLength = 2, ErrorMessage = "El nombre debe tener entre 2 y 200 caracteres.")]
+        [Required(ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationDisplayNameRequired))]
+        [StringLength(200, MinimumLength = 2, ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationDisplayNameLength))]
         public string DisplayName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Indica tu email.")]
-        [EmailAddress(ErrorMessage = "Ese email no parece valido.")]
+        [Required(ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationEmailRequired))]
+        [EmailAddress(ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationEmailInvalid))]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Indica una contrasena.")]
-        [StringLength(100, MinimumLength = 8, ErrorMessage = "La contrasena necesita al menos 8 caracteres.")]
+        [Required(ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationPasswordRequired))]
+        [StringLength(100, MinimumLength = 8, ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationPasswordLength))]
         public string Password { get; set; } = string.Empty;
 
-        [Range(typeof(bool), "true", "true", ErrorMessage = "Hay que aceptar el aviso de proteccion de datos.")]
+        [Range(typeof(bool), "true", "true", ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationConsentRequired))]
         public bool ConsentAccepted { get; set; }
     }
 }

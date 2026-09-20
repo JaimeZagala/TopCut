@@ -1,0 +1,33 @@
+@using System.Linq.Expressions
+
+@* Casilla para formularios de SSR estatico, y la unica pieza del formulario que no es de MudBlazor.
+
+   Motivo: una casilla HTML sin atributo `value` envia la cadena "on" al marcarse, y el enlace de
+   formulario de Blazor no la acepta para un booleano ("The value 'on' is not valid"). MudBlazor no
+   deja poner ese `value` — el atributo choca con su propio parametro Value — mientras que el
+   InputCheckbox de Blazor ya dibuja lo que el servidor espera leer.
+
+   Aqui se nota porque la casilla es la que da el consentimiento de proteccion de datos: si no
+   llegara, el alta se rechazaria siempre. Va estilada con `accent-color` para que use el color de
+   la aplicacion. *@
+
+<label class="ssr-check">
+    <InputCheckbox Value="Value" ValueChanged="ValueChanged" ValueExpression="For" />
+    <span>@ChildContent</span>
+</label>
+
+<ValidationMessage TValue="bool" For="For" />
+
+@code {
+    [Parameter]
+    public bool Value { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> ValueChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public Expression<Func<bool>> For { get; set; } = null!;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

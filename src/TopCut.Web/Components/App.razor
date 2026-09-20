@@ -1,23 +1,51 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+@using Microsoft.AspNetCore.Components.Endpoints
+
+<!DOCTYPE html>
+<html lang="es">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <ResourcePreloader />
-    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+    @* MudBlazor trae su propia hoja de estilos; no se carga ninguna fuente externa a proposito
+       (ver TopCutTheme). Bootstrap se retiro al entrar MudBlazor en el hito 3. *@
+    <link rel="stylesheet" href="@Assets["_content/MudBlazor/MudBlazor.min.css"]" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["TopCut.Web.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+    <HeadOutlet @rendermode="PageRenderMode" />
 </head>
 
 <body>
-    <Routes />
+    <Routes @rendermode="PageRenderMode" />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="@Assets["_content/MudBlazor/MudBlazor.min.js"]"></script>
 </body>
 
 </html>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    /// <summary>
+    /// Interactividad global, salvo en las paginas que se excluyen con
+    /// <c>[ExcludeFromInteractiveRouting]</c>, que se sirven en SSR estatico.
+    /// <para>
+    /// Hace falta que sea global porque un <b>layout</b> no hereda el modo de render de su pagina:
+    /// si la interactividad se declara pagina a pagina, la pagina es interactiva pero su cascara no,
+    /// y el boton del cajon lateral se queda pintado sin hacer nada.
+    /// </para>
+    /// <para>
+    /// Las paginas publicas y las de cuenta se excluyen: las de cuenta porque entrar necesita el
+    /// <c>HttpContext</c> de una peticion de verdad, y las publicas para no abrir un circuito de
+    /// SignalR por cada visita anonima, que en el nivel gratuito de Azure SignalR son ~20
+    /// conexiones simultaneas en total.
+    /// </para>
+    /// </summary>
+    private IComponentRenderMode? PageRenderMode =>
+        HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
+}

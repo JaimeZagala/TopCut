@@ -1,5 +1,10 @@
-﻿@page "/not-found"
+@page "/not-found"
+@attribute [ExcludeFromInteractiveRouting]
 @layout MainLayout
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+<PageTitle>@Textos.NotFoundTitle - @Textos.AppName</PageTitle>
+
+<MudText Typo="Typo.h1" GutterBottom="true">@Textos.NotFoundTitle</MudText>
+<MudText Typo="Typo.body1" Class="mb-6">@Textos.NotFoundBody</MudText>
+
+<MudButton Href="/" Variant="Variant.Filled" Color="Color.Primary">@Textos.BackHome</MudButton>

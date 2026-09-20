@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Textos de interfaz en espanol (ADR-0019). El codigo esta en ingles (ADR-0008), asi que las
+    claves tambien. MSBuild genera la clase `TopCut.Web.Resources.Textos` a partir de este archivo
+    en cada compilacion: una clave mal escrita es un error de compilacion, no una cadena rara en
+    pantalla. Anadir un idioma sera anadir `Textos.<cultura>.resx` al lado, sin tocar las vistas.
+  -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Marca y navegacion -->
+  <data name="AppName" xml:space="preserve">
+    <value>TopCut</value>
+  </data>
+  <data name="AppTagline" xml:space="preserve">
+    <value>Torneos de TCG bien llevados</value>
+  </data>
+  <data name="NavHome" xml:space="preserve">
+    <value>Inicio</value>
+  </data>
+  <data name="NavStore" xml:space="preserve">
+    <value>Mi tienda</value>
+  </data>
+  <data name="NavSignIn" xml:space="preserve">
+    <value>Entrar</value>
+  </data>
+  <data name="NavSignUp" xml:space="preserve">
+    <value>Crear cuenta</value>
+  </data>
+  <data name="NavSignOut" xml:space="preserve">
+    <value>Salir</value>
+  </data>
+  <data name="NavPrivacy" xml:space="preserve">
+    <value>Proteccion de datos</value>
+  </data>
+  <data name="NavMenuToggle" xml:space="preserve">
+    <value>Abrir el menu de navegacion</value>
+    <comment>Etiqueta accesible del boton que abre el panel lateral.</comment>
+  </data>
+  <data name="NavUserMenu" xml:space="preserve">
+    <value>Mi cuenta</value>
+  </data>
+
+  <!-- Portada -->
+  <data name="HomeTitle" xml:space="preserve">
+    <value>Torneos de TCG, sin hojas de calculo</value>
+  </data>
+  <data name="HomeIntro" xml:space="preserve">
+    <value>TopCut se encarga de la parte tediosa de un torneo: emparejamientos suizos, desempates oficiales y clasificacion al dia. Tu te encargas de la tienda.</value>
+  </data>
+  <data name="HomePlayersTitle" xml:space="preserve">
+    <value>Si juegas</value>
+  </data>
+  <data name="HomePlayersBody" xml:space="preserve">
+    <value>Busca torneos, apuntate y consulta tu clasificacion desde el movil.</value>
+  </data>
+  <data name="HomeStoresTitle" xml:space="preserve">
+    <value>Si organizas</value>
+  </data>
+  <data name="HomeStoresBody" xml:space="preserve">
+    <value>Crea el torneo, lanza las rondas y corrige resultados sin salir de una pantalla.</value>
+  </data>
+  <data name="HomeRulesTitle" xml:space="preserve">
+    <value>Reglas de verdad</value>
+  </data>
+  <data name="HomeRulesBody" xml:space="preserve">
+    <value>Magic y One Piece con sus puntos, sus desempates y su tabla de rondas oficiales.</value>
+  </data>
+
+  <!-- Campos compartidos -->
+  <data name="FieldDisplayName" xml:space="preserve">
+    <value>Nombre para los emparejamientos</value>
+  </data>
+  <data name="FieldEmail" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="FieldPassword" xml:space="preserve">
+    <value>Contrasena</value>
+  </data>
+
+  <!-- Registro -->
+  <data name="SignUpTitle" xml:space="preserve">
+    <value>Crear cuenta</value>
+  </data>
+  <data name="SignUpSubmit" xml:space="preserve">
+    <value>Crear cuenta</value>
+  </data>
+  <data name="SignUpConsent" xml:space="preserve">
+    <value>He leido y acepto el aviso de proteccion de datos.</value>
+  </data>
+  <data name="SignUpConsentDetail" xml:space="preserve">
+    <value>Guardamos tu email y tu historial de torneos para poder organizar los eventos.</value>
+  </data>
+  <data name="SignUpHaveAccount" xml:space="preserve">
+    <value>Ya tienes cuenta?</value>
+  </data>
+
+  <!-- Acceso -->
+  <data name="SignInTitle" xml:space="preserve">
+    <value>Entrar</value>
+  </data>
+  <data name="SignInSubmit" xml:space="preserve">
+    <value>Entrar</value>
+  </data>
+  <data name="SignInRemember" xml:space="preserve">
+    <value>No cerrar sesion</value>
+  </data>
+  <data name="SignInWithGoogle" xml:space="preserve">
+    <value>Entrar con Google</value>
+  </data>
+  <data name="SignInNoAccount" xml:space="preserve">
+    <value>No tienes cuenta?</value>
+  </data>
+  <data name="SignInGoogleFailed" xml:space="preserve">
+    <value>No hemos podido completar la entrada con Google. Intentalo otra vez.</value>
+  </data>
+
+  <!-- Alta con Google -->
+  <data name="GoogleSignUpTitle" xml:space="preserve">
+    <value>Ya casi esta</value>
+  </data>
+  <data name="GoogleSignUpIntro" xml:space="preserve">
+    <value>Has entrado con Google. Solo faltan dos cosas para crear tu cuenta.</value>
+  </data>
+
+  <!-- Proteccion de datos -->
+  <data name="PrivacyTitle" xml:space="preserve">
+    <value>Aviso de proteccion de datos</value>
+  </data>
+  <data name="PrivacyLink" xml:space="preserve">
+    <value>aviso de proteccion de datos</value>
+    <comment>Texto del enlace dentro de una frase, en minuscula.</comment>
+  </data>
+  <data name="PrivacyVersion" xml:space="preserve">
+    <value>Version {0}</value>
+    <comment>{0} es la version del aviso, por ejemplo 2026-09-20.</comment>
+  </data>
+
+  <!-- Panel de la tienda -->
+  <data name="StoreDashboardTitle" xml:space="preserve">
+    <value>Panel de la tienda</value>
+  </data>
+  <data name="StoreDashboardIntro" xml:space="preserve">
+    <value>Desde aqui se crean y se llevan los torneos.</value>
+  </data>
+  <data name="StoreTournamentsSoon" xml:space="preserve">
+    <value>La gestion de torneos llega en el siguiente tramo del hito 3.</value>
+  </data>
+
+  <!-- Errores -->
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Algo ha fallado</value>
+  </data>
+  <data name="ErrorBody" xml:space="preserve">
+    <value>Se ha producido un error al procesar tu peticion. Si vuelve a pasar, avisa a la tienda.</value>
+  </data>
+  <data name="ErrorRequestId" xml:space="preserve">
+    <value>Identificador de la peticion: {0}</value>
+    <comment>{0} es el identificador tecnico de la peticion.</comment>
+  </data>
+  <data name="NotFoundTitle" xml:space="preserve">
+    <value>Aqui no hay nada</value>
+  </data>
+  <data name="NotFoundBody" xml:space="preserve">
+    <value>La pagina que buscabas no existe o ha cambiado de sitio.</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>No tienes permiso</value>
+  </data>
+  <data name="AccessDeniedBody" xml:space="preserve">
+    <value>Tu cuenta no puede ver esta pagina. Si crees que deberia, habla con la tienda o con el administrador de la plataforma.</value>
+  </data>
+  <data name="BackHome" xml:space="preserve">
+    <value>Volver al inicio</value>
+  </data>
+
+  <!-- Validacion: se referencian desde los atributos de DataAnnotations -->
+  <data name="ValidationDisplayNameRequired" xml:space="preserve">
+    <value>Indica el nombre con el que quieres aparecer.</value>
+  </data>
+  <data name="ValidationDisplayNameLength" xml:space="preserve">
+    <value>El nombre debe tener entre 2 y 200 caracteres.</value>
+  </data>
+  <data name="ValidationEmailRequired" xml:space="preserve">
+    <value>Indica tu email.</value>
+  </data>
+  <data name="ValidationEmailInvalid" xml:space="preserve">
+    <value>Ese email no parece valido.</value>
+  </data>
+  <data name="ValidationPasswordRequired" xml:space="preserve">
+    <value>Indica una contrasena.</value>
+  </data>
+  <data name="ValidationPasswordLength" xml:space="preserve">
+    <value>La contrasena necesita al menos 8 caracteres.</value>
+  </data>
+  <data name="ValidationConsentRequired" xml:space="preserve">
+    <value>Hay que aceptar el aviso de proteccion de datos.</value>
+  </data>
+</root>

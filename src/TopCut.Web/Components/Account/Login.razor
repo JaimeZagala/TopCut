@@ -1,65 +1,100 @@
 @page "/cuenta/acceso"
+@attribute [ExcludeFromInteractiveRouting]
 @using System.ComponentModel.DataAnnotations
 @using TopCut.Api
-@using TopCut.Application.Abstractions
 @inject ISignInService SignIn
 @inject IConfiguration Configuration
 @inject NavigationManager Navigation
 
-<PageTitle>Entrar - TopCut</PageTitle>
+<PageTitle>@Textos.SignInTitle - @Textos.AppName</PageTitle>
 
-<h1>Entrar</h1>
+<MudPaper Class="pa-8 mx-auto" MaxWidth="460px" Elevation="0" Outlined="true">
+    <MudText Typo="Typo.h1" GutterBottom="true">@Textos.SignInTitle</MudText>
 
-@if (error is not null)
-{
-    <p class="errores" role="alert">@error</p>
-}
+    @if (error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4" role="alert">
+            <MudText Typo="Typo.body2">@error</MudText>
+        </MudAlert>
+    }
 
-<EditForm Model="Input!" FormName="acceso" OnValidSubmit="SignInAsync" method="post">
-    <DataAnnotationsValidator />
+    <EditForm Model="Input!" FormName="acceso" OnValidSubmit="SignInAsync" method="post">
+        <DataAnnotationsValidator />
 
-    <p>
-        <label for="email">Email</label>
-        <InputText id="email" type="email" @bind-Value="Input!.Email" autocomplete="username" />
-        <ValidationMessage For="() => Input!.Email" />
-    </p>
+        <SsrTextField Name="Input.Email"
+                      Label="@Textos.FieldEmail"
+                      Value="@Input!.Email"
+                      For="() => Input!.Email"
+                      InputType="InputType.Email"
+                      Autocomplete="username" />
 
-    <p>
-        <label for="password">Contrasena</label>
-        <InputText id="password" type="password" @bind-Value="Input!.Password" autocomplete="current-password" />
-        <ValidationMessage For="() => Input!.Password" />
-    </p>
+        <SsrTextField Name="Input.Password"
+                      Label="@Textos.FieldPassword"
+                      Value="@Input!.Password"
+                      For="() => Input!.Password"
+                      InputType="InputType.Password"
+                      Autocomplete="current-password"
+                      Class="mt-4" />
 
-    <p>
-        <label><InputCheckbox @bind-Value="Input!.RememberMe" /> No cerrar sesion</label>
-    </p>
+        <div class="mt-4">
+            <SsrCheckBox @bind-Value="Input!.RememberMe" For="() => Input!.RememberMe">
+                @Textos.SignInRemember
+            </SsrCheckBox>
+        </div>
 
-    <button type="submit">Entrar</button>
-</EditForm>
+        <MudButton ButtonType="ButtonType.Submit"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   FullWidth="true"
+                   Class="mt-4">
+            @Textos.SignInSubmit
+        </MudButton>
+    </EditForm>
 
-@if (googleAvailable)
-{
-    <form action="/cuenta/google" method="post">
-        <AntiforgeryToken />
-        <button type="submit">Entrar con Google</button>
-    </form>
-}
+    @if (googleAvailable)
+    {
+        <MudDivider Class="my-6" />
+        <form method="post" action="/cuenta/google">
+            <AntiforgeryToken />
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       FullWidth="true">
+                @Textos.SignInWithGoogle
+            </MudButton>
+        </form>
+    }
 
-<p>No tienes cuenta? <a href="/cuenta/registro">Registrate</a>.</p>
+    <MudText Typo="Typo.body2" Class="mt-6">
+        @Textos.SignInNoAccount <MudLink Href="/cuenta/registro">@Textos.NavSignUp</MudLink>
+    </MudText>
+</MudPaper>
 
 @code {
     private string? error;
     private bool googleAvailable;
 
+    /// <summary>Where to go back to after signing in, set by RedirectToSignIn.</summary>
+    [SupplyParameterFromQuery(Name = "volver")]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    private string? ExternalError { get; set; }
+
     [SupplyParameterFromForm]
     private LoginModel? Input { get; set; }
 
-    // The button only shows when credentials are configured, so the application runs fine before
-    // the Google Cloud project exists.
+    // The Google button only shows when credentials are configured, so the application runs fine
+    // before the Google Cloud project exists.
     protected override void OnInitialized()
     {
         Input ??= new();
         googleAvailable = DependencyInjection.IsGoogleConfigured(Configuration);
+
+        if (ExternalError is not null)
+        {
+            error = Textos.SignInGoogleFailed;
+        }
     }
 
     private async Task SignInAsync()
@@ -74,16 +109,29 @@
             return;
         }
 
-        Navigation.NavigateTo("/", forceLoad: true);
+        Navigation.NavigateTo(SafeReturnUrl(), forceLoad: true);
     }
+
+    /// <summary>
+    /// Only ever returns a path inside this site. Redirecting to whatever arrives in the query
+    /// string would let a phishing link bounce someone off to another host right after they typed
+    /// their password here.
+    /// </summary>
+    private string SafeReturnUrl() =>
+        ReturnUrl is not null
+        && ReturnUrl.StartsWith('/')
+        && !ReturnUrl.StartsWith("//", StringComparison.Ordinal)
+        && !ReturnUrl.StartsWith("/\\", StringComparison.Ordinal)
+            ? ReturnUrl
+            : "/";
 
     private sealed class LoginModel
     {
-        [Required(ErrorMessage = "Indica tu email.")]
-        [EmailAddress(ErrorMessage = "Ese email no parece valido.")]
+        [Required(ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationEmailRequired))]
+        [EmailAddress(ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationEmailInvalid))]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Indica tu contrasena.")]
+        [Required(ErrorMessageResourceType = typeof(Textos), ErrorMessageResourceName = nameof(Textos.ValidationPasswordRequired))]
         public string Password { get; set; } = string.Empty;
 
         public bool RememberMe { get; set; }

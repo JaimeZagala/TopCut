@@ -95,10 +95,50 @@ una tienda.
 *Criterio de cierre alcanzado*: torneos completos simulados con campos pares e impares, con bajas,
 con y sin top cut, verificando emparejamientos y clasificacion.
 
-### Hito 3 — UI de gestion de torneo (tienda) ⬜
+### Hito 3 — UI de gestion de torneo (tienda) 🔨
 
-MudBlazor, layout base, textos en `.resx`. CRUD de torneos, alta manual de participantes, lanzar
-rondas, ver y corregir resultados. Todavia sin tiempo real.
+Partido en cuatro tramos para que cada uno sea revisable por separado.
+
+#### 3a — Cascara, tema y textos ✅
+
+- ✅ **MudBlazor 9** con un tema unico (`Theme/TopCutTheme.cs`), paleta clara y oscura, y la pila de
+  fuentes del sistema: **ninguna fuente externa**, para no enviar la IP de cada visitante a un CDN
+  en la misma aplicacion que muestra un aviso de proteccion de datos
+- ✅ Fuera Bootstrap y lo que quedaba de la plantilla (contador, previsión del tiempo)
+- ✅ **Dos cascaras**: `MainLayout` (publica) y `StoreLayout` (gestion, con cajon lateral)
+- ✅ **Interactividad global con paginas excluidas** (ADR-0020): las publicas y las de cuenta se
+  sirven en SSR estatico, de modo que leer la portada no gasta una de las ~20 conexiones del nivel
+  gratuito de Azure SignalR
+- ✅ **Textos de interfaz en `.resx`** con clase generada por MSBuild (ADR-0019): una clave mal
+  escrita es un error de compilacion, no una cadena rara en pantalla
+- ✅ Registro, acceso, alta con Google y aviso de privacidad **reestilados**, con los campos de
+  formulario preparados para SSR estatico (ADR-0021)
+- ✅ Paginas de error, no encontrado y sin permiso, ahora si con contenido: la reejecucion de
+  `/not-found` devolvia un 404 vacio porque el enrutado se resolvia antes
+- ✅ **Politicas solo por cookie** (ADR-0022) y destinos de redireccion propios; el destino de vuelta
+  tras entrar se valida para que no apunte fuera del sitio
+- ✅ Corregido un fallo real que aparecio al abrir la primera pantalla de gestion: la comprobacion de
+  tienda aprobada compartia el `DbContext` de la peticion y reventaba al evaluarse dos veces a la
+  vez (ADR-0023)
+- ✅ **17 pruebas nuevas**: 4 que fijan como se renderizan los campos de MudBlazor sin base de datos
+  y 13 que recorren la aplicacion real por HTTP (alta desde el formulario, consentimiento rechazado,
+  redirecciones, permisos y que cada pagina abra o no circuito)
+
+#### 3b — CRUD de torneos ⬜
+
+Listado de torneos de la tienda, crear y editar, publicar. La pantalla de crear llega con las
+rondas y el top cut **ya puestos** segun la asistencia esperada (ADR-0018), y la tienda los cambia
+si quiere. Aqui hay que resolver el acceso a datos desde componentes interactivos sin compartir el
+`DbContext` de la peticion (ADR-0023).
+
+#### 3c — Participantes ⬜
+
+Alta manual de jugadores sin cuenta, renombrar, dar de baja, y la lista de espera a la vista.
+
+#### 3d — Mesa de control del torneo ⬜
+
+Lanzar rondas, ver emparejamientos, registrar y corregir resultados, clasificacion en vivo y cerrar
+el torneo. Todavia sin tiempo real: eso es el hito 4.
 
 ### Hito 4 — Tiempo real: pantalla en vivo y cronometro ⬜
 

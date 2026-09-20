@@ -436,3 +436,118 @@ formula universal**: cada TCG publica su propia tabla, y no coinciden.
   de por partidas.
 - **Migracion**: el seed rellena la tabla en los rulesets que ya existan y esten vacios, pero nunca
   pisa una que el Superadmin haya ajustado.
+
+---
+
+## ADR-0019 — Los textos de interfaz salen de un `.resx` con clase generada en la compilacion
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo, afecta a las vistas
+
+El brief pide que los textos visibles vivan en archivos de recursos desde el principio aunque la v1
+sea solo en espanol. Se usa **`Resources/Textos.resx`** y se accede como `@Textos.HomeTitle`.
+
+- **Alternativa descartada**: `IStringLocalizer<T>` con claves en cadena (`L["HomeTitle"]`), que es
+  lo idiomatico en ASP.NET Core. Se descarta porque una clave mal escrita no falla: pinta la propia
+  clave en pantalla y nadie se entera hasta que lo ve un usuario.
+- **Alternativa descartada**: `.Designer.cs` generado por Visual Studio y versionado. Se descarta
+  porque solo se regenera desde el IDE, y este proyecto se edita tambien desde la linea de comandos:
+  el archivo acabaria desincronizado del `.resx`.
+- **Decision**: la clase la genera **MSBuild** en cada compilacion, con los metadatos
+  `StronglyTypedFileName` / `StronglyTypedClassName` del `EmbeddedResource`. Sale a `obj/`, no se
+  versiona, y **una clave mal escrita es un error de compilacion**.
+- **Que no va al `.resx`**: el texto del aviso de proteccion de datos. Es contenido legal versionado
+  (`PrivacyNotice.CurrentVersion`), no rotulo de interfaz; traducirlo seria un acto juridico con su
+  propia version, no un cambio de cadena.
+- **Anadir un idioma** sera anadir `Textos.<cultura>.resx` al lado y la cultura en `Program.cs`, sin
+  tocar ninguna vista.
+
+---
+
+## ADR-0020 — Interactividad global de Blazor, con las paginas publicas excluidas
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: medio, define como se sirve cada pagina
+
+`arquitectura.md` describia interactividad **pagina a pagina**: SSR estatico en lo publico,
+`InteractiveServer` en la gestion. Al montar la cascara resulto que eso **no puede funcionar**: un
+*layout* no hereda el modo de render de su pagina. Con `@rendermode` en la pagina, la pagina es
+interactiva pero su cascara no, y el boton que abre el cajon lateral queda pintado sin hacer nada.
+
+- **Decision**: interactividad **global** (`<Routes @rendermode="...">`), y las paginas que deben
+  servirse estaticas lo dicen con `@attribute [ExcludeFromInteractiveRouting]`. `App.razor` consulta
+  `HttpContext.AcceptsInteractiveRouting()` y pasa `null` como modo en esas peticiones.
+- **Que se excluye y por que**:
+  - *Registro, acceso y alta con Google*: entrar escribe la cookie de sesion, y eso necesita el
+    `HttpContext` de una peticion de verdad, que no existe dentro de un circuito.
+  - *Portada, aviso de privacidad, error y pagina no encontrada*: para **no abrir un circuito de
+    SignalR por cada visita anonima**. El nivel gratuito de Azure SignalR son unas 20 conexiones
+    simultaneas en total; gastarlas en gente leyendo la portada dejaria sin sitio a los jugadores
+    de un torneo en curso. La busqueda publica del hito 5 se excluira por lo mismo.
+- **Dos cascaras**: `MainLayout` (publica, barra superior y poco mas) y `StoreLayout` (gestion, con
+  cajon lateral, dialogos y avisos emergentes). Estan separadas porque la publica se pinta tambien
+  sin interactividad, y ahi un cajon que se abre no tendria quien lo abriera.
+- **Hay dos pruebas** que fijan esto: las paginas publicas no traen marca de isla interactiva en el
+  HTML, y `/tienda` si.
+
+---
+
+## ADR-0021 — Los formularios de SSR estatico llevan `name` y `Text` a mano, y la casilla es de Blazor
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo, tres formularios
+
+En SSR estatico no hay circuito: el navegador envia el formulario y el servidor lo reconstruye a
+partir del atributo `name` de cada campo. Los campos de MudBlazor no son los `InputText` de Blazor,
+asi que no lo ponen solos.
+
+- **Campos de texto**: `MudTextField` con `name="Input.Email"` **y** `Text` con el valor. El `name`
+  es por donde entra el dato; `Text` es lo unico que hace que se dibuje el atributo `value`, y sin
+  el un error de validacion devolveria el formulario con todo borrado.
+- **Casillas**: se usa el `InputCheckbox` de **Blazor**, no `MudCheckBox`. Una casilla HTML sin
+  atributo `value` envia la cadena `"on"` al marcarse, y el enlace de formulario de Blazor no la
+  acepta para un booleano (*"The value 'on' is not valid"*). MudBlazor no deja poner ese `value`
+  porque el atributo choca con su propio parametro `Value`. Importa porque esa casilla es la del
+  consentimiento de proteccion de datos: si no llegase, el alta se rechazaria siempre.
+- Las dos cosas estan encapsuladas en `SsrTextField` y `SsrCheckBox`, y **fijadas con pruebas** que
+  renderizan los componentes sin base de datos, para que una version futura de MudBlazor que deje de
+  reenviar el atributo rompa una prueba en vez de romper el registro en silencio.
+
+---
+
+## ADR-0022 — Las politicas nombradas se autentican solo con la cookie
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo · **Amplia**: ADR-0013
+
+`CanOrganize`, `IsSuperadmin`, `IsPlayer` y la politica por defecto aceptaban **cookie y Bearer**.
+Al proteger la primera pagina se vio el problema: cuando se rechaza el acceso, ASP.NET lanza el
+*challenge* de **todos** los esquemas de la politica. El de la cookie escribe una redireccion y el
+de Bearer un 401, y la respuesta salia con **las dos cosas a la vez**, que no es nada que un
+navegador sepa interpretar.
+
+- **Decision**: las politicas nombradas declaran solo `IdentityConstants.ApplicationScheme`. Los
+  endpoints de la API ya declaraban Bearer explicitamente uno a uno (ADR-0013), asi que la regla
+  queda uniforme: **cada puerta acepta una sola llave**.
+- Se configura ademas adonde manda la cookie a quien no pasa: `/cuenta/acceso` si le falta sesion
+  (con el parametro `volver`) y `/sin-permiso` si le falta permiso. Por defecto apuntaba a
+  `/Account/Login`, que es de la plantilla de ASP.NET y aqui no existe.
+- La pagina de acceso **solo acepta destinos dentro del sitio**: un enlace de phishing podria poner
+  cualquier cosa en `volver`, y rebotar a otro dominio justo despues de teclear la contrasena es
+  precisamente lo que se busca al montar uno.
+
+---
+
+## ADR-0023 — La comprobacion de tienda aprobada consulta en su propio ambito
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo, pero sienta precedente
+
+`StoreDirectory` usaba el `TopCutDbContext` de la peticion. La primera pagina de gestion reventaba
+al abrirse: *"a second operation was started on this context instance"*. La politica `CanOrganize`
+la evaluan a la vez el endpoint y el `AuthorizeView` de la barra superior, Blazor los renderiza en
+paralelo, y un `DbContext` **no admite dos operaciones simultaneas**.
+
+- **Decision**: `StoreDirectory` abre su propio ambito de DI y su propio `DbContext` por consulta.
+  Es una lectura unica por indice, asi que sale barato.
+- **Alternativa descartada**: cachear la respuesta en la peticion. No arregla la carrera (dos
+  comprobaciones simultaneas empiezan antes de que ninguna cachee) y ademas pierde lo que da valor a
+  ADR-0011: que revocar una tienda surta efecto en la peticion siguiente.
+- **Precedente para el hito 3b**: cualquier componente interactivo que consulte datos tiene el mismo
+  problema. Si varios componentes de una pantalla van a leer a la vez, el acceso a datos tendra que
+  dejar de compartir el contexto de la peticion (`IDbContextFactory` o un ambito por operacion).

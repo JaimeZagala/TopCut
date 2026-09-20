@@ -1,39 +1,47 @@
 @page "/privacidad"
+@attribute [ExcludeFromInteractiveRouting]
 
-<PageTitle>Proteccion de datos - TopCut</PageTitle>
+@* El texto del aviso no va en el .resx (ADR-0019): es contenido legal versionado, no rotulo de
+   interfaz. Traducirlo seria un acto juridico, no un cambio de cadena, y tendria su propia
+   version. Lo que si sale de recursos son los rotulos que lo rodean. *@
 
-<h1>Aviso de proteccion de datos</h1>
+<PageTitle>@Textos.PrivacyTitle - @Textos.AppName</PageTitle>
 
-<p>
-    Version <strong>@TopCutPolicies_Version</strong>. Este es el texto que aceptas al registrarte.
-</p>
+<MudText Typo="Typo.h1" GutterBottom="true">@Textos.PrivacyTitle</MudText>
 
-<h2>Que datos guardamos</h2>
+<MudChip T="string" Color="Color.Default" Size="Size.Small" Class="mb-6">
+    @string.Format(Textos.PrivacyVersion, PrivacyNoticeVersion)
+</MudChip>
+
+<MudText Typo="Typo.body1" Class="mb-6">Este es el texto que aceptas al registrarte.</MudText>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Que datos guardamos</MudText>
 <ul>
     <li>Tu <strong>correo electronico</strong>, para identificarte y poder darte acceso a tu cuenta.</li>
     <li>El <strong>nombre</strong> con el que quieres aparecer en emparejamientos y clasificaciones.</li>
     <li>Tu <strong>historial de torneos</strong>: en cuales te has inscrito, contra quien jugaste y que resultados hubo.</li>
 </ul>
 
-<h2>Para que los usamos</h2>
+<MudText Typo="Typo.h3" GutterBottom="true" Class="mt-6">Para que los usamos</MudText>
 <ul>
     <li>Organizar los torneos: emparejarte, calcular la clasificacion y mostrar los resultados.</li>
     <li>Que puedas consultar tu propio historial y tu puesto en las ligas activas.</li>
 </ul>
 
-<h2>Quien los ve</h2>
-<p>
+<MudText Typo="Typo.h3" GutterBottom="true" Class="mt-6">Quien los ve</MudText>
+<MudText Typo="Typo.body1">
     La tienda que organiza cada torneo en el que participas, y el resto de jugadores de ese torneo,
     que veran tu nombre y tus resultados en los emparejamientos y la clasificacion publica.
     No cedemos tus datos a nadie mas ni los usamos para publicidad.
-</p>
+</MudText>
 
-<h2>Tus derechos</h2>
-<p>
+<MudText Typo="Typo.h3" GutterBottom="true" Class="mt-6">Tus derechos</MudText>
+<MudText Typo="Typo.body1">
     Puedes pedir que te mostremos, corrijamos o borremos tus datos escribiendo a la tienda
     organizadora o al responsable de la plataforma.
-</p>
+</MudText>
 
 @code {
-    private const string TopCutPolicies_Version = TopCut.Application.Abstractions.PrivacyNotice.CurrentVersion;
+    // Nombre completo: este componente tambien se llama PrivacyNotice.
+    private const string PrivacyNoticeVersion = TopCut.Application.Abstractions.PrivacyNotice.CurrentVersion;
 }

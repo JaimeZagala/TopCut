@@ -1,6 +1,6 @@
 # Arquitectura
 
-> Ultima actualizacion: 2026-09-20 (hito 1b)
+> Ultima actualizacion: 2026-09-20 (hito 3a)
 
 ## Stack
 
@@ -63,13 +63,23 @@ adelante seria anadir un host minimo que referencie la misma biblioteca.
 
 ## Modos de renderizado de Blazor
 
+La interactividad es **global** y las paginas que deben servirse estaticas se excluyen una a una con
+`[ExcludeFromInteractiveRouting]` (ADR-0020). Al reves no se puede: un *layout* no hereda el modo de
+render de su pagina, asi que con interactividad pagina a pagina la cascara se queda muerta.
+
 | Pantalla | Modo | Motivo |
 |---|---|---|
-| Listado y busqueda publica de torneos | SSR estatico | Rapido, indexable, sin sesion ni circuito SignalR |
+| Portada, aviso de privacidad, errores | SSR estatico | No gastan una conexion de SignalR en alguien que solo lee |
+| Registro, acceso, alta con Google | SSR estatico | Entrar escribe la cookie, y eso necesita el `HttpContext` de una peticion real |
+| Busqueda publica de torneos (hito 5) | SSR estatico | Rapido, indexable, sin sesion ni circuito |
 | Gestion de torneo, pantalla en vivo, inscripcion | `InteractiveServer` | Necesitan interactividad y tiempo real |
 
-La plantilla se genero con `--interactivity Server` **sin** `--all-interactive`, de forma que el
-modo interactivo se activa pagina a pagina.
+Dos cascaras: `MainLayout` (publica, sin nada que dependa de un circuito abierto) y `StoreLayout`
+(gestion, con cajon lateral, dialogos y avisos emergentes).
+
+Los formularios de las pantallas estaticas necesitan que cada campo lleve su `name` para que el
+servidor los recoja del POST; con MudBlazor eso hay que ponerlo a mano (ADR-0021), y esta
+encapsulado en `SsrTextField` y `SsrCheckBox`.
 
 ## Tiempo real
 
@@ -106,11 +116,22 @@ filtro porque una tienda *es* el tenant.
 - **Login social**: proveedor externo de Google.
 - Los tres roles (Superadmin, Tienda, Jugador) son roles de Identity combinados con politicas de
   autorizacion.
+- **Cada puerta acepta una sola llave** (ADR-0013 y ADR-0022): las politicas nombradas que usan las
+  paginas se autentican solo con la cookie, y los endpoints `/api/v1/*` solo con Bearer. Una
+  politica que aceptase las dos responderia a un acceso denegado con una redireccion y un 401 a la
+  vez.
+- Quien no tiene sesion acaba en `/cuenta/acceso?volver=...` y quien no tiene permiso en
+  `/sin-permiso`. El destino de vuelta se valida: solo rutas dentro del sitio.
 
 ## Concurrencia
 
-Control de concurrencia **optimista** (columna `RowVersion` de EF Core) en las operaciones
-sensibles a condiciones de carrera:
+Dos cosas distintas con el mismo nombre. La primera, **no compartir un `DbContext` entre
+operaciones simultaneas**: Blazor renderiza varios componentes en paralelo y un contexto no admite
+dos consultas a la vez. La comprobacion de tienda aprobada ya abre su propio ambito por consulta
+(ADR-0023), y el acceso a datos de las pantallas interactivas tendra que hacer lo mismo.
+
+La segunda, control de concurrencia **optimista** (columna `RowVersion` de EF Core) en las
+operaciones sensibles a condiciones de carrera:
 
 - Reportar el resultado de una partida.
 - Ocupar la ultima plaza de un torneo.
@@ -143,6 +164,11 @@ El contenido de la v1 es **solo en espanol**, pero los textos de interfaz van en
 recursos **`.resx`** desde el principio, para que internacionalizar mas adelante sea configurar un
 idioma mas y no reescribir vistas. Por eso `InvariantGlobalization` esta desactivado en
 [`Directory.Build.props`](../Directory.Build.props).
+
+En concreto: `src/TopCut.Web/Resources/Textos.resx`, del que **MSBuild genera una clase fuertemente
+tipada en cada compilacion** (ADR-0019), asi que se escribe `@Textos.HomeTitle` y una clave mal
+escrita no compila. Anadir un idioma sera anadir `Textos.<cultura>.resx` al lado y la cultura en
+`Program.cs`. El aviso de proteccion de datos **no** esta ahi: es contenido legal versionado.
 
 ## Infraestructura y despliegue (gratuito)
 
@@ -206,9 +232,14 @@ busquedas publicas — en lugar de duplicar infraestructura.
 
 ## UI
 
-**MudBlazor** como libreria principal de componentes: es la mas usada en Blazor (mas ejemplos y
-documentacion), sigue Material Design con estetica coherente sin necesitar disenador, funciona
-igual en Blazor Server y en Blazor Hybrid (.NET MAUI), y es gratuita y de codigo abierto.
+**MudBlazor** (version 9) como libreria principal de componentes: es la mas usada en Blazor (mas
+ejemplos y documentacion), sigue Material Design con estetica coherente sin necesitar disenador,
+funciona igual en Blazor Server y en Blazor Hybrid (.NET MAUI), y es gratuita y de codigo abierto.
+
+El tema esta en `Theme/TopCutTheme.cs`, uno solo para toda la aplicacion, con paleta clara y oscura.
+**No se carga ninguna fuente externa**: una tipografia servida desde un CDN enviaria la IP de cada
+visitante a un tercero al cargar la pagina, lo cual queda raro en la misma aplicacion que ensena un
+aviso de proteccion de datos. Se usa la pila de fuentes del sistema.
 
 Alternativa anotada: **Radzen Blazor** (140+ componentes, tambien compatible con MAUI Blazor
 Hybrid) si en algun momento hacen falta tablas de datos muy densas, por ejemplo en el panel de
