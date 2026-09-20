@@ -73,43 +73,37 @@ public sealed class TournamentService(ITournamentRepository tournaments, TimePro
     /// The current table, including results already in from the round in progress. Empty when the
     /// tournament does not exist or belongs to another store.
     /// </summary>
-    public async Task<IReadOnlyList<Standing>> GetStandingsAsync(
+    public Task<IReadOnlyList<Standing>> GetStandingsAsync(
         Guid tournamentId,
-        CancellationToken cancellationToken = default)
-    {
-        var tournament = await tournaments.FindAsync(tournamentId, cancellationToken);
-        return tournament is null ? [] : StandingsCalculator.For(tournament);
-    }
+        CancellationToken cancellationToken = default) =>
+        tournaments.ReadAsync<IReadOnlyList<Standing>>(
+            tournamentId,
+            StandingsCalculator.For,
+            whenMissing: [],
+            cancellationToken);
 
     /// <summary>Whether there is another round to launch, so the live screen can offer the button.</summary>
-    public async Task<bool> HasNextRoundAsync(Guid tournamentId, CancellationToken cancellationToken = default)
-    {
-        var tournament = await tournaments.FindAsync(tournamentId, cancellationToken);
-        return tournament is not null && TournamentEngine.HasNextRound(tournament);
-    }
+    public Task<bool> HasNextRoundAsync(Guid tournamentId, CancellationToken cancellationToken = default) =>
+        tournaments.ReadAsync(
+            tournamentId,
+            TournamentEngine.HasNextRound,
+            whenMissing: false,
+            cancellationToken);
 
-    private async Task<OperationResult> Mutate(
+    private Task<OperationResult> Mutate(
         Guid tournamentId,
         Action<Tournament> change,
-        CancellationToken cancellationToken)
-    {
-        var tournament = await tournaments.FindAsync(tournamentId, cancellationToken);
-
-        if (tournament is null)
+        CancellationToken cancellationToken) =>
+        tournaments.ExecuteAsync(tournamentId, tournament =>
         {
-            return OperationResult.Fail("No existe ese torneo.");
-        }
-
-        try
-        {
-            change(tournament);
-        }
-        catch (DomainException error)
-        {
-            return OperationResult.Fail(error.Message);
-        }
-
-        await tournaments.SaveChangesAsync(cancellationToken);
-        return OperationResult.Ok();
-    }
+            try
+            {
+                change(tournament);
+                return OperationResult.Ok();
+            }
+            catch (DomainException error)
+            {
+                return OperationResult.Fail(error.Message);
+            }
+        }, cancellationToken);
 }

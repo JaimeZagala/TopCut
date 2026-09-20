@@ -551,3 +551,72 @@ paralelo, y un `DbContext` **no admite dos operaciones simultaneas**.
 - **Precedente para el hito 3b**: cualquier componente interactivo que consulte datos tiene el mismo
   problema. Si varios componentes de una pantalla van a leer a la vez, el acceso a datos tendra que
   dejar de compartir el contexto de la peticion (`IDbContextFactory` o un ambito por operacion).
+
+---
+
+## ADR-0024 — La tienda en contexto tambien se fija desde el circuito de Blazor
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: medio · **Amplia**: ADR-0011
+
+`ITenantContext` sacaba la tienda del claim del usuario **leyendo el `HttpContext`**. Eso vale para
+una peticion HTTP, pero una pagina interactiva vive dentro de un circuito de SignalR y **ahi no hay
+`HttpContext`**. Combinado con que el filtro de tenant falla cerrado, el resultado habria sido el
+peor posible: la tienda abre su lista de torneos y la ve **vacia**, sin ningun error.
+
+- **Decision**: `TenantContext` mantiene el camino HTTP y anade `ITenantScope.Set(...)`.
+  `StoreLayout` —la cascara por la que pasan todas las pantallas de gestion— la fija una vez, leida
+  del **mismo claim** que lee el camino HTTP. El layout se renderiza entero antes que la pagina que
+  lleva dentro, asi que el ambito esta puesto antes de la primera consulta.
+- **Alternativa descartada**: leer `AuthenticationStateProvider` dentro del `ITenantContext`. Es
+  asincrono y el filtro de consulta de EF Core lo necesita sincrono; bloquear sobre una tarea dentro
+  de un circuito es pedir un interbloqueo.
+- **Alternativa descartada**: un `CircuitHandler`. Es el gancho del framework, pero el estado de
+  autenticacion no esta garantizado al abrirse el circuito, y depender de ese orden es fragil.
+- **Alternativa descartada**: pasar el id de tienda como parametro en cada caso de uso. Explicito,
+  pero renuncia al ambito implicito que hace que **no se pueda olvidar** un filtro, que es el motivo
+  entero del ADR-0011.
+- **No amplia el acceso de nadie**: el valor sale del principal ya autenticado, las paginas estan
+  detras de `[Authorize(CanOrganize)]`, y si nadie lo fija el filtro sigue fallando cerrado.
+
+---
+
+## ADR-0025 — La hora que teclea la tienda se interpreta en una zona horaria configurada
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo, una clase y una clave de configuracion
+
+El formulario de torneo pide fecha y hora; el dominio guarda un `DateTimeOffset`. Convertir con la
+zona horaria **de la maquina** habria funcionado en el portatil (Madrid) y habria fallado en
+produccion: App Service corre en **UTC**, asi que el mismo "18:00" tecleado en el mismo formulario
+habria significado dos instantes distintos y el torneo habria empezado dos horas tarde.
+
+- **Decision**: `LocalTime` convierte en ambos sentidos usando una zona **de configuracion**
+  (`TopCut:TimeZone`), con `Europe/Madrid` por defecto, que es donde esta la tienda de la v1.
+- **Alternativa descartada**: pedir la zona al navegador por JS. Es lo correcto cuando hay usuarios
+  repartidos por el mundo; para una tienda local anade una llamada a JavaScript y un caso de fallo a
+  cambio de nada.
+- **Alternativa descartada**: guardar y mostrar todo en UTC. Obligaria al organizador a hacer la
+  resta mentalmente cada vez que programa un torneo.
+- Cuando haya tiendas en varias zonas, lo natural sera que la zona sea un campo de la tienda en vez
+  de configuracion global. El cambio afecta a una clase.
+
+---
+
+## ADR-0026 — Lecturas y escrituras separadas: proyecciones para las listas, agregado para los cambios
+
+**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: medio, define como consultan las pantallas
+
+El repositorio carga el agregado **entero** (participantes, rondas, emparejamientos y partidas)
+porque emparejar y clasificar lo necesitan. Pintar una lista de treinta torneos con eso seria traer
+media base de datos para mostrar una fecha y un contador.
+
+- **Decision**: dos caminos.
+  - `ITournamentRepository` para **cambiar**: carga el agregado, aplica la operacion y guarda **solo
+    si sale bien**, todo en una unidad de trabajo con su propia conexion. Una regla rota a mitad no
+    deja rastro, ni siquiera de lo que se aplico antes de romperse.
+  - `ITournamentQueries` e `ITcgCatalog` para **leer**: proyecciones sin seguimiento, con los
+    contadores calculados por SQL Server.
+- Ninguno de los dos usa `IgnoreQueryFilters`, asi que el aislamiento entre tiendas sigue siendo del
+  filtro y no de que alguien se acuerde de anadir un `Where`.
+- **Guardar es atomico por pantalla**: la pantalla de edicion manda datos y reglas en **una** sola
+  llamada. Partido en cuatro, un torneo podria quedarse con las plazas nuevas y la duracion de ronda
+  vieja porque la tercera llamada fue rechazada.

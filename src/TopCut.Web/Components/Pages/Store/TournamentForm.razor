@@ -1,0 +1,264 @@
+@* El formulario de torneo, uno solo para crear y para editar: son los mismos campos y las mismas
+   reglas, y tenerlos por duplicado seria garantizar que se separen. *@
+
+<EditForm Model="Model" OnValidSubmit="OnSubmit">
+    <DataAnnotationsValidator />
+
+    @if (Locked)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-6">@Textos.LockedNotice</MudAlert>
+    }
+
+    <MudPaper Class="pa-6 mb-4" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.h4" GutterBottom="true">@Textos.SectionBasics</MudText>
+
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="6">
+                <MudSelect T="int"
+                           Value="Model.TcgId"
+                           ValueChanged="ChangeGame"
+                           Label="@Textos.FieldGame"
+                           Variant="Variant.Outlined"
+                           Disabled="@(Locked || GameLocked)">
+                    @foreach (var game in Games)
+                    {
+                        <MudSelectItem T="int" Value="game.Id">@game.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                <ValidationMessage For="() => Model.TcgId" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="Model.Name"
+                              Label="@Textos.FieldTournamentName"
+                              Variant="Variant.Outlined"
+                              Disabled="Locked" />
+                <ValidationMessage For="() => Model.Name" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudDatePicker @bind-Date="Model.Date"
+                               Label="@Textos.FieldDate"
+                               Variant="Variant.Outlined"
+                               Disabled="Locked" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTimePicker @bind-Time="Model.Time"
+                               Label="@Textos.FieldTime"
+                               Variant="Variant.Outlined"
+                               Disabled="Locked" />
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-6 mb-4" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.h4" GutterBottom="true">@Textos.SectionStructure</MudText>
+
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="4">
+                <MudNumericField T="int"
+                                 Value="Model.Capacity"
+                                 ValueChanged="ChangeCapacity"
+                                 Label="@Textos.FieldCapacity"
+                                 Variant="Variant.Outlined"
+                                 Min="2"
+                                 Max="5000"
+                                 Disabled="Locked" />
+                <ValidationMessage For="() => Model.Capacity" />
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudNumericField @bind-Value="Model.SwissRounds"
+                                 Label="@Textos.FieldSwissRounds"
+                                 Variant="Variant.Outlined"
+                                 Min="1"
+                                 Max="20"
+                                 Disabled="Locked" />
+                <ValidationMessage For="() => Model.SwissRounds" />
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudSelect T="int?"
+                           @bind-Value="Model.TopCutSize"
+                           Label="@Textos.FieldTopCut"
+                           Variant="Variant.Outlined"
+                           Disabled="Locked">
+                    <MudSelectItem T="int?" Value="@((int?)null)">@Textos.TopCutNone</MudSelectItem>
+                    @foreach (var size in CutSizes)
+                    {
+                        <MudSelectItem T="int?" Value="@((int?)size)">@string.Format(Textos.TopCutOf, size)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+
+        @if (!Locked && SelectedGame is { } game && game.RecommendationFor(Model.Capacity) is { } band)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-4" Dense="true">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                    <div>
+                        <MudText Typo="Typo.body2">
+                            @string.Format(
+                                Textos.RecommendationFor,
+                                Model.Capacity,
+                                game.Name,
+                                band.SwissRounds,
+                                Labels.TopCut(band.TopCutSize))
+                        </MudText>
+                        <MudText Typo="Typo.caption">@Textos.RecommendationWhy</MudText>
+                    </div>
+                    <MudSpacer />
+                    @if (band.SwissRounds != Model.SwissRounds || band.TopCutSize != Model.TopCutSize)
+                    {
+                        <MudButton Size="Size.Small" Color="Color.Primary" OnClick="ApplyRecommendation">
+                            @Textos.RecommendationApply
+                        </MudButton>
+                    }
+                </MudStack>
+            </MudAlert>
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-6 mb-4" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.h4" GutterBottom="true">@Textos.SectionVenue</MudText>
+
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="Model.Street" Label="@Textos.FieldStreet" Variant="Variant.Outlined" Disabled="Locked" />
+                <ValidationMessage For="() => Model.Street" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="Model.City" Label="@Textos.FieldCity" Variant="Variant.Outlined" Disabled="Locked" />
+                <ValidationMessage For="() => Model.City" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="Model.Province" Label="@Textos.FieldProvince" Variant="Variant.Outlined" Disabled="Locked" />
+                <ValidationMessage For="() => Model.Province" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="Model.PostalCode" Label="@Textos.FieldPostalCode" Variant="Variant.Outlined" Disabled="Locked" />
+                <ValidationMessage For="() => Model.PostalCode" />
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-6 mb-6" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.h4">@Textos.SectionRules</MudText>
+        <MudText Typo="Typo.caption" Class="d-block mb-4">@Textos.RulesAreACopy</MudText>
+
+        <MudText Typo="Typo.subtitle2" Class="mt-2">@Textos.FieldSwissPhase</MudText>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="4">
+                <MudSelect T="MatchFormat" @bind-Value="Model.SwissFormat" Label="@Textos.FieldMatchFormat" Variant="Variant.Outlined" Disabled="Locked">
+                    @foreach (var format in Formats)
+                    {
+                        <MudSelectItem T="MatchFormat" Value="format">@Labels.For(format)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6" sm="4">
+                <MudNumericField @bind-Value="Model.SwissMinutes" Label="@Textos.FieldRoundLength" Variant="Variant.Outlined" Min="5" Max="240" Disabled="Locked" />
+                <ValidationMessage For="() => Model.SwissMinutes" />
+            </MudItem>
+            <MudItem xs="6" sm="4">
+                <MudNumericField @bind-Value="Model.SwissExtraMinutes" Label="@Textos.FieldExtraTime" Variant="Variant.Outlined" Min="0" Max="60" Disabled="Locked" />
+                <ValidationMessage For="() => Model.SwissExtraMinutes" />
+            </MudItem>
+        </MudGrid>
+
+        @if (Model.TopCutSize is not null)
+        {
+            <MudText Typo="Typo.subtitle2" Class="mt-5">@Textos.FieldTopCutPhase</MudText>
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="MatchFormat" @bind-Value="Model.TopCutFormat" Label="@Textos.FieldMatchFormat" Variant="Variant.Outlined" Disabled="Locked">
+                        @foreach (var format in Formats)
+                        {
+                            <MudSelectItem T="MatchFormat" Value="format">@Labels.For(format)</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="6" sm="4">
+                    <MudNumericField @bind-Value="Model.TopCutMinutes" Label="@Textos.FieldRoundLength" Variant="Variant.Outlined" Min="5" Max="240" Disabled="Locked" />
+                    <ValidationMessage For="() => Model.TopCutMinutes" />
+                </MudItem>
+                <MudItem xs="6" sm="4">
+                    <MudNumericField @bind-Value="Model.TopCutExtraMinutes" Label="@Textos.FieldExtraTime" Variant="Variant.Outlined" Min="0" Max="60" Disabled="Locked" />
+                    <ValidationMessage For="() => Model.TopCutExtraMinutes" />
+                </MudItem>
+            </MudGrid>
+        }
+
+        <MudGrid Spacing="3" Class="mt-2">
+            <MudItem xs="12" sm="6">
+                <MudSelect T="TimeExpiryPolicy" @bind-Value="Model.TimeExpiry" Label="@Textos.FieldTimeExpiry" Variant="Variant.Outlined" Disabled="Locked">
+                    @foreach (var policy in Policies)
+                    {
+                        <MudSelectItem T="TimeExpiryPolicy" Value="policy">@Labels.For(policy)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudStack Row="true" Spacing="3">
+        <MudButton ButtonType="ButtonType.Submit"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Disabled="@(Locked || Busy)">
+            @SubmitLabel
+        </MudButton>
+        <MudButton Href="/tienda/torneos" Variant="Variant.Text">@Textos.ActionCancel</MudButton>
+    </MudStack>
+</EditForm>
+
+@code {
+    private static readonly int[] CutSizes = [2, 4, 8, 16, 32, 64];
+    private static readonly MatchFormat[] Formats = [MatchFormat.Bo1, MatchFormat.Bo3];
+    private static readonly TimeExpiryPolicy[] Policies = [TimeExpiryPolicy.LeaderWins, TimeExpiryPolicy.AlwaysDraw];
+
+    [Parameter, EditorRequired]
+    public TournamentFormModel Model { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<TcgOption> Games { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public string SubmitLabel { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback OnSubmit { get; set; }
+
+    /// <summary>The tournament is under way: everything here would invalidate what is already played.</summary>
+    [Parameter]
+    public bool Locked { get; set; }
+
+    /// <summary>The game cannot change after creation: the tournament copied its rules on day one.</summary>
+    [Parameter]
+    public bool GameLocked { get; set; }
+
+    [Parameter]
+    public bool Busy { get; set; }
+
+    private TcgOption? SelectedGame => Games.FirstOrDefault(game => game.Id == Model.TcgId);
+
+    private void ChangeGame(int tcgId)
+    {
+        if (Games.FirstOrDefault(game => game.Id == tcgId) is { } game)
+        {
+            Model.AdoptDefaultsOf(game);
+        }
+    }
+
+    // Changing the capacity changes what the rulebook recommends, so the hint has to follow along.
+    private void ChangeCapacity(int capacity) => Model.Capacity = capacity;
+
+    private void ApplyRecommendation()
+    {
+        if (SelectedGame is { } game)
+        {
+            Model.ApplyRecommendationOf(game);
+        }
+    }
+}

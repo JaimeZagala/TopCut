@@ -4,8 +4,55 @@ using TopCut.Domain.Tournaments;
 
 namespace TopCut.Infrastructure.Persistence;
 
-public sealed class TournamentRepository(TopCutDbContext db) : ITournamentRepository
+public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> contexts) : ITournamentRepository
 {
+    public async Task<OperationResult> ExecuteAsync(
+        Guid tournamentId,
+        Func<Tournament, OperationResult> work,
+        CancellationToken cancellationToken = default)
+    {
+        await using var db = contexts.CreateDbContext();
+
+        var tournament = await LoadAsync(db, tournamentId, cancellationToken);
+
+        if (tournament is null)
+        {
+            return OperationResult.Fail("No existe ese torneo.");
+        }
+
+        var result = work(tournament);
+
+        // Only a successful operation is saved. A refused one throws its context away with whatever
+        // half-applied state it had, so a rule broken midway cannot leave a trace behind.
+        if (result.Succeeded)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        return result;
+    }
+
+    public async Task<T> ReadAsync<T>(
+        Guid tournamentId,
+        Func<Tournament, T> read,
+        T whenMissing,
+        CancellationToken cancellationToken = default)
+    {
+        await using var db = contexts.CreateDbContext();
+
+        var tournament = await LoadAsync(db, tournamentId, cancellationToken, tracked: false);
+
+        return tournament is null ? whenMissing : read(tournament);
+    }
+
+    public async Task AddAsync(Tournament tournament, CancellationToken cancellationToken = default)
+    {
+        await using var db = contexts.CreateDbContext();
+
+        db.Tournaments.Add(tournament);
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
     /// <summary>
     /// Pulls the whole aggregate in one go. Pairing and standings both walk every round, so lazy
     /// loading would turn one operation into dozens of round trips against a database that, on the
@@ -15,15 +62,20 @@ public sealed class TournamentRepository(TopCutDbContext db) : ITournamentReposi
     /// reaching another store's tournament by guessing its id.
     /// </para>
     /// </summary>
-    public Task<Tournament?> FindAsync(Guid tournamentId, CancellationToken cancellationToken = default) =>
-        db.Tournaments
+    private static Task<Tournament?> LoadAsync(
+        TopCutDbContext db,
+        Guid tournamentId,
+        CancellationToken cancellationToken,
+        bool tracked = true)
+    {
+        var tournaments = tracked ? db.Tournaments : db.Tournaments.AsNoTracking();
+
+        return tournaments
             .Include(tournament => tournament.Participants)
             .Include(tournament => tournament.Rounds)
                 .ThenInclude(round => round.Pairings)
                     .ThenInclude(pairing => pairing.Games)
             .AsSplitQuery()
             .SingleOrDefaultAsync(tournament => tournament.Id == tournamentId, cancellationToken);
-
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        db.SaveChangesAsync(cancellationToken);
+    }
 }

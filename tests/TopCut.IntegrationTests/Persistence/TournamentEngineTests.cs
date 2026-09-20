@@ -150,7 +150,7 @@ public class TournamentEngineTests(SqlServerFixture fixture)
     // --- Harness -----------------------------------------------------------------------------------
 
     private TournamentService Service(Guid tenantId) =>
-        new(new TournamentRepository(fixture.CreateContext(tenantId)), TimeProvider.System);
+        new(new TournamentRepository(fixture.CreateContextFactory(tenantId)), TimeProvider.System);
 
     private static Task<Tournament> Load(TopCutDbContext db, Guid tournamentId) =>
         db.Tournaments

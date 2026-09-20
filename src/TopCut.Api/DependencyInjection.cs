@@ -30,7 +30,12 @@ public static class DependencyInjection
     public static IServiceCollection AddTopCutApi(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddHttpContextAccessor();
-        services.AddScoped<ITenantContext, HttpTenantContext>();
+
+        // One instance serving both faces: the query filter reads it, and a Blazor circuit — which
+        // has no HttpContext to read from — sets it (ADR-0024).
+        services.AddScoped<TenantContext>();
+        services.AddScoped<ITenantContext>(provider => provider.GetRequiredService<TenantContext>());
+        services.AddScoped<ITenantScope>(provider => provider.GetRequiredService<TenantContext>());
         services.AddScoped<IAuthorizationHandler, ApprovedStoreHandler>();
 
         var authentication = services.AddAuthentication(options =>

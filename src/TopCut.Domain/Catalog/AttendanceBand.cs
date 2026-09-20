@@ -11,4 +11,17 @@ namespace TopCut.Domain.Catalog;
 /// </summary>
 /// <param name="UpToPlayers">Inclusive upper bound of the band.</param>
 /// <param name="TopCutSize">Players the bracket takes, or <c>null</c> when the TCG suggests none.</param>
-public readonly record struct AttendanceBand(int UpToPlayers, int SwissRounds, int? TopCutSize);
+public readonly record struct AttendanceBand(int UpToPlayers, int SwissRounds, int? TopCutSize)
+{
+    /// <summary>
+    /// The band that applies to a turnout, given a table ordered by <see cref="UpToPlayers"/>.
+    /// <para>
+    /// Lives here rather than only on <c>Ruleset</c> so that the screen where the store types an
+    /// expected turnout can answer the same question without loading the aggregate.
+    /// </para>
+    /// </summary>
+    public static AttendanceBand? For(IEnumerable<AttendanceBand> bands, int players) =>
+        bands.FirstOrDefault(band => players <= band.UpToPlayers) is { UpToPlayers: > 0 } match
+            ? match
+            : null;
+}

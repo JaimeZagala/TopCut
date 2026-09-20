@@ -8,9 +8,26 @@ namespace TopCut.Api.Auth;
 /// Resolves the current store from the signed-in principal. The tenant travels as a claim, so no
 /// database round trip is needed on every request; whether that store may act is a separate check.
 /// </summary>
-public sealed class HttpTenantContext(IHttpContextAccessor accessor) : ITenantContext
+public sealed class TenantContext(IHttpContextAccessor accessor) : ITenantContext, ITenantScope
 {
-    public Guid? TenantId =>
+    private Guid? _scoped;
+    private bool _hasScope;
+
+    public Guid? TenantId => _hasScope ? _scoped : FromRequest();
+
+    /// <summary>
+    /// Used where there is no request to read from — an interactive Blazor page runs inside a
+    /// SignalR circuit, and a circuit has no <c>HttpContext</c> (ADR-0024). The caller takes the
+    /// value from the authenticated principal, which is the very same claim <see cref="FromRequest"/>
+    /// reads, so this widens nobody's access: it only stops the scope from vanishing.
+    /// </summary>
+    public void Set(Guid? tenantId)
+    {
+        _scoped = tenantId;
+        _hasScope = true;
+    }
+
+    private Guid? FromRequest() =>
         Guid.TryParse(accessor.HttpContext?.User.FindFirst(TopCutClaims.Tenant)?.Value, out var tenantId)
             ? tenantId
             : null;

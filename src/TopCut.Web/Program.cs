@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using MudBlazor.Services;
+using TopCut.Web.Time;
 using TopCut.Api;
 using TopCut.Infrastructure;
 using TopCut.Infrastructure.Persistence;
@@ -17,6 +18,10 @@ builder.Services.AddMudServices();
 // La v1 es solo en espanol, pero los textos ya salen de .resx (ADR-0019) y las fechas y los
 // numeros se formatean con la cultura, no a mano. Anadir un idioma sera anadir la cultura aqui.
 builder.Services.AddLocalization();
+
+// La zona horaria de la tienda, para que la hora que se teclea signifique lo mismo en el portatil
+// de desarrollo y en un servidor que corre en UTC (ADR-0025).
+builder.Services.AddSingleton<LocalTime>();
 
 var connectionString = builder.Configuration.GetConnectionString("TopCut")
     ?? throw new InvalidOperationException("Falta la cadena de conexion 'TopCut'.");

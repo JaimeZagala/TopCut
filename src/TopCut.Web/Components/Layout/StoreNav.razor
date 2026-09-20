@@ -1,8 +1,11 @@
-@* Navegacion del organizador. Crece con cada tramo del hito 3; hoy solo existe el panel. *@
+@* Navegacion del organizador. Crece con cada tramo del hito 3. *@
 
 <MudNavMenu Class="pa-2">
     <MudNavLink Href="/tienda" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
         @Textos.StoreDashboardTitle
+    </MudNavLink>
+    <MudNavLink Href="/tienda/torneos" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.EmojiEvents">
+        @Textos.NavTournaments
     </MudNavLink>
     <MudDivider Class="my-2" />
     <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">

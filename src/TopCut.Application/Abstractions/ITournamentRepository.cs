@@ -5,15 +5,37 @@ namespace TopCut.Application.Abstractions;
 /// <summary>
 /// Loads and saves the tournament aggregate whole. Every operation the organiser performs touches
 /// participants, rounds, pairings and games together, so there is no useful way to load a slice.
+/// <para>
+/// Each call is <b>one unit of work on its own database connection</b> (ADR-0023). Handing out a
+/// long-lived context instead would break as soon as two components of the same screen read at the
+/// same time, which is the normal state of affairs in Blazor.
+/// </para>
+/// <para>
+/// A tournament that belongs to another store is indistinguishable from one that does not exist:
+/// the tenant filter removes it before the query returns, on purpose.
+/// </para>
 /// </summary>
 public interface ITournamentRepository
 {
     /// <summary>
-    /// The tournament with its participants, rounds, pairings and individual games loaded. Returns
-    /// <c>null</c> when it does not exist <b>or</b> belongs to another store: the tenant filter
-    /// makes those two cases indistinguishable on purpose.
+    /// Loads the aggregate, hands it to <paramref name="work"/>, and saves <b>only</b> if that
+    /// comes back successful. A refused operation leaves nothing behind, not even the part of the
+    /// change that ran before the rule was broken.
     /// </summary>
-    Task<Tournament?> FindAsync(Guid tournamentId, CancellationToken cancellationToken = default);
+    Task<OperationResult> ExecuteAsync(
+        Guid tournamentId,
+        Func<Tournament, OperationResult> work,
+        CancellationToken cancellationToken = default);
 
-    Task SaveChangesAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Reads something off the aggregate without saving. Returns <paramref name="whenMissing"/>
+    /// when the tournament does not exist or belongs to another store.
+    /// </summary>
+    Task<T> ReadAsync<T>(
+        Guid tournamentId,
+        Func<Tournament, T> read,
+        T whenMissing,
+        CancellationToken cancellationToken = default);
+
+    Task AddAsync(Tournament tournament, CancellationToken cancellationToken = default);
 }

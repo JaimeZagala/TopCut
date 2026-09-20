@@ -144,10 +144,7 @@ public class Ruleset : CatalogEntity
     /// What this TCG suggests for the given turnout, or <c>null</c> when its table says nothing
     /// about a field that size. A suggestion only: the store can always override it.
     /// </summary>
-    public AttendanceBand? RecommendationFor(int players) =>
-        _attendanceBands.FirstOrDefault(band => players <= band.UpToPlayers) is { UpToPlayers: > 0 } match
-            ? match
-            : null;
+    public AttendanceBand? RecommendationFor(int players) => AttendanceBand.For(_attendanceBands, players);
 
     /// <summary>Settings for the given phase.</summary>
     public PhaseSettings SettingsFor(Phase phase) => phase switch

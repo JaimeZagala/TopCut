@@ -1,0 +1,75 @@
+@page "/tienda/torneos"
+@layout StoreLayout
+@attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
+@inject ITournamentQueries Tournaments
+
+<PageTitle>@Textos.TournamentsTitle - @Textos.AppName</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-6">
+    <MudText Typo="Typo.h1">@Textos.TournamentsTitle</MudText>
+    <MudSpacer />
+    <MudButton Href="/tienda/torneos/nuevo"
+               Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add">
+        @Textos.TournamentsNew
+    </MudButton>
+</MudStack>
+
+@if (rows is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@Textos.Loading" />
+}
+else if (rows.Count == 0)
+{
+    <MudPaper Class="pa-8 text-center" Elevation="0" Outlined="true">
+        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Large" Color="Color.Primary" Class="mb-3" />
+        <MudText Typo="Typo.body1" Class="mb-4">@Textos.TournamentsEmpty</MudText>
+        <MudButton Href="/tienda/torneos/nuevo" Variant="Variant.Filled" Color="Color.Primary">
+            @Textos.TournamentsEmptyAction
+        </MudButton>
+    </MudPaper>
+}
+else
+{
+    <MudTable Items="rows" Hover="true" Elevation="0" Outlined="true" Breakpoint="Breakpoint.Sm">
+        <HeaderContent>
+            <MudTh>@Textos.ColumnTournament</MudTh>
+            <MudTh>@Textos.ColumnGame</MudTh>
+            <MudTh>@Textos.ColumnDate</MudTh>
+            <MudTh>@Textos.ColumnFormat</MudTh>
+            <MudTh>@Textos.ColumnPlayers</MudTh>
+            <MudTh>@Textos.ColumnStatus</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="row">
+            <MudTd DataLabel="@Textos.ColumnTournament">
+                <MudLink Href="@($"/tienda/torneos/{row.Id}")" Typo="Typo.body1">@row.Name</MudLink>
+                <MudText Typo="Typo.caption" Class="d-block">@row.City</MudText>
+            </MudTd>
+            <MudTd DataLabel="@Textos.ColumnGame">@row.TcgName</MudTd>
+            <MudTd DataLabel="@Textos.ColumnDate">@row.StartsAt.LocalDateTime.ToString("g")</MudTd>
+            <MudTd DataLabel="@Textos.ColumnFormat">@Labels.Structure(row.SwissRounds, row.TopCutSize)</MudTd>
+            <MudTd DataLabel="@Textos.ColumnPlayers">
+                @string.Format(Textos.RegisteredSummary, row.Registered, row.Capacity)
+                @if (row.Waitlisted > 0)
+                {
+                    <MudText Typo="Typo.caption" Class="d-block">
+                        @string.Format(Textos.WaitlistCount, row.Waitlisted)
+                    </MudText>
+                }
+            </MudTd>
+            <MudTd DataLabel="@Textos.ColumnStatus">
+                <MudChip T="string" Size="Size.Small" Color="@Labels.ColourFor(row.Status)">
+                    @Labels.For(row.Status)
+                </MudChip>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private IReadOnlyList<TournamentListItem>? rows;
+
+    protected override async Task OnInitializedAsync() =>
+        rows = await Tournaments.ForCurrentStoreAsync();
+}

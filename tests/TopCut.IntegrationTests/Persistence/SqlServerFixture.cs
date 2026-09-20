@@ -79,6 +79,21 @@ public sealed class SqlServerFixture : IAsyncLifetime
         return new TopCutDbContext(builder.Options, new FixedTenantContext(tenantId));
     }
 
+    /// <summary>
+    /// Hands out a fresh context per call, scoped to one store, the way the application does
+    /// (ADR-0023). Services that own their unit of work take this rather than a single context.
+    /// </summary>
+    public IDbContextFactory<TopCutDbContext> CreateContextFactory(
+        Guid? tenantId = null,
+        IDomainEventDispatcher? dispatcher = null,
+        TimeProvider? timeProvider = null) =>
+        new FixtureContextFactory(() => CreateContext(tenantId, dispatcher, timeProvider));
+
+    private sealed class FixtureContextFactory(Func<TopCutDbContext> create) : IDbContextFactory<TopCutDbContext>
+    {
+        public TopCutDbContext CreateDbContext() => create();
+    }
+
     private sealed class FixedTenantContext(Guid? tenantId) : ITenantContext
     {
         public Guid? TenantId { get; } = tenantId;

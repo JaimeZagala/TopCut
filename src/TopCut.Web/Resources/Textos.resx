@@ -253,4 +253,270 @@
   <data name="ValidationConsentRequired" xml:space="preserve">
     <value>Hay que aceptar el aviso de proteccion de datos.</value>
   </data>
+
+  <!-- Hito 3b: gestion de torneos -->
+  <data name="NavTournaments" xml:space="preserve">
+    <value>Torneos</value>
+  </data>
+  <data name="ActionSave" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="ActionCancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="ActionBack" xml:space="preserve">
+    <value>Volver</value>
+  </data>
+  <data name="ActionRetry" xml:space="preserve">
+    <value>Reintentar</value>
+  </data>
+  <data name="ActionConfirm" xml:space="preserve">
+    <value>Confirmar</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Cargando...</value>
+  </data>
+  <data name="TournamentsTitle" xml:space="preserve">
+    <value>Torneos</value>
+  </data>
+  <data name="TournamentsNew" xml:space="preserve">
+    <value>Nuevo torneo</value>
+  </data>
+  <data name="TournamentsEmpty" xml:space="preserve">
+    <value>Todavia no has creado ningun torneo.</value>
+  </data>
+  <data name="TournamentsEmptyAction" xml:space="preserve">
+    <value>Crear el primero</value>
+  </data>
+  <data name="ColumnTournament" xml:space="preserve">
+    <value>Torneo</value>
+  </data>
+  <data name="ColumnGame" xml:space="preserve">
+    <value>Juego</value>
+  </data>
+  <data name="ColumnDate" xml:space="preserve">
+    <value>Fecha</value>
+  </data>
+  <data name="ColumnStatus" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="ColumnPlayers" xml:space="preserve">
+    <value>Inscritos</value>
+  </data>
+  <data name="ColumnFormat" xml:space="preserve">
+    <value>Formato</value>
+  </data>
+  <data name="WaitlistCount" xml:space="preserve">
+    <value>+{0} en espera</value>
+    <comment>{0} es el numero de jugadores en lista de espera.</comment>
+  </data>
+  <data name="RoundsSummary" xml:space="preserve">
+    <value>{0} rondas</value>
+  </data>
+  <data name="RoundsAndCutSummary" xml:space="preserve">
+    <value>{0} rondas + top {1}</value>
+  </data>
+  <data name="StatusDraft" xml:space="preserve">
+    <value>Borrador</value>
+  </data>
+  <data name="StatusPublished" xml:space="preserve">
+    <value>Publicado</value>
+  </data>
+  <data name="StatusInProgress" xml:space="preserve">
+    <value>En curso</value>
+  </data>
+  <data name="StatusCompleted" xml:space="preserve">
+    <value>Finalizado</value>
+  </data>
+  <data name="StatusCancelled" xml:space="preserve">
+    <value>Cancelado</value>
+  </data>
+  <data name="TournamentNewTitle" xml:space="preserve">
+    <value>Nuevo torneo</value>
+  </data>
+  <data name="TournamentEditTitle" xml:space="preserve">
+    <value>Editar torneo</value>
+  </data>
+  <data name="TournamentNotFound" xml:space="preserve">
+    <value>Ese torneo no existe, o no es de tu tienda.</value>
+  </data>
+  <data name="SectionBasics" xml:space="preserve">
+    <value>Lo basico</value>
+  </data>
+  <data name="SectionVenue" xml:space="preserve">
+    <value>Donde se juega</value>
+  </data>
+  <data name="SectionStructure" xml:space="preserve">
+    <value>Estructura</value>
+  </data>
+  <data name="SectionRules" xml:space="preserve">
+    <value>Reglas de juego</value>
+  </data>
+  <data name="FieldTournamentName" xml:space="preserve">
+    <value>Nombre del torneo</value>
+  </data>
+  <data name="FieldGame" xml:space="preserve">
+    <value>Juego</value>
+  </data>
+  <data name="FieldDate" xml:space="preserve">
+    <value>Fecha</value>
+  </data>
+  <data name="FieldTime" xml:space="preserve">
+    <value>Hora</value>
+  </data>
+  <data name="FieldCapacity" xml:space="preserve">
+    <value>Plazas</value>
+  </data>
+  <data name="FieldExpectedPlayers" xml:space="preserve">
+    <value>Jugadores que esperas</value>
+  </data>
+  <data name="FieldSwissRounds" xml:space="preserve">
+    <value>Rondas suizas</value>
+  </data>
+  <data name="FieldTopCut" xml:space="preserve">
+    <value>Top cut</value>
+  </data>
+  <data name="FieldStreet" xml:space="preserve">
+    <value>Calle</value>
+  </data>
+  <data name="FieldCity" xml:space="preserve">
+    <value>Ciudad</value>
+  </data>
+  <data name="FieldProvince" xml:space="preserve">
+    <value>Provincia</value>
+  </data>
+  <data name="FieldPostalCode" xml:space="preserve">
+    <value>Codigo postal</value>
+  </data>
+  <data name="FieldSwissPhase" xml:space="preserve">
+    <value>Fase suiza</value>
+  </data>
+  <data name="FieldTopCutPhase" xml:space="preserve">
+    <value>Top cut</value>
+  </data>
+  <data name="FieldMatchFormat" xml:space="preserve">
+    <value>Formato de partida</value>
+  </data>
+  <data name="FieldRoundLength" xml:space="preserve">
+    <value>Duracion de ronda (min)</value>
+  </data>
+  <data name="FieldExtraTime" xml:space="preserve">
+    <value>Tiempo extra (min)</value>
+  </data>
+  <data name="FieldTimeExpiry" xml:space="preserve">
+    <value>Cuando se acaba el tiempo</value>
+  </data>
+  <data name="TopCutNone" xml:space="preserve">
+    <value>Sin top cut</value>
+  </data>
+  <data name="TopCutOf" xml:space="preserve">
+    <value>Top {0}</value>
+  </data>
+  <data name="FormatBo1" xml:space="preserve">
+    <value>A una partida</value>
+  </data>
+  <data name="FormatBo3" xml:space="preserve">
+    <value>Al mejor de tres</value>
+  </data>
+  <data name="TimeExpiryLeaderWins" xml:space="preserve">
+    <value>Gana quien va por delante</value>
+  </data>
+  <data name="TimeExpiryAlwaysDraw" xml:space="preserve">
+    <value>Empate</value>
+  </data>
+  <data name="RoundLengthUnlimited" xml:space="preserve">
+    <value>Sin limite de tiempo</value>
+  </data>
+  <data name="RulesFrom" xml:space="preserve">
+    <value>Copiado de: {0}</value>
+    <comment>{0} es la version del reglamento oficial.</comment>
+  </data>
+  <data name="RulesAreACopy" xml:space="preserve">
+    <value>Estas reglas son una copia que se quedo fija al crear el torneo. Cambiar las del juego no toca este torneo.</value>
+  </data>
+  <data name="RecommendationTitle" xml:space="preserve">
+    <value>Lo que recomienda el reglamento</value>
+  </data>
+  <data name="RecommendationFor" xml:space="preserve">
+    <value>Para {0} jugadores, {1} recomienda {2} rondas y {3}.</value>
+    <comment>{1} es el nombre del juego; {3} es "top 8" o "sin top cut".</comment>
+  </data>
+  <data name="RecommendationApply" xml:space="preserve">
+    <value>Usarlo</value>
+  </data>
+  <data name="RecommendationWhy" xml:space="preserve">
+    <value>Con menos rondas de la cuenta acaban varios jugadores invictos y el torneo se decide por desempate en vez de por partidas.</value>
+  </data>
+  <data name="ActionPublish" xml:space="preserve">
+    <value>Publicar</value>
+  </data>
+  <data name="ActionUnpublish" xml:space="preserve">
+    <value>Volver a borrador</value>
+  </data>
+  <data name="ActionCancelTournament" xml:space="preserve">
+    <value>Cancelar torneo</value>
+  </data>
+  <data name="ConfirmCancelTitle" xml:space="preserve">
+    <value>Cancelar el torneo</value>
+  </data>
+  <data name="ConfirmCancelBody" xml:space="preserve">
+    <value>El torneo deja de estar disponible y no se puede reabrir. Los inscritos se quedan como estan.</value>
+  </data>
+  <data name="NoticeCreated" xml:space="preserve">
+    <value>Torneo creado.</value>
+  </data>
+  <data name="NoticeSaved" xml:space="preserve">
+    <value>Cambios guardados.</value>
+  </data>
+  <data name="NoticePublished" xml:space="preserve">
+    <value>Torneo publicado.</value>
+  </data>
+  <data name="NoticeUnpublished" xml:space="preserve">
+    <value>El torneo ha vuelto a borrador.</value>
+  </data>
+  <data name="NoticeCancelled" xml:space="preserve">
+    <value>Torneo cancelado.</value>
+  </data>
+  <data name="LockedNotice" xml:space="preserve">
+    <value>El torneo ya esta en curso: su configuracion queda fijada para no invalidar lo ya jugado.</value>
+  </data>
+  <data name="ParticipantsSoon" xml:space="preserve">
+    <value>El alta de participantes llega en el siguiente tramo del hito 3.</value>
+  </data>
+  <data name="RegisteredSummary" xml:space="preserve">
+    <value>{0} de {1} plazas</value>
+  </data>
+  <data name="ValidationTournamentNameRequired" xml:space="preserve">
+    <value>Ponle un nombre al torneo.</value>
+  </data>
+  <data name="ValidationTournamentNameLength" xml:space="preserve">
+    <value>El nombre no puede pasar de 200 caracteres.</value>
+  </data>
+  <data name="ValidationGameRequired" xml:space="preserve">
+    <value>Elige el juego.</value>
+  </data>
+  <data name="ValidationCapacityRange" xml:space="preserve">
+    <value>Las plazas van de 2 a 5000.</value>
+  </data>
+  <data name="ValidationRoundsRange" xml:space="preserve">
+    <value>Las rondas suizas van de 1 a 20.</value>
+  </data>
+  <data name="ValidationStreetRequired" xml:space="preserve">
+    <value>Indica la calle.</value>
+  </data>
+  <data name="ValidationCityRequired" xml:space="preserve">
+    <value>Indica la ciudad.</value>
+  </data>
+  <data name="ValidationProvinceRequired" xml:space="preserve">
+    <value>Indica la provincia.</value>
+  </data>
+  <data name="ValidationPostalCodeRequired" xml:space="preserve">
+    <value>Indica el codigo postal.</value>
+  </data>
+  <data name="ValidationRoundLengthRange" xml:space="preserve">
+    <value>La duracion de ronda va de 5 a 240 minutos.</value>
+  </data>
+  <data name="ValidationExtraTimeRange" xml:space="preserve">
+    <value>El tiempo extra va de 0 a 60 minutos.</value>
+  </data>
 </root>

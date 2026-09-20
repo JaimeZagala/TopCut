@@ -1,0 +1,165 @@
+@page "/tienda/torneos/{TournamentId:guid}"
+@layout StoreLayout
+@attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
+@using TopCut.Application.Tournaments
+@inject ITcgCatalog Catalog
+@inject ITournamentQueries Tournaments
+@inject TournamentSetupService Setup
+@inject LocalTime Clock
+@inject IDialogService Dialogs
+@inject ISnackbar Snackbar
+
+<PageTitle>@(details?.Name ?? Textos.TournamentEditTitle) - @Textos.AppName</PageTitle>
+
+@if (loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@Textos.Loading" />
+}
+else if (details is null)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-6">@Textos.TournamentNotFound</MudAlert>
+    <MudButton Href="/tienda/torneos" Variant="Variant.Filled" Color="Color.Primary">@Textos.ActionBack</MudButton>
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Spacing="3">
+        <MudText Typo="Typo.h1">@details.Name</MudText>
+        <MudChip T="string" Size="Size.Small" Color="@Labels.ColourFor(details.Status)">
+            @Labels.For(details.Status)
+        </MudChip>
+    </MudStack>
+
+    <MudText Typo="Typo.caption" Class="d-block mb-6">
+        @details.TcgName · @string.Format(Textos.RegisteredSummary, details.Registered, details.Capacity)
+        @if (details.Waitlisted > 0)
+        {
+            @(" · ")
+            @string.Format(Textos.WaitlistCount, details.Waitlisted)
+        }
+        · @string.Format(Textos.RulesFrom, details.RulesVersion)
+    </MudText>
+
+    @if (errors.Count > 0)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@string.Join(" ", errors)</MudAlert>
+    }
+
+    <MudStack Row="true" Spacing="3" Class="mb-6" Wrap="Wrap.Wrap">
+        @if (details.Status == TournamentStatus.Draft)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Visibility"
+                       Disabled="busy"
+                       OnClick="PublishAsync">
+                @Textos.ActionPublish
+            </MudButton>
+        }
+        @if (details.Status == TournamentStatus.Published)
+        {
+            <MudButton Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.VisibilityOff"
+                       Disabled="busy"
+                       OnClick="UnpublishAsync">
+                @Textos.ActionUnpublish
+            </MudButton>
+        }
+        @if (details.Status is TournamentStatus.Draft or TournamentStatus.Published or TournamentStatus.InProgress)
+        {
+            <MudButton Variant="Variant.Text"
+                       Color="Color.Error"
+                       StartIcon="@Icons.Material.Filled.Cancel"
+                       Disabled="busy"
+                       OnClick="CancelAsync">
+                @Textos.ActionCancelTournament
+            </MudButton>
+        }
+    </MudStack>
+
+    <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Class="mb-6" Dense="true">
+        @Textos.ParticipantsSoon
+    </MudAlert>
+
+    <TournamentForm Model="model!"
+                    Games="games!"
+                    SubmitLabel="@Textos.ActionSave"
+                    Locked="details.SettingsLocked"
+                    GameLocked="true"
+                    Busy="busy"
+                    OnSubmit="SaveAsync" />
+}
+
+@code {
+    private readonly List<string> errors = [];
+
+    [Parameter]
+    public Guid TournamentId { get; set; }
+
+    private IReadOnlyList<TcgOption>? games;
+    private TournamentDetails? details;
+    private TournamentFormModel? model;
+    private bool loading = true;
+    private bool busy;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+
+        // Sequentially, not with WhenAll: two reads at once would need two connections, and the
+        // point of loading them one after the other is that a page never has to think about it.
+        games = await Catalog.ActiveAsync();
+        details = await Tournaments.DetailsAsync(TournamentId);
+        model = details is null ? null : TournamentFormModel.From(details, Clock);
+
+        loading = false;
+    }
+
+    private Task SaveAsync() => Run(
+        () => Setup.UpdateAsync(TournamentId, model!.ToDraft(Clock), model.ToRules()),
+        Textos.NoticeSaved);
+
+    private Task PublishAsync() => Run(() => Setup.PublishAsync(TournamentId), Textos.NoticePublished);
+
+    private Task UnpublishAsync() => Run(() => Setup.UnpublishAsync(TournamentId), Textos.NoticeUnpublished);
+
+    private async Task CancelAsync()
+    {
+        // Cancelling cannot be undone, so it asks first.
+        var confirmed = await Dialogs.ShowMessageBoxAsync(
+            Textos.ConfirmCancelTitle,
+            Textos.ConfirmCancelBody,
+            yesText: Textos.ActionConfirm,
+            cancelText: Textos.ActionCancel);
+
+        if (confirmed is true)
+        {
+            await Run(() => Setup.CancelAsync(TournamentId), Textos.NoticeCancelled);
+        }
+    }
+
+    private async Task Run(Func<Task<OperationResult>> operation, string notice)
+    {
+        errors.Clear();
+        busy = true;
+
+        try
+        {
+            var result = await operation();
+
+            if (!result.Succeeded)
+            {
+                errors.AddRange(result.Errors);
+                return;
+            }
+
+            Snackbar.Add(notice, Severity.Success);
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}

@@ -124,12 +124,26 @@ Partido en cuatro tramos para que cada uno sea revisable por separado.
   y 13 que recorren la aplicacion real por HTTP (alta desde el formulario, consentimiento rechazado,
   redirecciones, permisos y que cada pagina abra o no circuito)
 
-#### 3b — CRUD de torneos ⬜
+#### 3b — CRUD de torneos ✅
 
-Listado de torneos de la tienda, crear y editar, publicar. La pantalla de crear llega con las
-rondas y el top cut **ya puestos** segun la asistencia esperada (ADR-0018), y la tienda los cambia
-si quiere. Aqui hay que resolver el acceso a datos desde componentes interactivos sin compartir el
-`DbContext` de la peticion (ADR-0023).
+- ✅ **Listado** de los torneos de la tienda, con el proximo arriba: juego, fecha, estructura,
+  inscritos y lista de espera, y estado
+- ✅ **Crear** y **editar**, con el mismo formulario: datos, sede, estructura y las reglas de juego
+  del torneo (formato y reloj de cada fase, y que pasa al acabarse el tiempo)
+- ✅ La pantalla de crear **llega rellena**: elegir el juego trae sus reglas, y las rondas y el top
+  cut salen de su tabla oficial segun las plazas (ADR-0018). Cambiar de juego o de plazas actualiza
+  la sugerencia, y hay un boton para aplicarla
+- ✅ **Publicar, volver a borrador y cancelar**, con confirmacion en el unico que no tiene vuelta
+- ✅ Con el torneo ya en curso la configuracion se **bloquea**, porque cambiarla invalidaria lo jugado
+- ✅ **Acceso a datos por operacion** (ADR-0026): proyecciones sin seguimiento para las listas y el
+  agregado completo solo para cambiar, cada uno con su propia conexion
+- ✅ **La tienda en contexto tambien dentro del circuito** (ADR-0024). Sin esto la tienda habria
+  abierto su lista y la habria visto vacia, sin ningun error: no hay `HttpContext` dentro de un
+  circuito de SignalR, y el filtro de tenant falla cerrado
+- ✅ **Zona horaria configurada** (ADR-0025), para que la hora tecleada signifique lo mismo en el
+  portatil y en un servidor que corre en UTC
+- ✅ **18 pruebas nuevas**: 11 sobre crear, editar, publicar y el aislamiento entre tiendas contra
+  SQL Server real, 4 sobre las pantallas por HTTP, y 3 sobre el ambito de tienda
 
 #### 3c — Participantes ⬜
 

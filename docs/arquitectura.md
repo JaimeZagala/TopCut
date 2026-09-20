@@ -92,6 +92,19 @@ ASP.NET Core SignalR para:
 
 En produccion se delega en **Azure SignalR Service** (ver mas abajo).
 
+## Acceso a datos
+
+Dos caminos distintos, segun lo que haga falta (ADR-0026):
+
+- **Cambiar algo**: `ITournamentRepository` carga el agregado entero, aplica la operacion y guarda
+  **solo si sale bien**. Una regla rota a mitad no deja rastro.
+- **Leer para pintar**: `ITournamentQueries` e `ITcgCatalog` devuelven proyecciones sin seguimiento,
+  con los contadores calculados en SQL Server. Una lista de torneos no carga rondas ni partidas.
+
+Cada operacion abre su **propio `DbContext`** (ADR-0023), creado por `IDbContextFactory` con el
+mismo `ITenantContext` del ambito, no desde un ambito hijo: un ambito hijo traeria un contexto de
+tenant vacio y el filtro, que falla cerrado, no devolveria nada.
+
 ## Multi-tenancy
 
 Una **unica base de datos compartida** con columna `TenantId` (identificador de tienda) en las
@@ -107,6 +120,10 @@ al construir el modelo, para que anadir una entidad nueva no pueda filtrar datos
 porque alguien olvidase una linea. Y **fallan cerrado** (ADR-0011): sin tienda en contexto no se ve
 nada, y leer entre tiendas exige `IgnoreQueryFilters()` explicito en la consulta. `Store` no lleva
 filtro porque una tienda *es* el tenant.
+
+De donde sale la tienda en contexto depende de por donde entre la peticion (ADR-0024): del claim del
+`HttpContext` en una peticion HTTP, y fijada por `StoreLayout` desde el principal autenticado cuando
+se trata de una pagina interactiva, porque **dentro de un circuito de SignalR no hay `HttpContext`**.
 
 ## Autenticacion
 
@@ -250,4 +267,6 @@ Pautas de diseno:
 - Prioridad a **claridad y velocidad de uso en la pantalla en vivo del organizador**: es la que se
   usa bajo presion, en mitad de un torneo con la sala esperando.
 - En movil, **reportar resultado debe completarse en un par de toques**.
+- Las fechas y horas que teclea la tienda se interpretan en una **zona horaria configurada**
+  (ADR-0025), no en la de la maquina: en produccion el servidor corre en UTC.
 - Identidad visual simple y neutra en la v1; branding por tienda queda como mejora futura.

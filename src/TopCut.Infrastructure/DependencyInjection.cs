@@ -39,8 +39,15 @@ public static class DependencyInjection
                 provider.GetRequiredService<DomainEventDispatchInterceptor>());
         });
 
+        // One DbContext per operation instead of one per request (ADR-0023). The scoped instance
+        // stays registered because Identity's stores expect to be handed one.
+        services.AddScoped<IDbContextFactory<TopCutDbContext>, TopCutDbContextFactory>();
+
         services.AddScoped<ITournamentRepository, TournamentRepository>();
+        services.AddScoped<ITournamentQueries, TournamentQueries>();
+        services.AddScoped<ITcgCatalog, TcgCatalog>();
         services.AddScoped<TournamentService>();
+        services.AddScoped<TournamentSetupService>();
 
         services.AddTopCutIdentity();
 

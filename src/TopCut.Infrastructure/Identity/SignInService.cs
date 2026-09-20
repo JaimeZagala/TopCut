@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using TopCut.Application.Abstractions;
 using TopCut.Domain.Tenancy;
 using TopCut.Infrastructure.Persistence;
@@ -57,12 +56,11 @@ public sealed class SignInService(SignInManager<TopCutUser> signInManager) : ISi
 /// context instance". The query is a single indexed read, so a short-lived context is cheap.
 /// </para>
 /// </summary>
-public sealed class StoreDirectory(IServiceScopeFactory scopes) : IStoreDirectory
+public sealed class StoreDirectory(IDbContextFactory<TopCutDbContext> contexts) : IStoreDirectory
 {
     public async Task<bool> IsApprovedAsync(Guid storeId, CancellationToken cancellationToken = default)
     {
-        using var scope = scopes.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<TopCutDbContext>();
+        await using var db = contexts.CreateDbContext();
 
         // Crosses the tenant boundary on purpose: this is the check that decides the tenant's own
         // permissions, so it cannot depend on the filter it is about to enable (ADR-0011).

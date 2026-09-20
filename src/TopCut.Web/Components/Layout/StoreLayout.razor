@@ -1,9 +1,14 @@
 @inherits LayoutComponentBase
+@inject ITenantScope TenantScope
 
-@* Cascara de gestion. Solo la usan paginas interactivas (InteractiveServer), asi que aqui si hay
-   cajon lateral que se abre y se cierra, dialogos y avisos emergentes. Un layout hereda el modo
-   de render de la pagina que lo usa: separar las dos cascaras es lo que evita pintar botones que
-   en SSR estatico no harian nada. *@
+@* Cascara de gestion. Solo la usan paginas interactivas, asi que aqui si hay cajon lateral que se
+   abre y se cierra, dialogos y avisos emergentes.
+
+   Ademas fija la tienda en contexto (ADR-0024): dentro de un circuito de SignalR no hay
+   HttpContext del que sacarla, y sin ella el filtro de tenant —que falla cerrado— dejaria a la
+   tienda sin ver sus propios datos. Se lee del claim del usuario ya autenticado, que es
+   exactamente lo mismo que lee el camino HTTP, y ocurre en el layout porque este se renderiza
+   entero antes que la pagina que lleva dentro. *@
 
 <MudThemeProvider Theme="TopCutTheme.Default" />
 <MudPopoverProvider />
@@ -46,4 +51,19 @@
 
 @code {
     private bool drawerOpen = true;
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? Authentication { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Authentication is null)
+        {
+            return;
+        }
+
+        var claim = (await Authentication).User.FindFirst(TopCutClaims.Tenant)?.Value;
+
+        TenantScope.Set(Guid.TryParse(claim, out var storeId) ? storeId : null);
+    }
 }

@@ -5,6 +5,7 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.Testing;
 using TopCut.Application.Abstractions;
+using TopCut.Application.Tournaments;
 using TopCut.IntegrationTests.Identity;
 using TopCut.IntegrationTests.Persistence;
 
@@ -85,7 +86,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
     public async Task The_store_panel_does_open_one_because_its_screens_need_it()
     {
         var browser = Browser();
-        var email = await RegisterApprovedStore(browser);
+        var (email, storeId) = await RegisterApprovedStore(browser);
         await SubmitSignIn(browser, email, "/tienda");
 
         Assert.Contains("<!--Blazor:", await browser.GetStringAsync("/tienda"));
@@ -178,7 +179,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
     public async Task An_approved_store_reaches_its_panel()
     {
         var browser = Browser();
-        var email = await RegisterApprovedStore(browser);
+        var (email, storeId) = await RegisterApprovedStore(browser);
 
         await SubmitSignIn(browser, email, "/tienda");
         var response = await browser.GetAsync("/tienda");
@@ -238,6 +239,70 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         Assert.Equal("/", Target(response));
     }
 
+    // --- Pantallas de la tienda ------------------------------------------------------------------
+
+    [Fact]
+    public async Task The_tournament_list_starts_empty_and_offers_to_create_the_first_one()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+
+        var html = await browser.GetStringAsync("/tienda/torneos");
+
+        Assert.Contains("Todavia no has creado ningun torneo", html);
+        Assert.Contains("/tienda/torneos/nuevo", html);
+    }
+
+    [Fact]
+    public async Task A_created_tournament_shows_up_on_the_list_with_its_game_and_structure()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+
+        await CreateTournament(storeId, "Prerelease de invierno");
+
+        var html = await browser.GetStringAsync("/tienda/torneos");
+
+        Assert.Contains("Prerelease de invierno", html);
+        Assert.Contains("Magic: The Gathering", html);
+        Assert.Contains("Borrador", html);
+    }
+
+    [Fact]
+    public async Task The_new_tournament_form_arrives_filled_in_with_what_the_rulebook_recommends()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+
+        var html = await browser.GetStringAsync("/tienda/torneos/nuevo");
+
+        // ADR-0018: the screen opens on the official table rather than on an empty box.
+        Assert.Contains("recomienda", html);
+        Assert.Contains("rondas", html);
+    }
+
+    [Fact]
+    public async Task One_stores_tournament_is_not_reachable_from_another_stores_screens()
+    {
+        var owner = Browser();
+        var (ownerEmail, ownerStore) = await RegisterApprovedStore(owner);
+        await SubmitSignIn(owner, ownerEmail, "/tienda");
+        var tournamentId = await CreateTournament(ownerStore, "Solo mio");
+
+        var intruder = Browser();
+        var (intruderEmail, _) = await RegisterApprovedStore(intruder);
+        await SubmitSignIn(intruder, intruderEmail, "/tienda");
+
+        var theirList = await intruder.GetStringAsync("/tienda/torneos");
+        var byGuessingTheId = await intruder.GetStringAsync($"/tienda/torneos/{tournamentId}");
+
+        Assert.DoesNotContain("Solo mio", theirList);
+        Assert.Contains("no existe", byGuessingTheId);
+    }
+
     // --- Helpers ----------------------------------------------------------------------------------------
 
     /// <summary>Where a redirect points, as a path, whether the header is absolute or relative.</summary>
@@ -274,8 +339,40 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         return await browser.PostAsync("/cuenta/registro", new FormUrlEncodedContent(fields));
     }
 
+    /// <summary>
+    /// Creates a tournament through the application services, the way the screen does. The form
+    /// itself is interactive, so driving it needs a circuit rather than an HTTP post; what these
+    /// tests check is that the pages then render what the store actually owns.
+    /// </summary>
+    private async Task<Guid> CreateTournament(Guid storeId, string name)
+    {
+        using var scope = _app.Services.CreateScope();
+
+        scope.ServiceProvider.GetRequiredService<ITenantScope>().Set(storeId);
+
+        var catalog = scope.ServiceProvider.GetRequiredService<ITcgCatalog>();
+        var magic = (await catalog.ActiveAsync()).First(game => game.Code == "MTG");
+
+        var setup = scope.ServiceProvider.GetRequiredService<TournamentSetupService>();
+
+        var created = await setup.CreateAsync(new TournamentDraft(
+            magic.Id,
+            name,
+            DateTimeOffset.UtcNow.AddDays(7),
+            "Calle Mayor 1",
+            "Valencia",
+            "Valencia",
+            "46001",
+            Capacity: 16,
+            SwissRounds: 5,
+            TopCutSize: 4));
+
+        Assert.True(created.Succeeded, string.Join(" ", created.Errors));
+        return created.TournamentId!.Value;
+    }
+
     /// <summary>A store account that a Superadmin has already approved, signed up through the API.</summary>
-    private async Task<string> RegisterApprovedStore(HttpClient browser)
+    private async Task<(string Email, Guid StoreId)> RegisterApprovedStore(HttpClient browser)
     {
         var email = NewEmail();
         await SubmitRegistration(browser, email, "Kraken Cards", consent: true);
@@ -303,7 +400,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         var approved = await Send(browser, HttpMethod.Post, $"/api/v1/stores/{storeId}/approve", superadmin, new { });
         approved.EnsureSuccessStatusCode();
 
-        return email;
+        return (email, Guid.Parse(storeId!));
     }
 
     private static async Task<string> BearerFor(HttpClient browser, string email, string? password = null)
