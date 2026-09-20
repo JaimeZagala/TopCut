@@ -83,7 +83,9 @@ una tienda.
 - ✅ **Bajas** a mitad de torneo: fuera de los emparejamientos, dentro de la clasificacion
 - ✅ `TournamentEngine`, punto de entrada unico que decide que fase toca y lanza la ronda
 - ✅ `TournamentService` en Application, con las invariantes rotas devueltas como mensaje
-- ✅ **121 pruebas de dominio**, incluidas simulaciones completas de 4, 7, 8, 11, 16 y 23 jugadores
+- ✅ **145 pruebas de dominio**, incluidas simulaciones completas de campos de 4 a 128 jugadores,
+  con numeros impares y no potencias de dos (7, 19, 27, 37, 53, 101), y el caso limite del round
+  robin completo
 - ✅ **6 pruebas de integracion** que recorren torneos enteros recargando el agregado desde SQL
   Server entre cada operacion, como haria la aplicacion entre peticiones
 

@@ -359,9 +359,29 @@ a partir de ahi prueba hacia los lados.
   agota todas las combinaciones sin exito se repite permitiendolas. Eso es literalmente "evitar
   repetir mientras existan alternativas": con 4 jugadores y 4 rondas no hay alternativa posible, y
   el torneo tiene que poder continuar igualmente.
-- **Coste**: el backtracking es exponencial en el peor caso teorico. En la practica la primera
-  combinacion que prueba suele valer, porque la preferencia Dutch es justamente la que casi siempre
-  funciona. Las pruebas cubren hasta 23 jugadores y la bateria entera tarda 126 ms.
+- **Coste medido**: el backtracking es exponencial en el peor caso teorico, pero en la practica la
+  primera combinacion que prueba suele valer, porque la preferencia Dutch es justamente la que casi
+  siempre funciona. Medido sobre campos de 4 a 128 jugadores con las rondas que recomienda el
+  apendice E del MTR:
+
+  | Jugadores | Rondas | Tiempo |
+  |---:|---:|---:|
+  | 7 | 3 | < 1 ms |
+  | 19 | 5 | < 1 ms |
+  | 27 | 5 | < 1 ms |
+  | 32 | 5 | < 1 ms |
+  | 37 | 6 | 39 ms |
+  | 64 | 6 | 2 ms |
+  | 101 | 7 | 7 ms |
+  | 128 | 7 | 10 ms |
+
+  Lo que encarece la busqueda **no es el tamano del campo sino cuantas parejas quedan libres**: 37
+  jugadores tardan cuatro veces mas que 128 porque con un campo impar mediano y seis rondas las
+  combinaciones disponibles escasean y hay que retroceder de verdad. Aun asi son milisegundos.
+
+  El caso limite es el round robin completo, donde solo existe una familia de horarios validos:
+  10 jugadores en 9 rondas, o 7 jugadores en 7 rondas con un bye cada uno, se resuelven en menos de
+  1 ms y sin una sola repeticion.
 
 ---
 
