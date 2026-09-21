@@ -28,8 +28,31 @@ public sealed record RoundTimeExpired(
     Guid RoundId,
     IReadOnlyList<Guid> AffectedPairingIds) : DomainEvent;
 
-/// <summary>A seat opened up. <paramref name="PromotedParticipantId"/> is null if nobody was waiting.</summary>
-public sealed record SeatFreed(Guid TenantId, Guid TournamentId, Guid? PromotedParticipantId) : DomainEvent;
+/// <summary>
+/// Somebody joined the tournament, whether the store typed them in at the counter or they signed
+/// up themselves from the public sheet. <paramref name="Waitlisted"/> tells the two apart for a
+/// screen that cares: taking the last seat and joining the queue are not the same news.
+/// </summary>
+public sealed record ParticipantRegistered(
+    Guid TenantId,
+    Guid TournamentId,
+    Guid ParticipantId,
+    bool Waitlisted) : DomainEvent;
+
+/// <summary>
+/// Somebody left: a withdrawal at the counter, or a player unsigning from the public sheet. It is
+/// raised for anyone leaving, seat holder or queue, because either way the roster on screen is now
+/// out of date.
+/// </summary>
+/// <param name="PromotedParticipantId">
+/// Whoever moved up into the freed seat, or null when nobody did — because nobody was waiting, or
+/// because the person leaving was in the queue themselves.
+/// </param>
+public sealed record ParticipantDropped(
+    Guid TenantId,
+    Guid TournamentId,
+    Guid ParticipantId,
+    Guid? PromotedParticipantId) : DomainEvent;
 
 /// <summary>The tournament was closed out.</summary>
 public sealed record TournamentCompleted(Guid TenantId, Guid TournamentId) : DomainEvent;

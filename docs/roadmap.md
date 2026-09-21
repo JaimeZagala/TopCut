@@ -227,15 +227,35 @@ jugador necesita el vínculo entre cuenta y participante que crea la inscripció
 - ✅ **20 pruebas nuevas**: 14 sobre que se ve y que no se ve entre tiendas contra SQL Server real, y
   6 que recorren las dos pantallas por HTTP
 
-#### 5b — Inscripción, baja y lista de espera ⬜
+#### 5b — Inscripción, baja y lista de espera ✅
 
-El jugador se apunta y se borra desde la ficha, con **promoción automática** desde la lista de
-espera y concurrencia optimista al ocupar la última plaza. Historial del jugador.
+- ✅ **Apuntarse y darse de baja** desde la ficha pública, con la cuenta del jugador. Dos
+  formularios POST normales, sin circuito: el panel vuelve a leer el estado y lo enseña ("estás el
+  3.º de la lista"), que dice más que cualquier mensaje de confirmación
+- ✅ **Lista de espera con promoción automática**: al darse de baja alguien con plaza, entra el
+  primero de la cola y **la cola se renumera entera**. Corregido de paso un fallo que nadie podía
+  ver mientras la lista solo la miraba la tienda: quien salía por la mitad dejaba su número atrás
+- ✅ **Una cuenta, una fila**. Quien se borra y vuelve reincorpora su misma inscripción en vez de
+  crear otra, y no recupera la plaza si ya se la dieron a quien esperaba
+- ✅ **La última plaza ya no se vende dos veces** (ADR-0032). Dos inscripciones simultáneas no
+  chocaban porque la fila del torneo no cambiaba; ahora la versión de la raíz protege todo el
+  agregado, y la prueba monta la carrera de verdad contra SQL Server
+- ✅ **La escritura entre tiendas entra por una puerta con nombre** (ADR-0031),
+  `ExecuteOnPublicAsync`, con la misma regla de visibilidad que la búsqueda y sin tocar el ámbito
+  de tienda de la petición
+- ✅ **Baja solo antes de empezar**: con el torneo en marcha cambia los emparejamientos, así que
+  pasa a ser cosa de la mesa de control
+- ✅ **`/mis-torneos`**: los torneos del jugador, de todas las tiendas donde haya jugado, con
+  próximos y jugados
+- ✅ **Las pantallas de la tienda se enteran**: `ParticipantRegistered` y `ParticipantDropped`
+  sustituyen a `SeatFreed`, que solo cubría la mitad de los casos
+- ✅ **20 pruebas nuevas**: 4 de dominio, 11 sobre el camino del jugador contra SQL Server real
+  (carrera por la última plaza incluida) y 6 que recorren las pantallas por HTTP
 
 #### 5c — Pantalla móvil del jugador ⬜
 
-Reportar el resultado en un par de toques. Es lo que quedó del hito 4: necesita el vínculo entre
-cuenta y participante, que lo crea la inscripción del 5b.
+Reportar el resultado en un par de toques. Es lo que quedó del hito 4; el vínculo entre cuenta y
+participante ya existe, lo crea la inscripción del 5b.
 
 ### Hito 6 — Ligas por temporada ⬜
 

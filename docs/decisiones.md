@@ -724,3 +724,56 @@ un 200 con cara de disculpa.
   dirección que no lleva a ningún sitio.
 - **La prueba comprueba las dos cosas**: que el código es 404 y que el cuerpo **no está vacío**, que
   es el fallo que esto estuvo a punto de introducir.
+
+---
+
+## ADR-0031 — El jugador escribe en el torneo de otra tienda por una puerta con nombre
+
+**Fecha**: 2026-09-21 · **Estado**: aceptada · **Impacto**: alto
+
+El ADR-0029 abrió la lectura entre tiendas. Apuntarse es una **escritura** en el torneo de una
+tienda a la que el jugador no pertenece, y eso no se puede colar por el camino normal.
+
+- **Alternativa descartada**: fijar el ámbito de tienda al del torneo (`ITenantScope.Set`) durante
+  la operación. Funciona, pero deja al resto de la petición actuando como esa tienda. Es
+  exactamente el tipo de estado ambiental que un día se olvida de volver a su sitio.
+- **Alternativa descartada**: un repositorio aparte para el jugador. Duplicaría la carga del
+  agregado, sus `Include` ordenados y el manejo de choques de concurrencia.
+- **Decisión**: un segundo método en el mismo repositorio, `ExecuteOnPublicAsync`, con el nombre
+  diciendo lo que hace. Quita el filtro de tenant **solo para esa carga** y pone en su lugar la
+  misma regla de visibilidad del ADR-0029 — el mismo método compartido, no una copia. De ahí en
+  adelante todo es igual: el dominio decide, y `Tournament.Register` crea el participante con el
+  `TenantId` del torneo, que es de donde tiene que salir.
+- **Quién es el jugador** lo dice el principal autenticado, nunca el formulario. Un identificador
+  de usuario en un campo oculto sería una invitación a apuntar a otro.
+- **Un torneo que no es público responde "no existe"**, igual que para un buscador. Adivinar el
+  identificador de un borrador no sirve de nada.
+- **Darse de baja solo antes de empezar.** Con el torneo en marcha una baja cambia los
+  emparejamientos y el organizador que está en la sala tiene que enterarse, así que a partir de ahí
+  es cosa de la mesa de control y no de un botón en un móvil.
+
+---
+
+## ADR-0032 — La versión del torneo protege todo su agregado, no solo su fila
+
+**Fecha**: 2026-09-21 · **Estado**: aceptada · **Impacto**: alto
+
+Dos jugadores pulsando *Apuntarme* a la vez por la última plaza **no chocaban**. Cada uno insertaba
+su fila en `Participants` y las dos escrituras entraban: la fila del torneo no cambiaba, así que no
+había ninguna versión que la base de datos pudiera comparar. El torneo acababa con un jugador más
+que plazas, sin error y sin rastro.
+
+- **Decisión**: toda escritura que salga del repositorio marca también la **raíz** del agregado como
+  modificada, de modo que su `RowVersion` entra en el `WHERE` del `UPDATE`. Para eso está una raíz
+  de agregado: la consistencia se define sobre el conjunto, no sobre cada fila por separado.
+- **Alternativa descartada**: una restricción en la base de datos. SQL Server no sabe expresar
+  "menos filas hijas que el valor de esta columna" de forma declarativa.
+- **Alternativa descartada**: una transacción serializable alrededor de la inscripción. Bloquea de
+  más para lo que es un choque raro, y el nivel gratuito de Azure SQL no está para regalar bloqueos.
+- **Efecto secundario que interesa**: `UpdatedAt` del torneo pasa a significar de verdad "la última
+  vez que se tocó algo de este torneo", y no solo "la última vez que se editó su configuración".
+- **Coste**: cada operación escribe también la fila del torneo. Una fila estrecha, una vez por
+  operación de organizador, contra vender dos veces la misma plaza.
+- **La prueba** monta la carrera de verdad contra SQL Server: Bruno carga, se apunta y guarda
+  mientras Ana todavía tiene el agregado en la mano. Ana recibe el mensaje de recargar, y el torneo
+  acaba con exactamente las plazas que tiene.

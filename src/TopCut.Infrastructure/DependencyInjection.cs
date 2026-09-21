@@ -48,10 +48,12 @@ public static class DependencyInjection
         services.AddScoped<ITournamentRepository, TournamentRepository>();
         services.AddScoped<ITournamentQueries, TournamentQueries>();
         services.AddScoped<IPublicTournaments, PublicTournaments>();
+        services.AddScoped<IPlayerEntries, PlayerEntries>();
         services.AddScoped<ITcgCatalog, TcgCatalog>();
         services.AddScoped<TournamentService>();
         services.AddScoped<TournamentSetupService>();
         services.AddScoped<ParticipantService>();
+        services.AddScoped<PlayerEntryService>();
 
         services.AddTopCutLiveUpdates();
 
@@ -108,7 +110,8 @@ public static class DependencyInjection
         services.AddScoped<IDomainEventHandler<RoundClosed>, LiveUpdates.OnRoundClosed>();
         services.AddScoped<IDomainEventHandler<ResultRecorded>, LiveUpdates.OnResultRecorded>();
         services.AddScoped<IDomainEventHandler<RoundTimeExpired>, LiveUpdates.OnRoundTimeExpired>();
-        services.AddScoped<IDomainEventHandler<SeatFreed>, LiveUpdates.OnSeatFreed>();
+        services.AddScoped<IDomainEventHandler<ParticipantRegistered>, LiveUpdates.OnParticipantRegistered>();
+        services.AddScoped<IDomainEventHandler<ParticipantDropped>, LiveUpdates.OnParticipantDropped>();
         services.AddScoped<IDomainEventHandler<TournamentCompleted>, LiveUpdates.OnTournamentCompleted>();
     }
 

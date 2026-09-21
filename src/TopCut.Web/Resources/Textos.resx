@@ -880,4 +880,66 @@
   <data name="HomeFind" xml:space="preserve">
     <value>Buscar torneos</value>
   </data>
+
+  <!-- Hito 5b: inscripcion del jugador -->
+  <data name="JoinNeedsAccount" xml:space="preserve">
+    <value>Para apuntarte necesitas una cuenta. Mirar no, apuntarte sí.</value>
+  </data>
+  <data name="JoinSignIn" xml:space="preserve">
+    <value>Entrar y apuntarme</value>
+  </data>
+  <data name="JoinIn" xml:space="preserve">
+    <value>Apuntarme</value>
+  </data>
+  <data name="JoinWaitlist" xml:space="preserve">
+    <value>Apuntarme a la lista de espera</value>
+  </data>
+  <data name="JoinLeave" xml:space="preserve">
+    <value>Darme de baja</value>
+  </data>
+  <data name="JoinLeaveQueue" xml:space="preserve">
+    <value>Salir de la lista de espera</value>
+  </data>
+  <data name="JoinYouAreIn" xml:space="preserve">
+    <value>Estás inscrito.</value>
+  </data>
+  <data name="JoinAsName" xml:space="preserve">
+    <value>Apareces como «{0}».</value>
+  </data>
+  <data name="JoinYouAreWaiting" xml:space="preserve">
+    <value>Estás el {0}.º en la lista de espera.</value>
+  </data>
+  <data name="JoinWaitingHint" xml:space="preserve">
+    <value>Si alguien se da de baja antes de empezar, entras automáticamente.</value>
+  </data>
+  <data name="JoinYouWithdrew" xml:space="preserve">
+    <value>Te diste de baja de este torneo.</value>
+  </data>
+  <data name="JoinClosed" xml:space="preserve">
+    <value>Este torneo ya no admite inscripciones.</value>
+  </data>
+  <data name="JoinStartedYouAreIn" xml:space="preserve">
+    <value>Estás inscrito. Para darte de baja ahora, habla con la tienda.</value>
+  </data>
+  <data name="MyTournamentsTitle" xml:space="preserve">
+    <value>Mis torneos</value>
+  </data>
+  <data name="MyTournamentsEmpty" xml:space="preserve">
+    <value>No estás apuntado a ningún torneo. Busca uno y apúntate.</value>
+  </data>
+  <data name="MyTournamentsEmptyPast" xml:space="preserve">
+    <value>Todavía no has jugado ningún torneo.</value>
+  </data>
+  <data name="MyTournamentsUpcoming" xml:space="preserve">
+    <value>Próximos</value>
+  </data>
+  <data name="MyTournamentsPast" xml:space="preserve">
+    <value>Jugados</value>
+  </data>
+  <data name="MyTournamentsWaiting" xml:space="preserve">
+    <value>{0}.º en espera</value>
+  </data>
+  <data name="MyTournamentsIn" xml:space="preserve">
+    <value>Inscrito</value>
+  </data>
 </root>

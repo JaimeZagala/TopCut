@@ -6,14 +6,27 @@ namespace TopCut.Infrastructure.Persistence;
 
 public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> contexts) : ITournamentRepository
 {
-    public async Task<OperationResult> ExecuteAsync(
+    public Task<OperationResult> ExecuteAsync(
         Guid tournamentId,
         Func<Tournament, OperationResult> work,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        Execute(tournamentId, work, onlyPublic: false, cancellationToken);
+
+    public Task<OperationResult> ExecuteOnPublicAsync(
+        Guid tournamentId,
+        Func<Tournament, OperationResult> work,
+        CancellationToken cancellationToken = default) =>
+        Execute(tournamentId, work, onlyPublic: true, cancellationToken);
+
+    private async Task<OperationResult> Execute(
+        Guid tournamentId,
+        Func<Tournament, OperationResult> work,
+        bool onlyPublic,
+        CancellationToken cancellationToken)
     {
         await using var db = contexts.CreateDbContext();
 
-        var tournament = await LoadAsync(db, tournamentId, cancellationToken);
+        var tournament = await LoadAsync(db, tournamentId, cancellationToken, onlyPublic: onlyPublic);
 
         if (tournament is null)
         {
@@ -28,6 +41,8 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
         {
             return result;
         }
+
+        GuardTheWholeAggregate(db, tournament);
 
         try
         {
@@ -44,6 +59,22 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
 
         return result;
     }
+
+    /// <summary>
+    /// Makes the tournament's own row part of every write to its aggregate, so its
+    /// <c>RowVersion</c> is checked even when the change was to a child row.
+    /// <para>
+    /// Without this, two players pressing "Apuntarme" at the same time for the last seat both
+    /// insert a <c>Participant</c> and <b>neither write collides</b>: the tournament row never
+    /// changed, so there was no version for the database to compare. The tournament would quietly
+    /// end up with one player more than it has seats.
+    /// </para>
+    /// <para>
+    /// The aggregate root's version guards the whole aggregate, which is what a root is for.
+    /// </para>
+    /// </summary>
+    private static void GuardTheWholeAggregate(TopCutDbContext db, Tournament tournament) =>
+        db.Entry(tournament).Property(candidate => candidate.UpdatedAt).IsModified = true;
 
     public async Task<T> ReadAsync<T>(
         Guid tournamentId,
@@ -83,9 +114,17 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
         TopCutDbContext db,
         Guid tournamentId,
         CancellationToken cancellationToken,
-        bool tracked = true)
+        bool tracked = true,
+        bool onlyPublic = false)
     {
         var tournaments = tracked ? db.Tournaments : db.Tournaments.AsNoTracking();
+
+        // Reaching into another store's tournament, which only the public path does: the tenant
+        // filter comes off and the public visibility rule goes in its place (ADR-0031).
+        if (onlyPublic)
+        {
+            tournaments = tournaments.IgnoreQueryFilters().OnlyPublic(db);
+        }
 
         return tournaments
             .Include(tournament => tournament.Participants)

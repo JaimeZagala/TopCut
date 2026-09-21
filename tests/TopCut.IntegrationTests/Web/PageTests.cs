@@ -574,6 +574,98 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, nonsense.StatusCode);
     }
 
+    // --- Inscripcion del jugador (hito 5b) ----------------------------------------------------
+
+    [Fact]
+    public async Task A_visitor_who_is_not_signed_in_is_offered_a_way_back_to_this_very_sheet()
+    {
+        var tournamentId = await PublishedTournament();
+
+        var html = await Browser().GetStringAsync($"/torneos/{tournamentId}");
+
+        Assert.Contains("Para apuntarte necesitas una cuenta", html);
+
+        // Signing in must land them back on the tournament they were looking at, not on the home
+        // page with the sheet lost.
+        Assert.Contains($"volver=%2Ftorneos%2F{tournamentId}", html);
+        Assert.DoesNotContain("<!--Blazor:", html);
+    }
+
+    [Fact]
+    public async Task A_player_signs_up_from_the_sheet_and_the_sheet_says_so()
+    {
+        var tournamentId = await PublishedTournament();
+        var player = Browser();
+        await SubmitRegistration(player, NewEmail(), "Ana", consent: true);
+
+        var html = await Join(player, tournamentId);
+
+        Assert.Contains("Estás inscrito", html);
+        Assert.Contains("Ana", html);
+
+        // The seat count on the same page has to agree with it straight away.
+        Assert.Contains("1 de 16 plazas", html);
+    }
+
+    [Fact]
+    public async Task A_full_tournament_signs_the_player_into_the_queue_and_tells_them_their_number()
+    {
+        var (email, storeId) = await RegisterApprovedStore(Browser());
+        var tournamentId = await CreateTournament(storeId, "Torneo pequeño", capacity: 2, city: NewCity());
+        await SignUp(storeId, tournamentId, "Ana", "Bruno");
+        await Publish(storeId, tournamentId);
+
+        var player = Browser();
+        await SubmitRegistration(player, NewEmail(), "Carla", consent: true);
+
+        var html = await Join(player, tournamentId);
+
+        Assert.Contains("Estás el 1.º en la lista de espera", html);
+    }
+
+    [Fact]
+    public async Task A_player_can_take_themselves_back_out_and_then_change_their_mind_again()
+    {
+        var tournamentId = await PublishedTournament();
+        var player = Browser();
+        await SubmitRegistration(player, NewEmail(), "Ana", consent: true);
+
+        await Join(player, tournamentId);
+
+        var left = await Submit(player, $"/torneos/{tournamentId}", "darse-de-baja");
+        Assert.Contains("Te diste de baja", left);
+        Assert.Contains("0 de 16 plazas", left);
+
+        var back = await Join(player, tournamentId);
+        Assert.Contains("Estás inscrito", back);
+    }
+
+    [Fact]
+    public async Task My_tournaments_lists_what_the_player_signed_up_for_and_nothing_else()
+    {
+        var mine = await PublishedTournament("Al que voy");
+        var theirs = await PublishedTournament("Al que no voy");
+
+        var player = Browser();
+        await SubmitRegistration(player, NewEmail(), "Ana", consent: true);
+        await Join(player, mine);
+
+        var html = await player.GetStringAsync("/mis-torneos");
+
+        Assert.Contains("Al que voy", html);
+        Assert.DoesNotContain("Al que no voy", html);
+        Assert.DoesNotContain("<!--Blazor:", html);
+    }
+
+    [Fact]
+    public async Task My_tournaments_is_not_for_anonymous_visitors()
+    {
+        var response = await Browser().GetAsync("/mis-torneos");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.StartsWith("/cuenta/acceso", Target(response));
+    }
+
     // --- Helpers ----------------------------------------------------------------------------------------
 
     /// <summary>Where a redirect points, as a path, whether the header is absolute or relative.</summary>
@@ -651,6 +743,31 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
             .StartNextRoundAsync(tournamentId);
 
         Assert.True(result.Succeeded, string.Join(" ", result.Errors));
+    }
+
+    /// <summary>A published tournament of some store the player has nothing to do with.</summary>
+    private async Task<Guid> PublishedTournament(string name = "Prerelease de invierno")
+    {
+        var (_, storeId) = await RegisterApprovedStore(Browser());
+        var tournamentId = await CreateTournament(storeId, name, city: NewCity());
+
+        await Publish(storeId, tournamentId);
+
+        return tournamentId;
+    }
+
+    private Task<string> Join(HttpClient player, Guid tournamentId) =>
+        Submit(player, $"/torneos/{tournamentId}", "apuntarse");
+
+    /// <summary>Posts one of a page's Blazor forms the way a browser would, and returns what came back.</summary>
+    private static async Task<string> Submit(HttpClient browser, string url, string formName)
+    {
+        var page = await browser.GetStringAsync(url);
+        var fields = HtmlPage.HiddenFieldsOf(page, formName);
+
+        var response = await browser.PostAsync(url, new FormUrlEncodedContent(fields));
+
+        return await response.Content.ReadAsStringAsync();
     }
 
     /// <summary>A city nobody else's test is using, so a public search can be pinned to one store.</summary>

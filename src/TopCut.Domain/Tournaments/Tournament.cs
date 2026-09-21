@@ -194,26 +194,56 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
     /// <summary>
     /// Registers someone. If the tournament is full they join the waitlist in arrival order. The
     /// user id is null for the store's manual walk-in entries.
+    /// <para>
+    /// An account that withdrew and comes back gets its <b>same</b> row reinstated. Two lines for
+    /// one person would double-count them on the roster and make "am I in?" ambiguous. Coming back
+    /// does not recover the seat, though: if it went to someone waiting, this is a place in the
+    /// queue like anybody else's.
+    /// </para>
     /// </summary>
     public Participant Register(string name, string? userId = null)
     {
         DomainException.Require(
             Status is TournamentStatus.Draft or TournamentStatus.Published,
             "El torneo ya no admite inscripciones.");
-        DomainException.Require(
-            userId is null || _participants.All(p => p.UserId != userId),
-            "Ese jugador ya está inscrito en el torneo.");
 
-        var participant = new Participant(Id, TenantId, name, userId);
+        var full = IsFull;
+        var participant = userId is null ? null : EntryOf(userId);
 
-        if (IsFull)
+        if (participant is not null)
+        {
+            DomainException.Require(
+                participant.Status == ParticipantStatus.Dropped,
+                "Ese jugador ya está inscrito en el torneo.");
+
+            participant.Reinstate();
+        }
+        else
+        {
+            participant = new Participant(Id, TenantId, name, userId);
+            _participants.Add(participant);
+        }
+
+        if (full)
         {
             participant.MoveToWaitlist(Waitlist.Count() + 1);
         }
 
-        _participants.Add(participant);
+        Raise(new ParticipantRegistered(
+            TenantId,
+            Id,
+            participant.Id,
+            participant.Status == ParticipantStatus.Waitlisted));
+
         return participant;
     }
+
+    /// <summary>
+    /// The participant tied to that account, dropped ones included. Walk-ins the store typed in
+    /// have no account, so they are never returned here even if the names match.
+    /// </summary>
+    public Participant? EntryOf(string userId) =>
+        _participants.FirstOrDefault(participant => participant.UserId == userId);
 
     /// <summary>
     /// Drops a participant. Before the tournament starts this frees a seat and promotes the first
@@ -223,24 +253,20 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
     public Participant? Drop(Guid participantId)
     {
         var participant = FindParticipant(participantId);
-        var freesSeat = participant.Status == ParticipantStatus.Registered;
+
+        // Once the first round is up, a seat is not really free: the pairings are made, and
+        // dropping somebody in from the queue would leave them with rounds they never played.
+        var freesSeat = participant.Status == ParticipantStatus.Registered
+            && Status != TournamentStatus.InProgress;
 
         participant.Drop();
 
-        if (!freesSeat || Status == TournamentStatus.InProgress)
-        {
-            return null;
-        }
-
-        var promoted = Waitlist.FirstOrDefault();
+        var promoted = freesSeat ? Waitlist.FirstOrDefault() : null;
         promoted?.PromoteFromWaitlist();
 
-        foreach (var waiting in Waitlist)
-        {
-            waiting.MoveUpWaitlist();
-        }
+        RenumberWaitlist();
 
-        Raise(new SeatFreed(TenantId, Id, promoted?.Id));
+        Raise(new ParticipantDropped(TenantId, Id, participant.Id, promoted?.Id));
         return promoted;
     }
 
@@ -327,6 +353,21 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
     }
 
     // --- Helpers -----------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Closes the gaps in the queue. Somebody leaving from the middle of it used to leave their
+    /// number behind, so the person right after them was still told they were fourth when there
+    /// were three people in front. Nobody noticed while only the store could see the list.
+    /// </summary>
+    private void RenumberWaitlist()
+    {
+        var position = 1;
+
+        foreach (var waiting in Waitlist)
+        {
+            waiting.SetWaitlistPosition(position++);
+        }
+    }
 
     private Participant FindParticipant(Guid participantId) =>
         _participants.FirstOrDefault(p => p.Id == participantId)

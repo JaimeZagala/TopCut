@@ -1,6 +1,9 @@
 @page "/torneos/{Id:guid}"
 @attribute [ExcludeFromInteractiveRouting]
 @inject IPublicTournaments Tournaments
+@using TopCut.Application.Tournaments
+@inject IPlayerEntries Entries
+@inject PlayerEntryService Players
 @inject LocalTime Clock
 
 @* Ficha pública de un torneo: lo que hace falta para decidir si ir, sin cuenta y sin circuito.
@@ -8,7 +11,12 @@
    Incluye las reglas con las que se va a jugar (formato, reloj y que pasa al acabarse el tiempo),
    que es justo lo que se discute en la mesa cuando nadie las miró antes. Salen de la copia que el
    torneo guardó al crearse, no del reglamento actual del juego, así que lo que se lee aquí es lo
-   que se va a aplicar aunque el reglamento cambie mañana. *@
+   que se va a aplicar aunque el reglamento cambie mañana.
+
+   Apuntarse y darse de baja son dos formularios POST normales, sin circuito. No se redirige
+   después de guardar: el propio panel vuelve a leer el estado y lo enseña ("estás el 3.º de la
+   lista"), que dice más que cualquier mensaje de confirmación. Y volver a enviarlo sin querer es
+   inofensivo, porque el dominio rechaza inscribirse dos veces. *@
 
 @* Sin ficha no se pinta nada: la página ya ha puesto un 404 y de ahí se encarga /not-found. *@
 @if (sheet is not null)
@@ -26,6 +34,75 @@
 
     <MudText Typo="Typo.h1" GutterBottom="true">@sheet.Name</MudText>
     <MudText Typo="Typo.h6" Class="mud-text-secondary mb-6">@sheet.StoreName</MudText>
+
+    @if (refused.Count > 0)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4" role="alert">
+            <MudText Typo="Typo.body2">@string.Join(" ", refused)</MudText>
+        </MudAlert>
+    }
+
+    <MudPaper Outlined="true" Elevation="0" Class="pa-4 mb-6">
+        <AuthorizeView Context="session">
+            <NotAuthorized>
+                @if (sheet.AcceptsRegistrations)
+                {
+                    <MudText Typo="Typo.body1" Class="mb-3">@Textos.JoinNeedsAccount</MudText>
+                    <MudButton Href="@SignInHere" Variant="Variant.Filled" Color="Color.Primary">
+                        @Textos.JoinSignIn
+                    </MudButton>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body1">@Textos.JoinClosed</MudText>
+                }
+            </NotAuthorized>
+
+            <Authorized>
+                @if (entry is { HoldsASeat: true })
+                {
+                    <MudText Typo="Typo.body1" Class="mb-1">@Textos.JoinYouAreIn</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">@string.Format(Textos.JoinAsName, entry.Name)</MudText>
+                }
+                else if (entry is { IsWaiting: true })
+                {
+                    <MudText Typo="Typo.body1" Class="mb-1">
+                        @string.Format(Textos.JoinYouAreWaiting, entry.WaitlistPosition)
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">@Textos.JoinWaitingHint</MudText>
+                }
+                else if (entry is { HasWithdrawn: true } && sheet.AcceptsRegistrations)
+                {
+                    <MudText Typo="Typo.body1" Class="mb-3">@Textos.JoinYouWithdrew</MudText>
+                }
+
+                @if (sheet.AcceptsRegistrations && entry is null or { HasWithdrawn: true })
+                {
+                    @* Las plazas que quedan ya están en la ficha, unos centímetros más abajo. Lo que
+                       hace falta saber aquí lo dice el propio botón: si es apuntarse o hacer cola. *@
+                    <EditForm Model="this" FormName="apuntarse" OnValidSubmit="JoinAsync" method="post">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                            @(sheet.IsFull ? Textos.JoinWaitlist : Textos.JoinIn)
+                        </MudButton>
+                    </EditForm>
+                }
+                else if (entry is { HasWithdrawn: false } && sheet.AcceptsRegistrations)
+                {
+                    <EditForm Model="this" FormName="darse-de-baja" OnValidSubmit="WithdrawAsync" method="post">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Outlined" Color="Color.Error">
+                            @(entry is { IsWaiting: true } ? Textos.JoinLeaveQueue : Textos.JoinLeave)
+                        </MudButton>
+                    </EditForm>
+                }
+                else if (!sheet.AcceptsRegistrations)
+                {
+                    <MudText Typo="Typo.body1">
+                        @(entry is { HasWithdrawn: false } ? Textos.JoinStartedYouAreIn : Textos.JoinClosed)
+                    </MudText>
+                }
+            </Authorized>
+        </AuthorizeView>
+    </MudPaper>
 
     <MudGrid Spacing="4">
         <MudItem xs="12" md="7">
@@ -92,6 +169,8 @@
 
 @code {
     private PublicTournamentInfo? sheet;
+    private PlayerEntry? entry;
+    private List<string> refused = [];
     private Guid loaded;
 
     [Parameter]
@@ -99,6 +178,12 @@
 
     [CascadingParameter]
     private HttpContext? Request { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? Authentication { get; set; }
+
+    /// <summary>Sign in and come straight back here, rather than landing on the home page.</summary>
+    private string SignInHere => $"/cuenta/acceso?volver={Uri.EscapeDataString($"/torneos/{Id}")}";
 
     private string SeatsLine => sheet switch
     {
@@ -116,7 +201,7 @@
         }
 
         loaded = Id;
-        sheet = await Tournaments.FindAsync(Id);
+        await ReadAsync();
 
         // Un enlace a un torneo que no existe —o que su tienda nunca publicó— responde 404 de
         // verdad, no un 200 con cara de error: es una dirección pública y la va a seguir un
@@ -130,6 +215,65 @@
         {
             Request.Response.StatusCode = StatusCodes.Status404NotFound;
         }
+    }
+
+    private async Task JoinAsync()
+    {
+        var (userId, displayName) = await PlayerAsync();
+
+        if (userId is null)
+        {
+            return;
+        }
+
+        var outcome = await Players.JoinAsync(Id, userId, displayName);
+
+        refused = outcome.Succeeded ? [] : [.. outcome.Errors];
+        await ReadAsync();
+    }
+
+    private async Task WithdrawAsync()
+    {
+        var (userId, _) = await PlayerAsync();
+
+        if (userId is null)
+        {
+            return;
+        }
+
+        var result = await Players.WithdrawAsync(Id, userId);
+
+        refused = result.Succeeded ? [] : [.. result.Errors];
+        await ReadAsync();
+    }
+
+    /// <summary>
+    /// Who is signing up, taken from the authenticated principal and never from the form. A user
+    /// id posted in a hidden field would be an invitation to sign somebody else up.
+    /// </summary>
+    private async Task<(string? UserId, string DisplayName)> PlayerAsync()
+    {
+        if (Authentication is null)
+        {
+            return (null, string.Empty);
+        }
+
+        var user = (await Authentication).User;
+
+        return (
+            user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+            user.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value
+                ?? user.Identity?.Name
+                ?? string.Empty);
+    }
+
+    private async Task ReadAsync()
+    {
+        sheet = await Tournaments.FindAsync(Id);
+
+        var (userId, _) = await PlayerAsync();
+
+        entry = userId is null || sheet is null ? null : await Entries.ForAsync(Id, userId);
     }
 
     /// <summary>"Bo3, rondas de 50 min (+5 de prórroga)" — lo que se pregunta antes de sentarse.</summary>

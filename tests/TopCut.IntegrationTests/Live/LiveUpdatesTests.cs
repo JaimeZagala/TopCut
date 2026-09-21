@@ -164,7 +164,8 @@ public class LiveUpdatesTests(SqlServerFixture fixture)
         services.AddScoped<IDomainEventHandler<RoundClosed>, LiveUpdates.OnRoundClosed>();
         services.AddScoped<IDomainEventHandler<ResultRecorded>, LiveUpdates.OnResultRecorded>();
         services.AddScoped<IDomainEventHandler<RoundTimeExpired>, LiveUpdates.OnRoundTimeExpired>();
-        services.AddScoped<IDomainEventHandler<SeatFreed>, LiveUpdates.OnSeatFreed>();
+        services.AddScoped<IDomainEventHandler<ParticipantRegistered>, LiveUpdates.OnParticipantRegistered>();
+        services.AddScoped<IDomainEventHandler<ParticipantDropped>, LiveUpdates.OnParticipantDropped>();
         services.AddScoped<IDomainEventHandler<TournamentCompleted>, LiveUpdates.OnTournamentCompleted>();
 
         var dispatcher = new DomainEventDispatcher(services.BuildServiceProvider());

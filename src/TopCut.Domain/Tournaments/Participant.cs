@@ -63,13 +63,7 @@ public class Participant : BusinessEntity, ITenantOwned, IHasRowVersion
         WaitlistPosition = null;
     }
 
-    internal void MoveUpWaitlist()
-    {
-        if (WaitlistPosition is > 1)
-        {
-            WaitlistPosition--;
-        }
-    }
+    internal void SetWaitlistPosition(int position) => WaitlistPosition = position;
 
     /// <summary>Withdrawal. Keeps results already played and stops entering pairings and byes.</summary>
     internal void Drop()
@@ -79,6 +73,21 @@ public class Participant : BusinessEntity, ITenantOwned, IHasRowVersion
             "El participante ya estaba dado de baja.");
 
         Status = ParticipantStatus.Dropped;
+        WaitlistPosition = null;
+    }
+
+    /// <summary>
+    /// Undoes a withdrawal. A player who signed up, changed their mind and changed it back gets
+    /// their <b>same</b> row rather than a second one, so the roster keeps one line per person and
+    /// the account stays tied to a single participant.
+    /// </summary>
+    internal void Reinstate()
+    {
+        DomainException.Require(
+            Status == ParticipantStatus.Dropped,
+            "Solo se reincorpora a quien se había dado de baja.");
+
+        Status = ParticipantStatus.Registered;
         WaitlistPosition = null;
     }
 

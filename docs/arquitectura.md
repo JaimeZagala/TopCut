@@ -149,6 +149,12 @@ definición, y por eso hay pruebas que tiran en las dos direcciones: que un visi
 contexto **si** ve los torneos ajenos publicados, y que no ve borradores, tiendas sin aprobar ni
 tiendas de prueba.
 
+Esa puerta también deja pasar una **escritura**, y solo una: el jugador que se apunta o se da de
+baja desde la ficha pública (ADR-0031). Entra por `ITournamentRepository.ExecuteOnPublicAsync`, que
+aplica exactamente la misma regla de visibilidad —un método compartido, no una copia— y por el
+mismo camino de siempre a partir de ahí: el dominio decide, la operación es una unidad de trabajo y
+el participante nace con el `TenantId` del torneo, no con el de quien lo pidió.
+
 ## Autenticación
 
 - **Blazor Web App**: cookie de sesión de ASP.NET Core Identity.

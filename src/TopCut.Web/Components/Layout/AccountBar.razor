@@ -12,6 +12,12 @@
 
 <AuthorizeView>
     <Authorized>
+        <MudButton Href="/mis-torneos"
+                   Color="Color.Inherit"
+                   StartIcon="@Icons.Material.Filled.EventAvailable"
+                   Class="ml-2 d-none d-sm-flex">
+            @Textos.MyTournamentsTitle
+        </MudButton>
         <MudText Typo="Typo.body2" Class="mx-3 d-none d-sm-flex" title="@Textos.NavUserMenu">
             @DisplayNameOf(context)
         </MudText>

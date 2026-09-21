@@ -37,9 +37,17 @@ public static class LiveUpdates
             broadcaster.PublishAsync(domainEvent.TournamentId, TournamentChange.TimeExpired, cancellationToken);
     }
 
-    public sealed class OnSeatFreed(ITournamentBroadcaster broadcaster) : IDomainEventHandler<SeatFreed>
+    public sealed class OnParticipantRegistered(ITournamentBroadcaster broadcaster)
+        : IDomainEventHandler<ParticipantRegistered>
     {
-        public Task HandleAsync(SeatFreed domainEvent, CancellationToken cancellationToken = default) =>
+        public Task HandleAsync(ParticipantRegistered domainEvent, CancellationToken cancellationToken = default) =>
+            broadcaster.PublishAsync(domainEvent.TournamentId, TournamentChange.RosterChanged, cancellationToken);
+    }
+
+    public sealed class OnParticipantDropped(ITournamentBroadcaster broadcaster)
+        : IDomainEventHandler<ParticipantDropped>
+    {
+        public Task HandleAsync(ParticipantDropped domainEvent, CancellationToken cancellationToken = default) =>
             broadcaster.PublishAsync(domainEvent.TournamentId, TournamentChange.RosterChanged, cancellationToken);
     }
 

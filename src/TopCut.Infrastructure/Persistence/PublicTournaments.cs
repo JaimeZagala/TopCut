@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using TopCut.Application.Abstractions;
-using TopCut.Domain.Tenancy;
 using TopCut.Domain.Tournaments;
 
 namespace TopCut.Infrastructure.Persistence;
@@ -170,27 +169,12 @@ public sealed class PublicTournaments(IDbContextFactory<TopCutDbContext> context
             .ToListAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// What may be shown to anybody. Three conditions, and each one is there for a reason:
-    /// <list type="bullet">
-    /// <item>the organiser <b>published</b> it — a draft is the store's own workspace, and a
-    /// cancelled one stays visible on purpose, because somebody had it in their diary;</item>
-    /// <item>the store is <b>approved</b> right now, so revoking one takes its events off the
-    /// listing on the next request rather than whenever a cache feels like it;</item>
-    /// <item>and it is <b>not a test store</b>, which is what stands in for the staging environment
-    /// the Azure free tier cannot fund.</item>
-    /// </list>
-    /// </summary>
+    /// <summary>What may be shown to anybody. The rule itself lives in <see cref="PublicVisibility"/>.</summary>
     private static IQueryable<Tournament> Visible(TopCutDbContext db) =>
         db.Tournaments
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(tournament =>
-                tournament.Status != TournamentStatus.Draft
-                && db.Stores.Any(store =>
-                    store.Id == tournament.TenantId
-                    && store.Status == StoreStatus.Approved
-                    && !store.IsTestStore));
+            .OnlyPublic(db);
 
     private static string NameOf(Dictionary<int, (string Code, string Name)> games, int tcgId) =>
         games.TryGetValue(tcgId, out var game) ? game.Name : string.Empty;

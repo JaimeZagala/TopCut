@@ -1,0 +1,93 @@
+@page "/mis-torneos"
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [Authorize]
+@inject IPlayerEntries Entries
+@inject LocalTime Clock
+
+@* Los torneos del jugador, de todas las tiendas donde haya jugado. Su historial es suyo, no de
+   ninguna tienda en concreto, así que esta consulta también cruza la frontera (ADR-0029); lo que
+   sustituye al filtro aquí es la cuenta, que sale del principal autenticado y nunca de la
+   dirección. *@
+
+<PageTitle>@Textos.MyTournamentsTitle - @Textos.AppName</PageTitle>
+
+<MudText Typo="Typo.h1" GutterBottom="true">@Textos.MyTournamentsTitle</MudText>
+
+@* Los dos filtros son enlaces, no pestañas: sin circuito no hay nada que reaccione a un clic. *@
+<MudStack Row="true" Spacing="2" Class="mb-6">
+    <MudButton Href="/mis-torneos"
+               Variant="@(Past ? Variant.Text : Variant.Filled)"
+               Color="Color.Primary">
+        @Textos.MyTournamentsUpcoming
+    </MudButton>
+    <MudButton Href="/mis-torneos?cuando=pasados"
+               Variant="@(Past ? Variant.Filled : Variant.Text)"
+               Color="Color.Primary">
+        @Textos.MyTournamentsPast
+    </MudButton>
+</MudStack>
+
+@if (rows.Count == 0)
+{
+    <MudPaper Class="pa-8 text-center" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.body1" Class="mb-4">
+            @(Past ? Textos.MyTournamentsEmptyPast : Textos.MyTournamentsEmpty)
+        </MudText>
+        <MudButton Href="/torneos" Variant="Variant.Filled" Color="Color.Primary">@Textos.HomeFind</MudButton>
+    </MudPaper>
+}
+else
+{
+    <MudStack Spacing="3">
+        @foreach (var row in rows)
+        {
+            <MudPaper Outlined="true" Elevation="0" Class="pa-4">
+                <MudStack Row="true" Spacing="3" Wrap="Wrap.Wrap" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudLink Href="@($"/torneos/{row.TournamentId}")" Typo="Typo.h6" Underline="Underline.Hover">
+                            @row.Name
+                        </MudLink>
+                        <MudText Typo="Typo.body2" Class="mt-1">@row.StoreName · @row.City</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">@Clock.FormatLong(row.StartsAt)</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@row.TcgName</MudText>
+                    </div>
+
+                    <MudStack Spacing="1" AlignItems="AlignItems.End" Justify="Justify.Center">
+                        <MudChip T="string" Size="Size.Small" Color="@Labels.ColourFor(row.TournamentStatus)">
+                            @Labels.For(row.TournamentStatus)
+                        </MudChip>
+                        <MudText Typo="Typo.body2">
+                            @(row.WaitlistPosition is { } place
+                                ? string.Format(Textos.MyTournamentsWaiting, place)
+                                : Textos.MyTournamentsIn)
+                        </MudText>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
+}
+
+@code {
+    private IReadOnlyList<PlayerHistoryRow> rows = [];
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? Authentication { get; set; }
+
+    [SupplyParameterFromQuery(Name = "cuando")]
+    private string? When { get; set; }
+
+    private bool Past => When == "pasados";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Authentication is null)
+        {
+            return;
+        }
+
+        var userId = (await Authentication).User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        rows = userId is null ? [] : await Entries.HistoryAsync(userId, Past);
+    }
+}

@@ -37,5 +37,19 @@ public interface ITournamentRepository
         T whenMissing,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Same as <see cref="ExecuteAsync"/>, but for a tournament belonging to a store the caller is
+    /// <b>not</b> scoped to: a player signing up from the public sheet (ADR-0031).
+    /// <para>
+    /// The tenant filter is switched off, so the rule that replaces it is the same one the public
+    /// search uses (ADR-0029): only a tournament that store has published, of a store that is
+    /// approved and is not a test tenant. Anything else answers as if it did not exist.
+    /// </para>
+    /// </summary>
+    Task<OperationResult> ExecuteOnPublicAsync(
+        Guid tournamentId,
+        Func<Tournament, OperationResult> work,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(Tournament tournament, CancellationToken cancellationToken = default);
 }

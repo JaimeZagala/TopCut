@@ -123,9 +123,12 @@ Store 1──* Tournament *──1 Tcg 1──1 Ruleset
   ronda**; después la configuración queda congelada. Solo admite potencias de dos.
 - Cada **fase** tiene su propio formato y su propio tiempo, configurables por separado.
 - Al llenarse el torneo, las inscripciones pasan a **lista de espera** conservando el orden. Una
-  baja antes de empezar promociona al primero y reordena al resto; una baja con el torneo en curso
-  no promociona a nadie, pero retira al jugador de los emparejamientos futuros conservando sus
-  resultados.
+  baja antes de empezar promociona al primero y **renumera la cola entera**, salga quien salga y
+  desde donde salga; una baja con el torneo en curso no promociona a nadie, pero retira al jugador
+  de los emparejamientos futuros conservando sus resultados.
+- Una **cuenta** ocupa como mucho **una fila** en el torneo. Quien se da de baja y vuelve a
+  apuntarse reincorpora su misma fila, no crea otra; y no recupera la plaza, que para entonces
+  puede tenerla quien estuviera esperando.
 - Un **bye** nace ya resuelto y no admite que se le reporte resultado.
 - Las partidas se registran **una a una segun terminan** (`RecordGame`), y el enfrentamiento se
   cierra solo en cuanto queda decidido.
@@ -179,7 +182,9 @@ lugar de crear tablas aparte, porque nunca se consultan por separado y un join n
 - **`Pairing` no tiene clave ajena a `Participant`** a propósito: borrar un participante nunca debe
   arrastrar en cascada un enfrentamiento que ya cuenta para la clasificación.
 - **`RowVersion`** en `Tournaments`, `Participants` y `Pairings`, que son las filas donde dos
-  acciones simultáneas pueden pisarse.
+  acciones simultáneas pueden pisarse. La del torneo protege **todo el agregado**, no solo su fila:
+  cualquier escritura dentro del agregado marca también la raíz, para que dos inscripciones a la
+  vez por la última plaza choquen en vez de colarse las dos (ADR-0032).
 - **Fechas** como `datetimeoffset`; las duraciones de ronda como `time`.
 - Las claves `Guid` v7 las genera el dominio, no la base de datos (`ValueGeneratedNever`).
 

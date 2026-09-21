@@ -198,7 +198,7 @@ public class TournamentTests
     }
 
     [Fact]
-    public void Dropping_before_the_start_raises_the_seat_freed_event()
+    public void Dropping_before_the_start_announces_who_took_the_freed_seat()
     {
         var tournament = NewTournament(capacity: 2);
         tournament.Publish();
@@ -208,8 +208,66 @@ public class TournamentTests
 
         tournament.Drop(ana.Id);
 
-        var raised = Assert.Single(tournament.DomainEvents.OfType<SeatFreed>());
+        var raised = Assert.Single(tournament.DomainEvents.OfType<ParticipantDropped>());
+        Assert.Equal(ana.Id, raised.ParticipantId);
         Assert.Equal(carla.Id, raised.PromotedParticipantId);
+    }
+
+    [Fact]
+    public void Leaving_the_queue_closes_the_gap_behind()
+    {
+        var tournament = NewTournament(capacity: 2);
+        tournament.Publish();
+        tournament.Register("Ana");
+        tournament.Register("Zoe");
+        var bruno = tournament.Register("Bruno");
+        var carla = tournament.Register("Carla");
+        var diego = tournament.Register("Diego");
+
+        Assert.Equal([1, 2, 3], new[] { bruno, carla, diego }.Select(p => p.WaitlistPosition));
+
+        tournament.Drop(bruno.Id);
+
+        // Sin renumerar, a Carla se le seguiria diciendo que es la segunda cuando ya no hay nadie
+        // delante. Nadie lo noto mientras la cola solo la veia la tienda.
+        Assert.Equal(1, carla.WaitlistPosition);
+        Assert.Equal(2, diego.WaitlistPosition);
+
+        // Y nadie ocupa plaza: quien se fue estaba en la cola, no sentado.
+        var raised = Assert.Single(tournament.DomainEvents.OfType<ParticipantDropped>());
+        Assert.Null(raised.PromotedParticipantId);
+    }
+
+    [Fact]
+    public void A_player_who_withdraws_and_comes_back_keeps_one_row_and_loses_the_seat()
+    {
+        var tournament = NewTournament(capacity: 2);
+        tournament.Publish();
+        var ana = tournament.Register("Ana", "cuenta-de-ana");
+        tournament.Register("Zoe");
+
+        tournament.Drop(ana.Id);
+        var bruno = tournament.Register("Bruno");
+
+        var again = tournament.Register("Ana", "cuenta-de-ana");
+
+        Assert.Same(ana, again);
+        Assert.Equal(3, tournament.Participants.Count);
+        Assert.Equal(ParticipantStatus.Waitlisted, again.Status);
+        Assert.Equal(1, again.WaitlistPosition);
+        Assert.Equal(ParticipantStatus.Registered, bruno.Status);
+    }
+
+    [Fact]
+    public void The_same_account_cannot_sign_up_twice()
+    {
+        var tournament = NewTournament();
+        tournament.Publish();
+        tournament.Register("Ana", "cuenta-de-ana");
+
+        var error = Assert.Throws<DomainException>(() => tournament.Register("Ana", "cuenta-de-ana"));
+
+        Assert.Contains("ya está inscrito", error.Message);
     }
 
     [Fact]
