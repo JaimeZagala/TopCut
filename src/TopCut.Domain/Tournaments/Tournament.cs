@@ -192,23 +192,28 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
     // --- Participants ----------------------------------------------------------------------------
 
     /// <summary>
-    /// Registers someone. If the tournament is full they join the waitlist in arrival order. The
-    /// user id is null for the store's manual walk-in entries.
+    /// Registers someone from the store's book of regulars. If the tournament is full they join the
+    /// waitlist in arrival order. The user id is null for the players the store writes in by hand.
     /// <para>
-    /// An account that withdrew and comes back gets its <b>same</b> row reinstated. Two lines for
-    /// one person would double-count them on the roster and make "am I in?" ambiguous. Coming back
-    /// does not recover the seat, though: if it went to someone waiting, this is a place in the
-    /// queue like anybody else's.
+    /// Signing up twice is refused, and it is the <b>book entry</b> that decides whether it is the
+    /// same person — not the name, which two people can share, and not the account, which a walk-in
+    /// does not have.
+    /// </para>
+    /// <para>
+    /// Somebody who withdrew and comes back gets their <b>same</b> row reinstated. Two lines for one
+    /// person would double-count them on the roster and make "am I in?" ambiguous. Coming back does
+    /// not recover the seat, though: if it went to someone waiting, this is a place in the queue
+    /// like anybody else's.
     /// </para>
     /// </summary>
-    public Participant Register(string name, string? userId = null)
+    public Participant Register(Guid storePlayerId, string name, string? userId = null)
     {
         DomainException.Require(
             Status is TournamentStatus.Draft or TournamentStatus.Published,
             "El torneo ya no admite inscripciones.");
 
         var full = IsFull;
-        var participant = userId is null ? null : EntryOf(userId);
+        var participant = EntryOfPlayer(storePlayerId);
 
         if (participant is not null)
         {
@@ -220,7 +225,7 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
         }
         else
         {
-            participant = new Participant(Id, TenantId, name, userId);
+            participant = new Participant(Id, TenantId, storePlayerId, name, userId);
             _participants.Add(participant);
         }
 
@@ -244,6 +249,10 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
     /// </summary>
     public Participant? EntryOf(string userId) =>
         _participants.FirstOrDefault(participant => participant.UserId == userId);
+
+    /// <summary>The participant for that entry in the store's book, dropped ones included.</summary>
+    public Participant? EntryOfPlayer(Guid storePlayerId) =>
+        _participants.FirstOrDefault(participant => participant.StorePlayerId == storePlayerId);
 
     /// <summary>
     /// Drops a participant. Before the tournament starts this frees a seat and promotes the first

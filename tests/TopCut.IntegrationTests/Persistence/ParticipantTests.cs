@@ -57,13 +57,31 @@ public class ParticipantTests(SqlServerFixture fixture)
     }
 
     [Fact]
-    public async Task Two_people_can_share_a_name_because_walk_ins_have_nothing_else_to_tell_them_apart()
+    public async Task Typing_the_same_name_twice_is_the_same_person_and_says_so()
     {
         var (store, tournament) = await NewTournament();
 
         Assert.True((await Players(store).RegisterAsync(tournament, "Ana")).Succeeded);
+
+        // The name now resolves against the store's own book (ADR-0035), so this is the counter
+        // saying "Ana" about somebody already sitting down — which is nearly always a double tap.
+        var again = await Players(store).RegisterAsync(tournament, "Ana");
+
+        Assert.False(again.Succeeded);
+        Assert.Contains("ya está inscrito", string.Join(" ", again.Errors));
+        Assert.Single((await Queries(store).RosterAsync(tournament)).Registered);
+    }
+
+    [Fact]
+    public async Task A_shop_with_two_Anas_can_say_so_explicitly()
+    {
+        var (store, tournament) = await NewTournament();
+
         Assert.True((await Players(store).RegisterAsync(tournament, "Ana")).Succeeded);
 
+        var other = await Players(store).RegisterAsync(tournament, "Ana", asSomebodyNew: true);
+
+        Assert.True(other.Succeeded, string.Join(" ", other.Errors));
         Assert.Equal(2, (await Queries(store).RosterAsync(tournament)).Registered.Count);
     }
 
@@ -256,8 +274,9 @@ public class ParticipantTests(SqlServerFixture fixture)
 
     // --- Harness -------------------------------------------------------------------------------------------
 
-    private ParticipantService Players(Guid storeId) =>
-        new(new TournamentRepository(fixture.CreateContextFactory(storeId)));
+    private ParticipantService Players(Guid storeId) => new(
+        new TournamentRepository(fixture.CreateContextFactory(storeId)),
+        fixture.CreateStorePlayers(storeId));
 
     private TournamentSetupService Setup(Guid storeId) => new(
         new TournamentRepository(fixture.CreateContextFactory(storeId)),

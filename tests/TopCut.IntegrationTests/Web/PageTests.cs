@@ -767,6 +767,58 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         Assert.Contains("http-equiv=\"refresh\"", html);
     }
 
+    // --- Fichero de jugadores (hito 6a) -------------------------------------------------------
+
+    [Fact]
+    public async Task The_store_sees_who_has_played_there_and_how_often()
+    {
+        var browser = Browser();
+        var (email, storeId) = await RegisterApprovedStore(browser);
+        await SubmitSignIn(browser, email, "/tienda");
+
+        var january = await CreateTournament(storeId, "Enero", city: NewCity());
+        var february = await CreateTournament(storeId, "Febrero", city: NewCity());
+
+        await SignUp(storeId, january, "Ana Pérez", "Bruno Gil");
+        await SignUp(storeId, february, "Ana Pérez");
+
+        var html = await browser.GetStringAsync("/tienda/jugadores");
+
+        Assert.Contains("Ana Pérez", html);
+        Assert.Contains("Bruno Gil", html);
+
+        // The whole point of the book: the same person at two tournaments is one line, not two.
+        Assert.Equal(1, Occurrences(html, ">Ana Pérez<"));
+    }
+
+    [Fact]
+    public async Task Another_stores_players_are_not_in_your_book()
+    {
+        var owner = Browser();
+        var (ownerEmail, ownerStore) = await RegisterApprovedStore(owner);
+        await SubmitSignIn(owner, ownerEmail, "/tienda");
+        await SignUp(ownerStore, await CreateTournament(ownerStore, "Suyo", city: NewCity()), "Solo mia");
+
+        var intruder = Browser();
+        var (intruderEmail, _) = await RegisterApprovedStore(intruder);
+        await SubmitSignIn(intruder, intruderEmail, "/tienda");
+
+        Assert.DoesNotContain("Solo mia", await intruder.GetStringAsync("/tienda/jugadores"));
+    }
+
+    private static int Occurrences(string haystack, string needle)
+    {
+        var count = 0;
+
+        for (var at = haystack.IndexOf(needle, StringComparison.Ordinal); at >= 0;
+             at = haystack.IndexOf(needle, at + needle.Length, StringComparison.Ordinal))
+        {
+            count++;
+        }
+
+        return count;
+    }
+
     // --- Helpers ----------------------------------------------------------------------------------------
 
     /// <summary>Where a redirect points, as a path, whether the header is absolute or relative.</summary>

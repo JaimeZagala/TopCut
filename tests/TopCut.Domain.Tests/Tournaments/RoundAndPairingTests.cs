@@ -66,7 +66,7 @@ public class RoundAndPairingTests
     {
         var tournament = Magic();
         tournament.Publish();
-        var ana = tournament.Register("Ana");
+        var ana = tournament.SignUp("Ana");
         var round = tournament.StartRound(Phase.Swiss, Now);
 
         var bye = round.Pair(table: 1, ana.Id, playerBId: null);
@@ -81,7 +81,7 @@ public class RoundAndPairingTests
     {
         var tournament = Magic();
         tournament.Publish();
-        var ana = tournament.Register("Ana");
+        var ana = tournament.SignUp("Ana");
         var round = tournament.StartRound(Phase.Swiss, Now);
         var bye = round.Pair(table: 1, ana.Id, playerBId: null);
 
@@ -94,7 +94,7 @@ public class RoundAndPairingTests
     {
         var tournament = Magic();
         tournament.Publish();
-        var ana = tournament.Register("Ana");
+        var ana = tournament.SignUp("Ana");
         var round = tournament.StartRound(Phase.Swiss, Now);
 
         Assert.Throws<DomainException>(() => round.Pair(table: 1, ana.Id, ana.Id));
@@ -346,8 +346,8 @@ public class RoundAndPairingTests
         MatchInProgress(Tournament tournament)
     {
         tournament.Publish();
-        var ana = tournament.Register("Ana");
-        var bruno = tournament.Register("Bruno");
+        var ana = tournament.SignUp("Ana");
+        var bruno = tournament.SignUp("Bruno");
         var round = tournament.StartRound(Phase.Swiss, Now);
         var pairing = round.Pair(table: 1, ana.Id, bruno.Id);
 

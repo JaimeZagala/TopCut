@@ -42,7 +42,7 @@ internal sealed class TournamentDriver
 
         for (var seed = 1; seed <= players; seed++)
         {
-            var participant = Tournament.Register($"P{seed}");
+            var participant = Tournament.SignUp($"P{seed}");
             _seeds[participant.Id] = seed;
         }
     }

@@ -393,7 +393,9 @@ public class DeskTests(SqlServerFixture fixture)
         Assert.True(created.Succeeded, string.Join(" ", created.Errors));
         var tournamentId = created.TournamentId!.Value;
 
-        var roster = new ParticipantService(new TournamentRepository(fixture.CreateContextFactory(storeId)));
+        var roster = new ParticipantService(
+            new TournamentRepository(fixture.CreateContextFactory(storeId)),
+            fixture.CreateStorePlayers(storeId));
 
         for (var seat = 1; seat <= players; seat++)
         {

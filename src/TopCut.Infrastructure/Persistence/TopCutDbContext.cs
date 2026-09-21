@@ -32,6 +32,8 @@ public class TopCutDbContext(DbContextOptions<TopCutDbContext> options, ITenantC
 
     public DbSet<Store> Stores => Set<Store>();
 
+    public DbSet<StorePlayer> StorePlayers => Set<StorePlayer>();
+
     public DbSet<Tcg> Tcgs => Set<Tcg>();
 
     public DbSet<Ruleset> Rulesets => Set<Ruleset>();

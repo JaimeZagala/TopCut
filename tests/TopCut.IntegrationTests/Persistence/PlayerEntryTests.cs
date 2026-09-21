@@ -187,12 +187,12 @@ public class PlayerEntryTests(SqlServerFixture fixture)
         // exactly what two phones a second apart look like from the database's side.
         var mine = await ahead.ExecuteOnPublicAsync(id, tournament =>
         {
-            tournament.Register("Ana", ana);
+            tournament.SignUp("Ana", ana);
 
             theirs = behind
                 .ExecuteOnPublicAsync(id, other =>
                 {
-                    other.Register("Bruno", bruno);
+                    other.SignUp("Bruno", bruno);
                     return OperationResult.Ok();
                 })
                 .GetAwaiter()
@@ -365,14 +365,27 @@ public class PlayerEntryTests(SqlServerFixture fixture)
         await StartFirstRound(store, id);
 
         var mine = (await Players().BoardAsync(id, ana))!.Match!;
-        var theirs = (await Players().BoardAsync(id, carla))!.Match!;
 
-        // Only meaningful if the pairer put them on different tables, which with four players it did.
-        Assert.NotEqual(mine.PairingId, theirs.PairingId);
+        // Whoever the pairer did not sit at Ana's table. Asked rather than assumed: with four
+        // players there are two tables, but which pair is which is the pairer's business.
+        PlayerMatch? theirs = null;
+
+        foreach (var account in new[] { bruno, carla })
+        {
+            var match = (await Players().BoardAsync(id, account))!.Match!;
+
+            if (match.PairingId != mine.PairingId)
+            {
+                theirs = match;
+                break;
+            }
+        }
+
+        Assert.NotNull(theirs);
 
         // The pairing id travels in a form, so somebody could post another table's.
         var refused = await Players().ReportAsync(
-            id, ana, theirs.RoundId, theirs.PairingId, [GameWinner.PlayerA, GameWinner.PlayerA]);
+            id, ana, theirs!.RoundId, theirs.PairingId, [GameWinner.PlayerA, GameWinner.PlayerA]);
 
         Assert.False(refused.Succeeded);
         Assert.Contains("no es la tuya", string.Join(" ", refused.Errors));
@@ -457,8 +470,10 @@ public class PlayerEntryTests(SqlServerFixture fixture)
     /// The player's side, with <b>no store in scope</b>: that is what a signed-in player browsing
     /// the public sheet looks like, and what the tenant filter would otherwise close down.
     /// </summary>
-    private PlayerEntryService Players() =>
-        new(new TournamentRepository(fixture.CreateContextFactory()), TimeProvider.System);
+    private PlayerEntryService Players() => new(
+        new TournamentRepository(fixture.CreateContextFactory()),
+        fixture.CreateStorePlayers(),
+        TimeProvider.System);
 
     /// <summary>
     /// An account id nobody else's test is using. The suite shares one database and a player's
@@ -526,7 +541,7 @@ public class PlayerEntryTests(SqlServerFixture fixture)
         {
             for (var seat = 1; seat <= players; seat++)
             {
-                tournament.Register($"De la calle {seat}");
+                tournament.SignUp($"De la calle {seat}");
             }
         });
 

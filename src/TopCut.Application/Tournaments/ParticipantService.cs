@@ -39,15 +39,46 @@ public sealed record DropOutcome(bool Succeeded, string? PromotedName, IReadOnly
 /// screen — the queue at the door, not the settings and not the rounds.
 /// </para>
 /// </summary>
-public sealed class ParticipantService(ITournamentRepository tournaments)
+public sealed class ParticipantService(ITournamentRepository tournaments, IStorePlayers book)
 {
     /// <summary>
     /// Signs someone up by name. No account is involved: most people at a local event just turn up
     /// (docs/vision.md). A full tournament puts them on the waitlist rather than refusing them.
+    /// <para>
+    /// The typed name is resolved against the store's own book of regulars first (ADR-0035), so
+    /// that the same person signed in at three tournaments is one person as far as a league is
+    /// concerned. A name the store has never used before becomes a new entry in the book.
+    /// </para>
     /// </summary>
+    /// <param name="asSomebodyNew">
+    /// Skip the book and start a fresh entry. For the shop that really does have two Anas: without
+    /// it the second one would be told she is already signed up.
+    /// </param>
     public async Task<RegistrationOutcome> RegisterAsync(
         Guid tournamentId,
         string name,
+        bool asSomebodyNew = false,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return RegistrationOutcome.Fail("El participante necesita un nombre.");
+        }
+
+        var player = asSomebodyNew
+            ? await book.AddAsync(name, cancellationToken)
+            : await book.ForCounterAsync(name, cancellationToken);
+
+        return await RegisterAsync(tournamentId, player, cancellationToken);
+    }
+
+    /// <summary>
+    /// Signs up somebody the store picked from its own book, rather than typed. Removes the last
+    /// bit of guessing: with two entries called the same, this one says which.
+    /// </summary>
+    public async Task<RegistrationOutcome> RegisterAsync(
+        Guid tournamentId,
+        StorePlayerMatch player,
         CancellationToken cancellationToken = default)
     {
         Participant? registered = null;
@@ -56,7 +87,7 @@ public sealed class ParticipantService(ITournamentRepository tournaments)
         {
             try
             {
-                registered = tournament.Register(name);
+                registered = tournament.Register(player.Id, player.Name);
                 return OperationResult.Ok();
             }
             catch (DomainException error)

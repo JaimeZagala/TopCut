@@ -142,7 +142,10 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
         }
 
         return tournaments
-            .Include(tournament => tournament.Participants)
+            // Ordered like the rounds below, and for the same reason. Without it the pairer sees
+            // the participants in whatever order the database felt like returning, so the same
+            // tournament could pair differently from one load to the next.
+            .Include(tournament => tournament.Participants.OrderBy(p => p.RegisteredAt).ThenBy(p => p.Id))
             .Include(tournament => tournament.Rounds.OrderBy(round => round.Number))
                 .ThenInclude(round => round.Pairings.OrderBy(pairing => pairing.Table))
                     .ThenInclude(pairing => pairing.Games.OrderBy(game => game.Number))

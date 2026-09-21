@@ -832,3 +832,53 @@ y deja marcado que lo hizo.
 - **La mesa que se reporta se comprueba en el servidor**, no solo al pintar la pantalla: el
   identificador del emparejamiento viaja en un formulario, así que alguien podría enviar el de otra
   mesa.
+
+---
+
+## ADR-0035 — Quién es la misma persona entre torneos lo decide la tienda, no el nombre
+
+**Fecha**: 2026-09-22 · **Estado**: aceptada · **Impacto**: alto · **Cambia**: el esquema
+
+Una liga tiene que sumar lo que alguien ha puntuado en varios torneos, y hasta ahora **no había a
+qué sumarlo**: un participante es un nombre tecleado en el mostrador, y las dos "Ana" de dos
+torneos pueden ser la misma persona o no.
+
+- **Alternativa descartada**: puntuar solo a quien tenga cuenta. Cero cambios de esquema, pero en
+  una tienda donde la mitad de los habituales no se registra la tabla sale coja.
+- **Alternativa descartada**: agrupar por nombre normalizado. Tampoco toca el esquema, pero funde a
+  dos personas que se llaman igual y parte en dos a quien se apuntó con dos grafías, **sin sitio
+  donde arreglarlo**.
+- **Decisión** (elegida por Jaime): una entidad nueva, `StorePlayer`, el **fichero de jugadores de
+  la tienda**. Cada `Participant` apunta a una ficha, y la ficha es lo que la liga suma.
+
+Lo que se gana es que la identidad pasa a ser un dato que alguien puede corregir, en vez de una
+suposición del código. Lo que cuesta es una migración y una entidad más.
+
+### Las dos puertas, y por qué no son la misma
+
+- **El mostrador**: lo que la tienda teclea se busca en **su propio fichero**. Escribir "Ana Pérez"
+  en Kraken Cards significa la Ana Pérez de Kraken Cards, que es lo que ha hecho siempre un libro de
+  papel. Se sigue pudiendo escribir e Intro sin tocar el ratón; lo nuevo es que la pantalla enseña a
+  quién va a apuntar antes de hacerlo.
+- **La inscripción por web**: solo empareja por **cuenta**, jamás por nombre. Aquí no hay nadie en la
+  sala para darse cuenta de que la ha fundido con quien no era.
+- Consecuencia buscada: alguien que jugó de mostrador y luego se registra acaba con **dos fichas**.
+  La pantalla del fichero las marca como posible duplicado y la tienda las fusiona (tramo 6b). Eso
+  es preferible a fusionarlas solas y que nadie se entere.
+
+### Detalles
+
+- **`NormalizedName`** es una columna, no un cálculo: sin tildes, sin mayúsculas y sin espacios de
+  más. Lo justo para que "Ana Pérez" y "ana perez " no sean dos, y deliberadamente nada más listo,
+  porque cualquier cosa más difusa empezaría a fundir a gente distinta.
+- **Sin índice único por nombre**, a propósito: una tienda puede tener dos Anas de verdad. El botón
+  *"Es otra persona"* del mostrador es el que lo dice, y por eso teclear el mismo nombre dos veces
+  responde "ya está inscrito" en vez de crear un duplicado en silencio.
+- **Índice único por `(TenantId, UserId)`**, ese sí: la cuenta es el vínculo que no puede
+  equivocarse, y dos fichas para una cuenta partirían sus puntos por la mitad.
+- **El nombre del participante sigue siendo una foto** del momento en que se apuntó. Corregir el
+  fichero arregla el fichero, no los emparejamientos del mes pasado.
+- **La migración rellena el fichero** de los torneos que ya existían, con la misma regla: una ficha
+  por cuenta y una por nombre entre los de mostrador. La normalización en SQL se hace con la
+  conversión a una intercalación sin acentos, que es la única forma de quitarlos en T-SQL y sí trata
+  bien la eñe; verificada contra las mismas cadenas que prueban el C#.

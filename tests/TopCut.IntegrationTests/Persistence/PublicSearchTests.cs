@@ -352,7 +352,7 @@ public class PublicSearchTests(SqlServerFixture fixture)
         {
             for (var seat = 1; seat <= players; seat++)
             {
-                tournament.Register($"Jugador {seat}");
+                tournament.SignUp($"Jugador {seat}");
             }
         });
 

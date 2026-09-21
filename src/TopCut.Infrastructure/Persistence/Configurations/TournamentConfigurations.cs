@@ -75,6 +75,10 @@ internal sealed class ParticipantConfiguration : EntityConfiguration<Participant
         builder.Property(participant => participant.UserId).HasMaxLength(450);
         builder.Ignore(participant => participant.IsActive);
 
+        // No navigation to StorePlayer and no cascade: the book of regulars outlives any one
+        // tournament, and deleting a tournament must never take a player out of it.
+        builder.HasIndex(participant => participant.StorePlayerId);
+
         // One account cannot hold two seats in the same tournament. The filtered index lets
         // walk-ins, who have no account at all, share the NULL.
         builder.HasIndex(participant => new { participant.TournamentId, participant.UserId })

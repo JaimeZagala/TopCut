@@ -22,8 +22,8 @@ public class TournamentPersistenceTests(SqlServerFixture fixture)
             var tournament = await NewTournament(db, tenantId);
             tournament.SetTopCut(4);
             tournament.Publish();
-            var ana = tournament.Register("Ana", userId: $"user-{tenantId:N}");
-            var bruno = tournament.Register("Bruno");
+            var ana = tournament.SignUp("Ana", userId: $"user-{tenantId:N}");
+            var bruno = tournament.SignUp("Bruno");
             var round = tournament.StartRound(Phase.Swiss, DateTimeOffset.UtcNow);
             var pairing = round.Pair(table: 1, ana.Id, bruno.Id);
 
@@ -190,7 +190,7 @@ public class TournamentPersistenceTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext(tenantId, dispatcher);
         var tournament = await NewTournament(db, tenantId);
         tournament.Publish();
-        tournament.Register("Ana");
+        tournament.SignUp("Ana");
         db.Tournaments.Add(tournament);
         await db.SaveChangesAsync();
 
@@ -215,8 +215,8 @@ public class TournamentPersistenceTests(SqlServerFixture fixture)
 
         await using var db = fixture.CreateContext(tenantId);
         var tournament = await NewTournament(db, tenantId);
-        tournament.Register("Jugador de mostrador 1");
-        tournament.Register("Jugador de mostrador 2");
+        tournament.SignUp("Jugador de mostrador 1");
+        tournament.SignUp("Jugador de mostrador 2");
         db.Tournaments.Add(tournament);
 
         // The unique index on (TournamentId, UserId) is filtered, so NULL user ids do not collide.

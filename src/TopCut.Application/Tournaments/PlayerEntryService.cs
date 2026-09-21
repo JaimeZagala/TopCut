@@ -28,7 +28,10 @@ public sealed record JoinOutcome(
 /// only touch that one player's own entry.
 /// </para>
 /// </summary>
-public sealed class PlayerEntryService(ITournamentRepository tournaments, TimeProvider clock)
+public sealed class PlayerEntryService(
+    ITournamentRepository tournaments,
+    IStorePlayers book,
+    TimeProvider clock)
 {
     /// <summary>
     /// Signs the player up under the name on their account. A full tournament puts them in the
@@ -40,13 +43,30 @@ public sealed class PlayerEntryService(ITournamentRepository tournaments, TimePr
         string displayName,
         CancellationToken cancellationToken = default)
     {
+        // Which store's book to write in. Read through the public path, so a tournament that is not
+        // public answers the same here as everywhere else: as if it did not exist.
+        var storeId = await tournaments.ReadOnPublicAsync(
+            tournamentId,
+            tournament => tournament.TenantId,
+            whenMissing: Guid.Empty,
+            cancellationToken);
+
+        if (storeId == Guid.Empty)
+        {
+            return JoinOutcome.Fail(["No existe ese torneo."]);
+        }
+
+        // Matched on the account and never on the name (ADR-0035): nobody is in the room to catch
+        // it if an online sign-up gets folded into the wrong regular.
+        var player = await book.ForPlayerAsync(storeId, userId, displayName, cancellationToken);
+
         Participant? entry = null;
 
         var result = await tournaments.ExecuteOnPublicAsync(tournamentId, tournament =>
         {
             try
             {
-                entry = tournament.Register(displayName, userId);
+                entry = tournament.Register(player.Id, player.Name, userId);
                 return OperationResult.Ok();
             }
             catch (DomainException error)

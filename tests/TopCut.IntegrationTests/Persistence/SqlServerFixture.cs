@@ -89,6 +89,13 @@ public sealed class SqlServerFixture : IAsyncLifetime
         TimeProvider? timeProvider = null) =>
         new FixtureContextFactory(() => CreateContext(tenantId, dispatcher, timeProvider));
 
+    /// <summary>
+    /// The store's book of regulars, scoped like everything else. Handed out here because every
+    /// sign-up now goes through it (ADR-0035).
+    /// </summary>
+    public IStorePlayers CreateStorePlayers(Guid? tenantId = null) =>
+        new StorePlayers(CreateContextFactory(tenantId), new FixedTenantContext(tenantId));
+
     private sealed class FixtureContextFactory(Func<TopCutDbContext> create) : IDbContextFactory<TopCutDbContext>
     {
         public TopCutDbContext CreateDbContext() => create();

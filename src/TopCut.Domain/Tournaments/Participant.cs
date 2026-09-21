@@ -10,12 +10,13 @@ public class Participant : BusinessEntity, ITenantOwned, IHasRowVersion
 {
     private Participant() { }
 
-    internal Participant(Guid tournamentId, Guid tenantId, string name, string? userId)
+    internal Participant(Guid tournamentId, Guid tenantId, Guid storePlayerId, string name, string? userId)
     {
         DomainException.Require(!string.IsNullOrWhiteSpace(name), "El participante necesita un nombre.");
 
         TournamentId = tournamentId;
         TenantId = tenantId;
+        StorePlayerId = storePlayerId;
         Name = name.Trim();
         UserId = userId;
         Status = ParticipantStatus.Registered;
@@ -24,11 +25,18 @@ public class Participant : BusinessEntity, ITenantOwned, IHasRowVersion
 
     public Guid TournamentId { get; private set; }
 
+    /// <summary>
+    /// Who this is in the store's book of regulars. Every participant has one, walk-ins included:
+    /// it is what lets a league add up the same person across several tournaments, which a typed
+    /// name cannot do.
+    /// </summary>
+    public Guid StorePlayerId { get; private set; }
+
     public Guid TenantId { get; private set; }
 
     /// <summary>
-    /// The name shown on pairings and standings. Kept even when an account is linked, so the
-    /// organiser can print the tables without loading users.
+    /// The name shown on pairings and standings, as it was when they signed up. A snapshot on
+    /// purpose: renaming somebody in the store's book fixes the book, not last month's pairings.
     /// </summary>
     public string Name { get; private set; } = null!;
 

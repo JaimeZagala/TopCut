@@ -272,9 +272,44 @@ participante.
   comprueba que lo que reporta el jugador B se guarda como victoria de B) y 6 sobre la pantalla
   por HTTP
 
-### Hito 6 — Ligas por temporada ⬜
+### Hito 6 — Ligas por temporada 🔨
 
-Acumulación de puntos entre torneos reutilizando el modelo de puntuación, clasificación de liga.
+Partido en cuatro tramos. Los dos primeros construyen a **quién** se le suman los puntos, que es lo
+que faltaba: hasta ahora un participante era un nombre suelto de un torneo.
+
+#### 6a — Fichero de jugadores de la tienda ✅
+
+- ✅ **`StorePlayer`** (ADR-0035): quien ha jugado en la tienda. Cada participante apunta a una
+  ficha, y la ficha es lo que una liga puede sumar
+- ✅ **El mostrador sigue siendo escribir e Intro**, pero ahora enseña a quién va a apuntar: las
+  fichas que encajan con lo tecleado, con cuántos torneos lleva cada una
+- ✅ **Dos puertas distintas a propósito**: lo tecleado en el mostrador se busca en el fichero de esa
+  tienda; una inscripción por web empareja **solo por cuenta**, nunca por nombre, porque ahí no hay
+  nadie en la sala para notar que se ha fundido con quien no era
+- ✅ **Botón "Es otra persona"** para la tienda que de verdad tiene dos Anas, y por eso teclear el
+  mismo nombre dos veces responde "ya está inscrito" en vez de duplicar en silencio
+- ✅ **`/tienda/jugadores`**: el fichero, con torneos jugados, última vez, quién tiene cuenta y qué
+  fichas parecen duplicadas. Corregir un nombre cambia el fichero, no los torneos ya jugados
+- ✅ **Migración con relleno**: los participantes que ya existían reciben su ficha con la misma regla,
+  normalización de acentos incluida. Verificado sobre los datos reales de desarrollo
+- ✅ Corregido de paso: el agregado cargaba los **participantes sin orden**, así que el mismo torneo
+  podía emparejar distinto de una carga a otra. Mismo fallo que el de las rondas del hito 4
+- ✅ **12 pruebas nuevas**: 10 sobre quién se funde con quién contra SQL Server real y 2 sobre la
+  pantalla del fichero
+
+#### 6b — Fusionar fichas duplicadas ⬜
+
+Quien jugó de mostrador y luego se registró tiene dos fichas. La tienda las junta desde la pantalla
+del fichero.
+
+#### 6c — Ligas ⬜
+
+Crear, editar y cerrar una liga; asignarle torneos.
+
+#### 6d — Clasificación acumulada ⬜
+
+Suma de puntos a lo largo de la temporada reutilizando el modelo de puntuación del torneo, y página
+pública de la liga.
 
 ### Hito 7 — Panel de Superadmin ⬜
 

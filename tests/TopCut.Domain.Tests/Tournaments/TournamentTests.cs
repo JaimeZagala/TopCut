@@ -138,8 +138,8 @@ public class TournamentTests
     {
         var tournament = NewTournament();
         tournament.Publish();
-        tournament.Register("Ana");
-        tournament.Register("Bruno");
+        tournament.SignUp("Ana");
+        tournament.SignUp("Bruno");
         tournament.StartRound(Phase.Swiss, DateTimeOffset.UtcNow);
 
         var error = Assert.Throws<DomainException>(() => tournament.SetTopCut(8));
@@ -167,10 +167,10 @@ public class TournamentTests
         var tournament = NewTournament(capacity: 2);
         tournament.Publish();
 
-        tournament.Register("Ana");
-        tournament.Register("Bruno");
-        var carla = tournament.Register("Carla");
-        var diego = tournament.Register("Diego");
+        tournament.SignUp("Ana");
+        tournament.SignUp("Bruno");
+        var carla = tournament.SignUp("Carla");
+        var diego = tournament.SignUp("Diego");
 
         Assert.True(tournament.IsFull);
         Assert.Equal(ParticipantStatus.Waitlisted, carla.Status);
@@ -184,10 +184,10 @@ public class TournamentTests
         var tournament = NewTournament(capacity: 2);
         tournament.Publish();
 
-        var ana = tournament.Register("Ana");
-        tournament.Register("Bruno");
-        var carla = tournament.Register("Carla");
-        var diego = tournament.Register("Diego");
+        var ana = tournament.SignUp("Ana");
+        tournament.SignUp("Bruno");
+        var carla = tournament.SignUp("Carla");
+        var diego = tournament.SignUp("Diego");
 
         var promoted = tournament.Drop(ana.Id);
 
@@ -202,9 +202,9 @@ public class TournamentTests
     {
         var tournament = NewTournament(capacity: 2);
         tournament.Publish();
-        var ana = tournament.Register("Ana");
-        tournament.Register("Bruno");
-        var carla = tournament.Register("Carla");
+        var ana = tournament.SignUp("Ana");
+        tournament.SignUp("Bruno");
+        var carla = tournament.SignUp("Carla");
 
         tournament.Drop(ana.Id);
 
@@ -218,11 +218,11 @@ public class TournamentTests
     {
         var tournament = NewTournament(capacity: 2);
         tournament.Publish();
-        tournament.Register("Ana");
-        tournament.Register("Zoe");
-        var bruno = tournament.Register("Bruno");
-        var carla = tournament.Register("Carla");
-        var diego = tournament.Register("Diego");
+        tournament.SignUp("Ana");
+        tournament.SignUp("Zoe");
+        var bruno = tournament.SignUp("Bruno");
+        var carla = tournament.SignUp("Carla");
+        var diego = tournament.SignUp("Diego");
 
         Assert.Equal([1, 2, 3], new[] { bruno, carla, diego }.Select(p => p.WaitlistPosition));
 
@@ -243,13 +243,13 @@ public class TournamentTests
     {
         var tournament = NewTournament(capacity: 2);
         tournament.Publish();
-        var ana = tournament.Register("Ana", "cuenta-de-ana");
-        tournament.Register("Zoe");
+        var ana = tournament.SignUp("Ana", "cuenta-de-ana");
+        tournament.SignUp("Zoe");
 
         tournament.Drop(ana.Id);
-        var bruno = tournament.Register("Bruno");
+        var bruno = tournament.SignUp("Bruno");
 
-        var again = tournament.Register("Ana", "cuenta-de-ana");
+        var again = tournament.SignUpAgain(ana);
 
         Assert.Same(ana, again);
         Assert.Equal(3, tournament.Participants.Count);
@@ -259,13 +259,13 @@ public class TournamentTests
     }
 
     [Fact]
-    public void The_same_account_cannot_sign_up_twice()
+    public void The_same_person_cannot_sign_up_twice()
     {
         var tournament = NewTournament();
         tournament.Publish();
-        tournament.Register("Ana", "cuenta-de-ana");
+        var ana = tournament.SignUp("Ana", "cuenta-de-ana");
 
-        var error = Assert.Throws<DomainException>(() => tournament.Register("Ana", "cuenta-de-ana"));
+        var error = Assert.Throws<DomainException>(() => tournament.SignUpAgain(ana));
 
         Assert.Contains("ya está inscrito", error.Message);
     }
@@ -275,9 +275,9 @@ public class TournamentTests
     {
         var tournament = NewTournament(capacity: 2);
         tournament.Publish();
-        var ana = tournament.Register("Ana");
-        tournament.Register("Bruno");
-        var carla = tournament.Register("Carla");
+        var ana = tournament.SignUp("Ana");
+        tournament.SignUp("Bruno");
+        var carla = tournament.SignUp("Carla");
         tournament.StartRound(Phase.Swiss, DateTimeOffset.UtcNow);
 
         var promoted = tournament.Drop(ana.Id);
@@ -291,8 +291,8 @@ public class TournamentTests
     {
         var tournament = NewTournament();
         tournament.Publish();
-        var ana = tournament.Register("Ana");
-        tournament.Register("Bruno");
+        var ana = tournament.SignUp("Ana");
+        tournament.SignUp("Bruno");
         tournament.StartRound(Phase.Swiss, DateTimeOffset.UtcNow);
 
         tournament.Drop(ana.Id);
@@ -306,19 +306,24 @@ public class TournamentTests
     {
         var tournament = NewTournament();
 
-        var participant = tournament.Register("Jugador de mostrador");
+        var participant = tournament.SignUp("Jugador de mostrador");
 
         Assert.Null(participant.UserId);
         Assert.Equal(ParticipantStatus.Registered, participant.Status);
     }
 
     [Fact]
-    public void The_same_user_cannot_register_twice()
+    public void Two_people_who_happen_to_share_a_name_are_two_participants()
     {
         var tournament = NewTournament();
-        tournament.Register("Ana", userId: "user-1");
 
-        Assert.Throws<DomainException>(() => tournament.Register("Ana otra vez", userId: "user-1"));
+        // What tells them apart is the entry in the store's book, not what they are called
+        // (ADR-0035). A shop with two Anas is a shop with two Anas.
+        tournament.SignUp("Ana");
+        tournament.SignUp("Ana");
+
+        Assert.Equal(2, tournament.Participants.Count);
+        Assert.Equal(2, tournament.Participants.Select(p => p.StorePlayerId).Distinct().Count());
     }
 
     [Fact]
@@ -326,10 +331,10 @@ public class TournamentTests
     {
         var tournament = NewTournament();
         tournament.Publish();
-        tournament.Register("Ana");
+        tournament.SignUp("Ana");
         tournament.StartRound(Phase.Swiss, DateTimeOffset.UtcNow);
 
-        Assert.Throws<DomainException>(() => tournament.Register("Tarde"));
+        Assert.Throws<DomainException>(() => tournament.SignUp("Tarde"));
     }
 
     // --- Rounds --------------------------------------------------------------------------------------

@@ -105,14 +105,17 @@ Store 1──* Tournament *──1 Tcg 1──1 Ruleset
   │            │
   │            └──* Round ──* Pairing ──* Game
   │
-  └──* League ◄──── Tournament.LeagueId
+  ├──* League ◄──── Tournament.LeagueId
+  │
+  └──* StorePlayer ◄──── Participant.StorePlayerId
 ```
 
 | Entidad | Puntos relevantes |
 |---|---|
 | `Tournament` | `TenantId`, TCG, nombre, fecha, `Venue`, `Capacity`, `SwissRounds`, `TopCutSize` (nulo = sin top cut), estado y `Settings`. `RowVersion`. |
 | `TournamentSettings` | **Copia** del ruleset hecha al crear el torneo. Guarda `SourceRulesetId` y `RulesVersion` solo como trazabilidad: no se resincroniza jamás. |
-| `Participant` | `Name` siempre presente; `UserId` **opcional** (altas manuales de mostrador). Estado `Registered` / `Waitlisted` / `Dropped` y `WaitlistPosition`. `RowVersion`. |
+| `Participant` | `Name` siempre presente, como **foto** del momento de apuntarse; `StorePlayerId` **siempre**, que es quién es esa persona para la tienda; `UserId` **opcional** (altas manuales de mostrador). Estado `Registered` / `Waitlisted` / `Dropped` y `WaitlistPosition`. `RowVersion`. |
+| `StorePlayer` | El fichero de jugadores de la tienda (ADR-0035): `Name`, `NormalizedName`, `UserId` opcional y `MergedIntoId` para las fichas fusionadas. Es lo que una liga suma entre torneos. |
 | `Round` | Número, fase, formato copiado de la fase, y los instantes `RegularTimeEndsAt` y `ExtraTimeEndsAt` en UTC. |
 | `Pairing` | Mesa, dos jugadores (o uno y un bye), estado, `ReportedBy`, `AmendedByOrganizer`, `DecidedByTimeExpiry`. `RowVersion`. |
 | `Game` | Partida individual con su número y ganador. En Bo1 hay una; en Bo3 dos o tres. |
@@ -146,6 +149,16 @@ Store 1──* Tournament *──1 Tcg 1──1 Ruleset
 En la v1 **no tienen suscriptores**: existen para que añadir notificaciones o refrescar la pantalla
 en vivo por SignalR sea escribir un handler, sin tocar el dominio.
 
+## El fichero de jugadores
+
+`StorePlayer` es quien ha jugado en una tienda, frente a `Participant`, que es esa persona **en un
+torneo**. Existe porque una liga tiene que sumar lo de alguien a lo largo de varios eventos y un
+nombre tecleado no sirve para eso (ADR-0035).
+
+Quién es la misma persona no se adivina: lo tecleado en el mostrador se busca en el fichero de esa
+tienda, una inscripción por web empareja solo por cuenta, y cuando quedan dos fichas de lo que
+parece la misma persona la pantalla lo señala y es la tienda quien las junta.
+
 ## Ligas
 
 `League` pertenece a una tienda y a un TCG, con temporada (`StartsOn` / `EndsOn`) y bandera de
@@ -154,7 +167,7 @@ clasificación acumulada llega en el hito 6.
 
 ## Esquema en SQL Server
 
-Nueve tablas más `__EFMigrationsHistory`. Los tipos propiedad se aplanan en la fila de su dueño en
+Diez tablas más `__EFMigrationsHistory`. Los tipos propiedad se aplanan en la fila de su dueño en
 lugar de crear tablas aparte, porque nunca se consultan por separado y un join no aportaría nada:
 
 | Concepto | Como queda en la base de datos |
@@ -172,7 +185,11 @@ lugar de crear tablas aparte, porque nunca se consultan por separado y un join n
   panel de la tienda, y por `TcgId` y `LeagueId`.
 - `Participants` único y **filtrado** por `(TournamentId, UserId) WHERE UserId IS NOT NULL`: una
   cuenta no ocupa dos plazas del mismo torneo, pero los jugadores de mostrador, que no tienen
-  cuenta, comparten el `NULL` sin chocar.
+  cuenta, comparten el `NULL` sin chocar. Y por `StorePlayerId`, que es por donde una liga recorre
+  los torneos de una persona.
+- `StorePlayers` único y **filtrado** por `(TenantId, UserId) WHERE UserId IS NOT NULL`: una cuenta,
+  una ficha por tienda. Por el nombre solo hay índice de búsqueda, **no único**: una tienda puede
+  tener dos personas que se llamen igual (ADR-0035).
 - `Rounds` único por `(TournamentId, Number)`; `Pairings` único por `(RoundId, Table)`;
   `Games` único por `(PairingId, Number)`.
 - `Stores` por `(Status, IsTestStore)`, que es como filtra la búsqueda pública.

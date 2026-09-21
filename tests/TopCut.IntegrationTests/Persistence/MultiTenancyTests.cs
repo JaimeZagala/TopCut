@@ -126,8 +126,8 @@ public class MultiTenancyTests(SqlServerFixture fixture)
             swissRounds: 3);
 
         tournament.Publish();
-        tournament.Register("Ana");
-        tournament.Register("Bruno");
+        tournament.SignUp("Ana");
+        tournament.SignUp("Bruno");
 
         return tournament;
     }

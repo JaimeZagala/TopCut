@@ -4,6 +4,7 @@
 @using TopCut.Application.Tournaments
 @inject ITournamentQueries Tournaments
 @inject ParticipantService Participants
+@inject IStorePlayers Book
 @inject TournamentSetupService Setup
 @inject IDialogService Dialogs
 @inject ISnackbar Snackbar
@@ -54,23 +55,59 @@ else
                el valor que se esta escribiendo, y así no dependemos de como la trate por dentro. *@
             <div @onkeydown="OnKeyDown">
                 <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Start">
-                    <MudTextField @bind-Value="quickAdd.Name"
+                    <MudTextField T="string"
+                                  Value="quickAdd.Name"
+                                  ValueChanged="OnNameChanged"
                                   @ref="nameField"
                                   Label="@Textos.FieldParticipantName"
                                   Variant="Variant.Outlined"
                                   Immediate="true"
+                                  DebounceInterval="150"
                                   Disabled="busy"
                                   Class="flex-grow-1" />
                     <MudButton Variant="Variant.Filled"
                                Color="Color.Primary"
                                StartIcon="@Icons.Material.Filled.PersonAdd"
                                Disabled="@(busy || string.IsNullOrWhiteSpace(quickAdd.Name))"
-                               OnClick="RegisterAsync"
+                               OnClick="@(() => RegisterAsync())"
                                Class="mt-2">
                         @Textos.ActionAdd
                     </MudButton>
                 </MudStack>
             </div>
+
+            @* Quien ya está en el fichero de la tienda (ADR-0035). Sirve para dos cosas: ver a quién
+               se va a apuntar antes de pulsar Intro, y poder decir "es otra persona" cuando la
+               tienda tiene de verdad dos Anas. Escribir e Intro sigue funcionando sin tocar nada. *@
+            @if (suggestions.Count > 0)
+            {
+                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="mt-3">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@Textos.BookKnownAlready</MudText>
+
+                    @foreach (var known in suggestions)
+                    {
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Variant="Variant.Outlined"
+                                 Color="@(known.HasAccount ? Color.Primary : Color.Default)"
+                                 Disabled="busy"
+                                 OnClick="@(() => RegisterKnownAsync(known))">
+                            @known.Name · @Played(known.Tournaments)
+                        </MudChip>
+                    }
+
+                    @if (ExactMatch)
+                    {
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Text"
+                                   Color="Color.Default"
+                                   Disabled="busy"
+                                   OnClick="@(() => RegisterAsync(asSomebodyNew: true))">
+                            @Textos.BookSomebodyElse
+                        </MudButton>
+                    }
+                </MudStack>
+            }
 
             <MudText Typo="Typo.caption" Class="d-block mt-2">@SeatsNotice</MudText>
         </MudPaper>
@@ -177,6 +214,7 @@ else
     private readonly QuickAdd quickAdd = new();
 
     private MudTextField<string>? nameField;
+    private IReadOnlyList<StorePlayerMatch> suggestions = [];
     private bool loading = true;
     private bool busy;
 
@@ -232,10 +270,41 @@ else
         }
     }
 
-    private async Task RegisterAsync()
+    /// <summary>
+    /// The store's book, as the counter types. One small query per keystroke against a table of a
+    /// few dozen rows, which is cheaper than the round trip the store would otherwise make in their
+    /// head wondering whether this Ana is that Ana.
+    /// </summary>
+    private async Task OnNameChanged(string value)
+    {
+        quickAdd.Name = value;
+        suggestions = await Book.SearchAsync(value, limit: 5);
+    }
+
+    /// <summary>"1 torneo", no "1 torneos": la tienda lee esto de reojo mientras teclea.</summary>
+    private static string Played(int tournaments) => tournaments switch
+    {
+        0 => Textos.BookTournamentsNone,
+        1 => Textos.BookTournamentsOne,
+        var many => string.Format(Textos.BookTournaments, many)
+    };
+
+    /// <summary>The typed name is already somebody's, exactly. Then "es otra persona" makes sense.</summary>
+    private bool ExactMatch => suggestions.Any(known =>
+        string.Equals(known.Name, quickAdd.Name.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    private Task RegisterKnownAsync(StorePlayerMatch known) =>
+        SignUpAsync(known.Name, () => Participants.RegisterAsync(TournamentId, known));
+
+    private Task RegisterAsync(bool asSomebodyNew = false)
     {
         var name = quickAdd.Name.Trim();
 
+        return SignUpAsync(name, () => Participants.RegisterAsync(TournamentId, name, asSomebodyNew));
+    }
+
+    private async Task SignUpAsync(string name, Func<Task<RegistrationOutcome>> signUp)
+    {
         if (string.IsNullOrEmpty(name) || busy)
         {
             return;
@@ -246,7 +315,7 @@ else
 
         try
         {
-            var outcome = await Participants.RegisterAsync(TournamentId, name);
+            var outcome = await signUp();
 
             if (!outcome.Succeeded)
             {
@@ -261,6 +330,7 @@ else
                 outcome.Waitlisted ? Severity.Info : Severity.Success);
 
             quickAdd.Name = string.Empty;
+            suggestions = [];
             await LoadAsync();
         }
         finally

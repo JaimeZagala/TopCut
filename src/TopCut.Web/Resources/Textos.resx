@@ -1025,4 +1025,69 @@
   <data name="MyTableOpen" xml:space="preserve">
     <value>Mi mesa</value>
   </data>
+
+  <!-- Hito 6a: fichero de jugadores de la tienda -->
+  <data name="BookKnownAlready" xml:space="preserve">
+    <value>Ya en tu fichero:</value>
+  </data>
+  <data name="BookTournaments" xml:space="preserve">
+    <value>{0} torneos</value>
+  </data>
+  <data name="BookTournamentsOne" xml:space="preserve">
+    <value>1 torneo</value>
+  </data>
+  <data name="BookTournamentsNone" xml:space="preserve">
+    <value>sin torneos</value>
+  </data>
+  <data name="BookSomebodyElse" xml:space="preserve">
+    <value>Es otra persona</value>
+  </data>
+  <data name="BookTitle" xml:space="preserve">
+    <value>Jugadores</value>
+  </data>
+  <data name="BookIntro" xml:space="preserve">
+    <value>Quien ha jugado en tu tienda. Es lo que permite sumar los puntos de una misma persona a lo largo de una liga.</value>
+  </data>
+  <data name="BookEmpty" xml:space="preserve">
+    <value>Todavía no hay nadie. El fichero se va llenando solo segun apuntas gente a los torneos.</value>
+  </data>
+  <data name="BookColumnPlayer" xml:space="preserve">
+    <value>Jugador</value>
+  </data>
+  <data name="BookColumnTournaments" xml:space="preserve">
+    <value>Torneos</value>
+  </data>
+  <data name="BookColumnLastPlayed" xml:space="preserve">
+    <value>Última vez</value>
+  </data>
+  <data name="BookHasAccount" xml:space="preserve">
+    <value>Con cuenta</value>
+  </data>
+  <data name="BookHasAccountHint" xml:space="preserve">
+    <value>Se inscribe solo desde la web</value>
+  </data>
+  <data name="BookNeverPlayed" xml:space="preserve">
+    <value>Nunca</value>
+  </data>
+  <data name="BookPossibleDuplicate" xml:space="preserve">
+    <value>Posible duplicado</value>
+  </data>
+  <data name="BookPossibleDuplicateHint" xml:space="preserve">
+    <value>Hay otra ficha con este mismo nombre. Fusionarlas llega en el siguiente tramo.</value>
+  </data>
+  <data name="BookRename" xml:space="preserve">
+    <value>Corregir el nombre</value>
+  </data>
+  <data name="BookRenameTitle" xml:space="preserve">
+    <value>Corregir el nombre en el fichero</value>
+  </data>
+  <data name="BookRenameHint" xml:space="preserve">
+    <value>Cambia como aparece de aquí en adelante. Los torneos ya jugados conservan el nombre que tenían.</value>
+  </data>
+  <data name="BookRenamed" xml:space="preserve">
+    <value>Nombre corregido.</value>
+  </data>
+  <data name="NavBook" xml:space="preserve">
+    <value>Jugadores</value>
+  </data>
 </root>

@@ -112,7 +112,7 @@ public class LiveUpdatesTests(SqlServerFixture fixture)
         var live = Broadcaster();
         var (store, tournament) = await ReadyTournament(players: 4);
 
-        var roster = new ParticipantService(Repository(store, live));
+        var roster = new ParticipantService(Repository(store, live), fixture.CreateStorePlayers(store));
         var queries = new TournamentQueries(fixture.CreateContextFactory(store), TimeProvider.System);
         var player = (await queries.RosterAsync(tournament)).Registered.First();
 
@@ -204,7 +204,9 @@ public class LiveUpdatesTests(SqlServerFixture fixture)
         Assert.True(created.Succeeded, string.Join(" ", created.Errors));
         var tournamentId = created.TournamentId!.Value;
 
-        var roster = new ParticipantService(new TournamentRepository(fixture.CreateContextFactory(storeId)));
+        var roster = new ParticipantService(
+            new TournamentRepository(fixture.CreateContextFactory(storeId)),
+            fixture.CreateStorePlayers(storeId));
 
         for (var seat = 1; seat <= players; seat++)
         {

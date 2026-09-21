@@ -226,7 +226,7 @@ public class TournamentEngineTests(SqlServerFixture fixture)
 
         for (var seed = 1; seed <= players; seed++)
         {
-            tournament.Register($"P{seed}");
+            tournament.SignUp($"P{seed}");
         }
 
         db.Tournaments.Add(tournament);

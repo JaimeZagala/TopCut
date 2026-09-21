@@ -1,0 +1,139 @@
+@page "/tienda/jugadores"
+@layout StoreLayout
+@attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
+@inject IStorePlayers Book
+@inject LocalTime Clock
+@inject ISnackbar Snackbar
+
+@* El fichero de jugadores de la tienda (ADR-0035): quien ha jugado aquí, que es lo que permite
+   sumar los puntos de una misma persona a lo largo de una liga.
+
+   No se rellena a mano. Se va llenando solo cada vez que la tienda apunta a alguien en el
+   mostrador o alguien se inscribe desde la web; aquí solo se corrige. *@
+
+<PageTitle>@Textos.BookTitle - @Textos.AppName</PageTitle>
+
+<MudText Typo="Typo.h1" GutterBottom="true">@Textos.BookTitle</MudText>
+<MudText Typo="Typo.body1" Class="mb-6">@Textos.BookIntro</MudText>
+
+@if (rows is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@Textos.Loading" />
+}
+else if (rows.Count == 0)
+{
+    <MudPaper Class="pa-8 text-center" Elevation="0" Outlined="true">
+        <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Large" Color="Color.Primary" Class="mb-3" />
+        <MudText Typo="Typo.body1">@Textos.BookEmpty</MudText>
+    </MudPaper>
+}
+else
+{
+    <MudTable Items="rows" Hover="true" Elevation="0" Outlined="true" Breakpoint="Breakpoint.Sm">
+        <HeaderContent>
+            <MudTh>@Textos.BookColumnPlayer</MudTh>
+            <MudTh>@Textos.BookColumnTournaments</MudTh>
+            <MudTh>@Textos.BookColumnLastPlayed</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate Context="row">
+            <MudTd DataLabel="@Textos.BookColumnPlayer">
+                <MudText Typo="Typo.body1">@row.Name</MudText>
+                <MudStack Row="true" Spacing="1" Class="mt-1">
+                    @if (row.HasAccount)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined"
+                                 title="@Textos.BookHasAccountHint">
+                            @Textos.BookHasAccount
+                        </MudChip>
+                    }
+                    @if (row.PossibleDuplicateOf is not null)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined"
+                                 title="@Textos.BookPossibleDuplicateHint">
+                            @Textos.BookPossibleDuplicate
+                        </MudChip>
+                    }
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="@Textos.BookColumnTournaments">@row.Tournaments</MudTd>
+            <MudTd DataLabel="@Textos.BookColumnLastPlayed">
+                @(row.LastPlayedAt is { } played ? Clock.Format(played) : Textos.BookNeverPlayed)
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Size="Size.Small"
+                               title="@Textos.BookRename"
+                               Disabled="busy"
+                               OnClick="@(() => StartRename(row))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@if (renaming)
+{
+    <MudDialog Visible="true" Options="new DialogOptions { CloseOnEscapeKey = true }">
+        <TitleContent>@Textos.BookRenameTitle</TitleContent>
+        <DialogContent>
+            <MudText Typo="Typo.body2" Class="mb-4">@Textos.BookRenameHint</MudText>
+            <MudTextField @bind-Value="renameTo"
+                          Label="@Textos.BookColumnPlayer"
+                          Variant="Variant.Outlined"
+                          Immediate="true" />
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => renaming = false)">@Textos.ActionCancel</MudButton>
+            <MudButton Color="Color.Primary"
+                       Disabled="@(busy || string.IsNullOrWhiteSpace(renameTo))"
+                       OnClick="RenameAsync">
+                @Textos.ActionSave
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+    private IReadOnlyList<StorePlayerRow>? rows;
+    private readonly List<string> errors = [];
+
+    private bool busy;
+    private bool renaming;
+    private Guid renameId;
+    private string renameTo = string.Empty;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync() => rows = await Book.AllAsync();
+
+    private void StartRename(StorePlayerRow row)
+    {
+        renameId = row.Id;
+        renameTo = row.Name;
+        renaming = true;
+    }
+
+    private async Task RenameAsync()
+    {
+        busy = true;
+
+        try
+        {
+            var result = await Book.RenameAsync(renameId, renameTo);
+
+            if (!result.Succeeded)
+            {
+                Snackbar.Add(string.Join(" ", result.Errors), Severity.Error);
+                return;
+            }
+
+            renaming = false;
+            Snackbar.Add(Textos.BookRenamed, Severity.Success);
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}
