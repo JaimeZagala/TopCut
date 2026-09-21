@@ -297,10 +297,18 @@ que faltaba: hasta ahora un participante era un nombre suelto de un torneo.
 - ✅ **12 pruebas nuevas**: 10 sobre quién se funde con quién contra SQL Server real y 2 sobre la
   pantalla del fichero
 
-#### 6b — Fusionar fichas duplicadas ⬜
+#### 6b — Fusionar fichas duplicadas ✅
 
-Quien jugó de mostrador y luego se registró tiene dos fichas. La tienda las junta desde la pantalla
-del fichero.
+- ✅ **Fusionar desde la pantalla del fichero**: la tienda elige cuál de las dos se queda, y todo lo
+  que jugó la otra pasa a la superviviente. El diálogo avisa de que no tiene vuelta atrás
+- ✅ **La cuenta viaja con la persona**: si la absorbida tenía cuenta y la superviviente no, se la
+  lleva. Si **las dos** tienen cuenta, son dos personas y no se fusionan
+- ✅ **Dos fichas que jugaron el mismo torneo tampoco**, porque dejarían a una persona dos veces en
+  la misma acta. El mensaje dice qué torneo
+- ✅ **Escrituras ordenadas y en una transacción.** El índice único no admite que las dos fichas
+  tengan la cuenta ni por un instante, y EF no promete el orden de los dos `UPDATE` de un mismo
+  guardado: la absorbida la suelta, llega a la base, y solo entonces la otra la toma
+- ✅ **6 pruebas nuevas** sobre quién se fusiona y quién no, contra SQL Server real
 
 #### 6c — Ligas ⬜
 

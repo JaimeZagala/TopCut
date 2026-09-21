@@ -185,6 +185,134 @@ public class StoreBookTests(SqlServerFixture fixture)
         Assert.Contains("no está en tu fichero", string.Join(" ", refused.Errors));
     }
 
+    // --- Fusionar fichas -------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Folding_a_walk_in_into_the_account_that_turned_out_to_be_theirs()
+    {
+        var store = await NewStore();
+        var account = NewAccount();
+
+        // Ana played twice before registering, and once from the web afterwards.
+        await Counter(store).RegisterAsync(await NewTournament(store), "Ana Pérez");
+        await Counter(store).RegisterAsync(await NewTournament(store), "Ana Pérez");
+        await Player().JoinAsync(await NewTournament(store, published: true), account, "Ana Pérez");
+
+        var book = await Book(store).AllAsync();
+        var online = book.Single(row => row.HasAccount);
+        var counter = book.Single(row => !row.HasAccount);
+
+        Assert.Equal(2, book.Count);
+
+        var merged = await Book(store).MergeAsync(keepId: counter.Id, foldId: online.Id);
+
+        Assert.True(merged.Succeeded, string.Join(" ", merged.Errors));
+
+        var after = Assert.Single(await Book(store).AllAsync());
+
+        // One person, three tournaments, and the account came across with her.
+        Assert.Equal(counter.Id, after.Id);
+        Assert.Equal(3, after.Tournaments);
+        Assert.True(after.HasAccount);
+        Assert.Null(after.PossibleDuplicateOf);
+    }
+
+    [Fact]
+    public async Task After_a_merge_the_counter_stops_offering_the_folded_entry()
+    {
+        var store = await NewStore();
+
+        // Different tournaments: two entries that played the same one cannot be merged, which is
+        // its own test below.
+        await Counter(store).RegisterAsync(await NewTournament(store), "Ana");
+        await Counter(store).RegisterAsync(await NewTournament(store), "Ana", asSomebodyNew: true);
+
+        var book = await Book(store).AllAsync();
+
+        Assert.True((await Book(store).MergeAsync(book[0].Id, book[1].Id)).Succeeded);
+
+        Assert.Single(await Book(store).SearchAsync("ana"));
+
+        // And signing "Ana" in again lands on the survivor rather than resurrecting the other.
+        var later = await Counter(store).RegisterAsync(await NewTournament(store), "Ana");
+
+        Assert.True(later.Succeeded, string.Join(" ", later.Errors));
+        Assert.Equal(3, Assert.Single(await Book(store).AllAsync()).Tournaments);
+    }
+
+    [Fact]
+    public async Task Two_entries_with_their_own_account_are_two_people_and_will_not_merge()
+    {
+        var store = await NewStore();
+
+        await Player().JoinAsync(await NewTournament(store, published: true), NewAccount(), "Ana Pérez");
+        await Player().JoinAsync(await NewTournament(store, published: true), NewAccount(), "Ana Pérez");
+
+        var book = await Book(store).AllAsync();
+        var refused = await Book(store).MergeAsync(book[0].Id, book[1].Id);
+
+        Assert.False(refused.Succeeded);
+        Assert.Contains("su propia cuenta", string.Join(" ", refused.Errors));
+        Assert.Equal(2, (await Book(store).AllAsync()).Count);
+    }
+
+    [Fact]
+    public async Task Two_entries_that_played_the_same_tournament_will_not_merge_without_a_drop_first()
+    {
+        var store = await NewStore();
+        var tournament = await NewTournament(store);
+
+        await Counter(store).RegisterAsync(tournament, "Ana");
+        await Counter(store).RegisterAsync(tournament, "Ana", asSomebodyNew: true);
+
+        var book = await Book(store).AllAsync();
+
+        // Merging them would leave one person twice on that roster, and counted twice in the
+        // standings. The store unpicks it first, and the message says which tournament.
+        var refused = await Book(store).MergeAsync(book[0].Id, book[1].Id);
+
+        Assert.False(refused.Succeeded);
+        Assert.Contains("Torneo de prueba", string.Join(" ", refused.Errors));
+        Assert.Equal(2, (await Book(store).AllAsync()).Count);
+    }
+
+    [Fact]
+    public async Task A_player_from_another_store_cannot_be_merged_into_yours()
+    {
+        var mine = await NewStore();
+        var theirs = await NewStore();
+
+        await Counter(mine).RegisterAsync(await NewTournament(mine), "Ana Pérez");
+        await Counter(theirs).RegisterAsync(await NewTournament(theirs), "Ana Pérez");
+
+        var ours = Assert.Single(await Book(mine).AllAsync());
+        var other = Assert.Single(await Book(theirs).AllAsync());
+
+        var refused = await Book(mine).MergeAsync(ours.Id, other.Id);
+
+        Assert.False(refused.Succeeded);
+        Assert.Contains("no está en tu fichero", string.Join(" ", refused.Errors));
+    }
+
+    [Fact]
+    public async Task A_folded_entry_cannot_be_folded_again()
+    {
+        var store = await NewStore();
+
+        await Counter(store).RegisterAsync(await NewTournament(store), "Ana");
+        await Counter(store).RegisterAsync(await NewTournament(store), "Ana", asSomebodyNew: true);
+        await Counter(store).RegisterAsync(await NewTournament(store), "Ana", asSomebodyNew: true);
+
+        var book = await Book(store).AllAsync();
+
+        Assert.True((await Book(store).MergeAsync(book[0].Id, book[1].Id)).Succeeded);
+
+        var again = await Book(store).MergeAsync(book[2].Id, book[1].Id);
+
+        Assert.False(again.Succeeded);
+        Assert.Contains("ya se fusionó", string.Join(" ", again.Errors));
+    }
+
     // --- Harness ---------------------------------------------------------------------------------------
 
     private IStorePlayers Book(Guid storeId) => fixture.CreateStorePlayers(storeId);

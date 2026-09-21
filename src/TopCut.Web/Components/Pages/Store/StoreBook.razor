@@ -61,50 +61,150 @@ else
                 @(row.LastPlayedAt is { } played ? Clock.Format(played) : Textos.BookNeverPlayed)
             </MudTd>
             <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                               Size="Size.Small"
-                               title="@Textos.BookRename"
-                               Disabled="busy"
-                               OnClick="@(() => StartRename(row))" />
+                <MudStack Row="true" Spacing="0" Justify="Justify.FlexEnd">
+                    @if (row.PossibleDuplicateOf is { } twin)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.Merge"
+                                       Size="Size.Small"
+                                       Color="Color.Warning"
+                                       title="@Textos.BookMerge"
+                                       Disabled="busy"
+                                       OnClick="@(() => StartMerge(row, twin))" />
+                    }
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Size="Size.Small"
+                                   title="@Textos.BookRename"
+                                   Disabled="busy"
+                                   OnClick="@(() => StartRename(row))" />
+                </MudStack>
             </MudTd>
         </RowTemplate>
     </MudTable>
 }
 
-@if (renaming)
-{
-    <MudDialog Visible="true" Options="new DialogOptions { CloseOnEscapeKey = true }">
-        <TitleContent>@Textos.BookRenameTitle</TitleContent>
-        <DialogContent>
-            <MudText Typo="Typo.body2" Class="mb-4">@Textos.BookRenameHint</MudText>
-            <MudTextField @bind-Value="renameTo"
-                          Label="@Textos.BookColumnPlayer"
-                          Variant="Variant.Outlined"
-                          Immediate="true" />
-        </DialogContent>
-        <DialogActions>
-            <MudButton OnClick="@(() => renaming = false)">@Textos.ActionCancel</MudButton>
-            <MudButton Color="Color.Primary"
-                       Disabled="@(busy || string.IsNullOrWhiteSpace(renameTo))"
-                       OnClick="RenameAsync">
-                @Textos.ActionSave
-            </MudButton>
-        </DialogActions>
-    </MudDialog>
-}
+@* Los dos diálogos se quedan siempre montados y se abren con Visible, como el de la pantalla de
+   participantes. Envolverlos en un @@if los abre igual de bien, pero quitarlos del árbol no los
+   cierra: el contenedor de MudBlazor se queda con ellos y con su velo por encima. *@
+<MudDialog @bind-Visible="renaming" Options="Dialog">
+    <TitleContent>@Textos.BookRenameTitle</TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-4">@Textos.BookRenameHint</MudText>
+        <MudTextField @bind-Value="renameTo"
+                      Label="@Textos.BookColumnPlayer"
+                      Variant="Variant.Outlined"
+                      Immediate="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => renaming = false)">@Textos.ActionCancel</MudButton>
+        <MudButton Color="Color.Primary"
+                   Disabled="@(busy || string.IsNullOrWhiteSpace(renameTo))"
+                   OnClick="RenameAsync">
+            @Textos.ActionSave
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Fusionar es lo único de esta pantalla que no tiene vuelta atrás, así que el diálogo dice qué se
+   queda, qué desaparece y cuántos torneos se mueven, y obliga a elegir cuál de las dos fichas
+   sobrevive en vez de decidirlo por su cuenta. *@
+<MudDialog @bind-Visible="merging" Options="Dialog">
+    <TitleContent>@Textos.BookMergeTitle</TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-4">@Textos.BookMergeHint</MudText>
+
+        <MudRadioGroup T="Guid" @bind-Value="keepId">
+            @foreach (var option in pair)
+            {
+                <MudRadio T="Guid" Value="option.Id" Class="d-block mb-2">
+                    <MudText Typo="Typo.body1">@option.Name</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                        @Played(option.Tournaments)@(option.HasAccount ? $" · {Textos.BookHasAccount}" : string.Empty)
+                    </MudText>
+                </MudRadio>
+            }
+        </MudRadioGroup>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => merging = false)">@Textos.ActionCancel</MudButton>
+        <MudButton Color="Color.Warning"
+                   Variant="Variant.Filled"
+                   Disabled="busy"
+                   OnClick="MergeAsync">
+            @Textos.BookMergeConfirm
+        </MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
     private IReadOnlyList<StorePlayerRow>? rows;
-    private readonly List<string> errors = [];
 
     private bool busy;
     private bool renaming;
     private Guid renameId;
     private string renameTo = string.Empty;
 
+    private static readonly DialogOptions Dialog = new() { CloseOnEscapeKey = true };
+
+    private bool merging;
+    private StorePlayerRow[] pair = [];
+    private Guid keepId;
+
+    /// <summary>"1 torneo", no "1 torneos".</summary>
+    private static string Played(int tournaments) => tournaments switch
+    {
+        0 => Textos.BookTournamentsNone,
+        1 => Textos.BookTournamentsOne,
+        var many => string.Format(Textos.BookTournaments, many)
+    };
+
     protected override Task OnInitializedAsync() => LoadAsync();
 
     private async Task LoadAsync() => rows = await Book.AllAsync();
+
+    private void StartMerge(StorePlayerRow row, Guid twinId)
+    {
+        if (rows?.FirstOrDefault(candidate => candidate.Id == twinId) is not { } twin)
+        {
+            return;
+        }
+
+        pair = [row, twin];
+
+        // Preseleccionada la que más ha jugado, que es casi siempre la que la tienda quiere
+        // conservar; pero se puede cambiar, porque "casi siempre" no es siempre.
+        keepId = row.Tournaments >= twin.Tournaments ? row.Id : twin.Id;
+        merging = true;
+    }
+
+    private async Task MergeAsync()
+    {
+        if (pair.Length != 2)
+        {
+            return;
+        }
+
+        busy = true;
+
+        try
+        {
+            var fold = pair.Single(candidate => candidate.Id != keepId).Id;
+            var result = await Book.MergeAsync(keepId, fold);
+
+            if (!result.Succeeded)
+            {
+                Snackbar.Add(string.Join(" ", result.Errors), Severity.Error);
+                return;
+            }
+
+            merging = false;
+            Snackbar.Add(Textos.BookMerged, Severity.Success);
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
 
     private void StartRename(StorePlayerRow row)
     {

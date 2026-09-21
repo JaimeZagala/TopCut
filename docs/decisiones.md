@@ -882,3 +882,20 @@ suposición del código. Lo que cuesta es una migración y una entidad más.
   por cuenta y una por nombre entre los de mostrador. La normalización en SQL se hace con la
   conversión a una intercalación sin acentos, que es la única forma de quitarlos en T-SQL y sí trata
   bien la eñe; verificada contra las mismas cadenas que prueban el C#.
+
+### Fusionar dos fichas (tramo 6b)
+
+- **Lo que se mueve son las filas**, no un puntero: los participantes de la ficha absorbida pasan a
+  la superviviente. Seguir un `MergedIntoId` al leer sería un salto hoy y dos después de la
+  siguiente fusión.
+- **Dos fichas con cuenta no se fusionan.** Son dos personas: juntarlas le daría los resultados de
+  una a la otra, y desde una pantalla eso no se deshace.
+- **Dos fichas que jugaron el mismo torneo tampoco**, porque dejarían a una persona dos veces en el
+  mismo acta y contada dos veces en la clasificación. El mensaje dice qué torneo, y la tienda da de
+  baja una de las dos inscripciones primero.
+- **El orden de las escrituras no es una preferencia.** Una cuenta solo puede estar en una ficha
+  viva, y el índice único no tolera que las dos la tengan ni en el instante que hay entre dos
+  `UPDATE` del mismo guardado —cuyo orden EF no promete—. Así que la ficha absorbida la suelta,
+  eso llega a la base, y solo entonces la superviviente la toma. Las tres escrituras van en una
+  transacción, porque una fusión a medias dejaría los torneos de alguien repartidos entre una ficha
+  que nadie ve y otra sin su cuenta.

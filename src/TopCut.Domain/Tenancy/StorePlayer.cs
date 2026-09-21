@@ -77,13 +77,40 @@ public class StorePlayer : BusinessEntity, ITenantOwned, IAuditable
         UserId = userId;
     }
 
-    /// <summary>Marks this entry as folded into another. The moving of rows is the caller's job.</summary>
-    public void MergeInto(Guid survivorId)
+    /// <summary>
+    /// Folds <b>this</b> entry into another: the same person, written down twice. Usually somebody
+    /// who played as a walk-in before opening an account.
+    /// <para>
+    /// Only this side is changed, and the account it was holding comes back as the return value for
+    /// the caller to hand to the survivor with <see cref="LinkAccount"/>. That looks roundabout and
+    /// is not: one account can only be on one live entry, so the two writes have to reach the
+    /// database in this order — release first, take second — and a single method mutating both
+    /// would leave that order up to whoever saves them.
+    /// </para>
+    /// <para>Moving the participant rows is the caller's job too: it is the part that needs SQL.</para>
+    /// </summary>
+    /// <returns>The account this entry was holding, if any, now free to move.</returns>
+    public string? LeaveBookInto(StorePlayer survivor)
     {
-        DomainException.Require(survivorId != Id, "Un jugador no se puede fusionar consigo mismo.");
-        DomainException.Require(!IsMerged, "Este jugador ya se fusionó con otro.");
+        DomainException.Require(survivor.Id != Id, "Un jugador no se puede fusionar consigo mismo.");
+        DomainException.Require(
+            survivor.TenantId == TenantId,
+            "Los dos jugadores tienen que ser de la misma tienda.");
+        DomainException.Require(!IsMerged, "Esa ficha ya se fusionó con otra.");
+        DomainException.Require(!survivor.IsMerged, "Esta ficha ya se fusionó con otra.");
 
-        MergedIntoId = survivorId;
+        // Two accounts are two people. Whatever they are called, merging them would hand one
+        // player's results to the other, and there is no undoing that from a screen.
+        DomainException.Require(
+            survivor.UserId is null || UserId is null,
+            "Cada una de las dos fichas tiene su propia cuenta, así que no son la misma persona.");
+
+        var account = UserId;
+
+        UserId = null;
+        MergedIntoId = survivor.Id;
+
+        return account;
     }
 
     /// <summary>

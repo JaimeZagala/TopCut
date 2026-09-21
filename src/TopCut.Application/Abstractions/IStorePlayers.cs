@@ -57,6 +57,18 @@ public interface IStorePlayers
     /// </summary>
     Task<StorePlayerMatch> AddAsync(string name, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Folds one entry into another: the same person written down twice, which the book cannot
+    /// work out on its own (ADR-0035). Everything the absorbed entry has played moves across, so
+    /// from here on a league counts them once.
+    /// </summary>
+    /// <param name="keepId">The entry that survives, with its name.</param>
+    /// <param name="foldId">The entry that disappears from the book.</param>
+    Task<OperationResult> MergeAsync(
+        Guid keepId,
+        Guid foldId,
+        CancellationToken cancellationToken = default);
+
     Task<OperationResult> RenameAsync(
         Guid storePlayerId,
         string name,

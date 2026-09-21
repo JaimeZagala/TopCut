@@ -1073,7 +1073,22 @@
     <value>Posible duplicado</value>
   </data>
   <data name="BookPossibleDuplicateHint" xml:space="preserve">
-    <value>Hay otra ficha con este mismo nombre. Fusionarlas llega en el siguiente tramo.</value>
+    <value>Hay otra ficha con este mismo nombre. Si son la misma persona, fusiónalas.</value>
+  </data>
+  <data name="BookMerge" xml:space="preserve">
+    <value>Fusionar con la otra ficha</value>
+  </data>
+  <data name="BookMergeTitle" xml:space="preserve">
+    <value>Fusionar dos fichas</value>
+  </data>
+  <data name="BookMergeHint" xml:space="preserve">
+    <value>Si son la misma persona, todo lo que ha jugado pasa a la ficha que conserves y la otra desaparece del fichero. Esto no tiene vuelta atrás: elige cuál se queda.</value>
+  </data>
+  <data name="BookMergeConfirm" xml:space="preserve">
+    <value>Fusionar</value>
+  </data>
+  <data name="BookMerged" xml:space="preserve">
+    <value>Fichas fusionadas.</value>
   </data>
   <data name="BookRename" xml:space="preserve">
     <value>Corregir el nombre</value>

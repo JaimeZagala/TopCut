@@ -127,6 +127,111 @@ public sealed class StorePlayers(IDbContextFactory<TopCutDbContext> contexts, IT
         return new StorePlayerMatch(created.Id, created.Name, HasAccount: false, Tournaments: 0);
     }
 
+    public async Task<OperationResult> MergeAsync(
+        Guid keepId,
+        Guid foldId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var db = contexts.CreateDbContext();
+
+        // The tenant filter is on StorePlayer, so a id from another store simply does not come
+        // back: from here it reads the same as one that never existed.
+        var both = await db.StorePlayers
+            .Where(player => player.Id == keepId || player.Id == foldId)
+            .ToListAsync(cancellationToken);
+
+        var keep = both.SingleOrDefault(player => player.Id == keepId);
+        var fold = both.SingleOrDefault(player => player.Id == foldId);
+
+        if (keep is null || fold is null)
+        {
+            return OperationResult.Fail("Alguna de las dos fichas no está en tu fichero.");
+        }
+
+        var clash = await SharedTournament(db, keepId, foldId, cancellationToken);
+
+        if (clash is not null)
+        {
+            // Both entries played the same tournament, so merging them would leave one person
+            // twice on a roster and counted twice in the standings. The store unpicks it first.
+            return OperationResult.Fail(
+                $"Las dos fichas jugaron «{clash}». Da de baja una de las dos inscripciones antes de fusionarlas.");
+        }
+
+        string? account;
+
+        try
+        {
+            account = fold.LeaveBookInto(keep);
+        }
+        catch (DomainException error)
+        {
+            return OperationResult.Fail(error.Message);
+        }
+
+        // Three writes that have to happen together and in this order.
+        //
+        // The order is not a preference: one account can only be on one live entry, and the unique
+        // index will not tolerate both of them holding it even for the instant between two UPDATEs
+        // of the same save — whose order EF does not promise. So the folded entry lets go, that
+        // reaches the database, and only then does the survivor take it.
+        //
+        // And together, because a merge that stopped halfway would leave the person's tournaments
+        // split between an entry nobody can see and one without their account. The retrying
+        // strategy of the Azure free tier insists on owning the transaction, hence the wrapper.
+        var strategy = db.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+
+            await db.SaveChangesAsync(cancellationToken);
+
+            if (account is not null && keep.UserId is null)
+            {
+                keep.LinkAccount(account);
+                await db.SaveChangesAsync(cancellationToken);
+            }
+
+            // Everything the folded entry played is now the survivor's. Moved rather than followed
+            // by a pointer at read time: one hop today is two hops after the next merge.
+            await db.Participants
+                .Where(participant => participant.StorePlayerId == foldId)
+                .ExecuteUpdateAsync(
+                    update => update.SetProperty(participant => participant.StorePlayerId, keepId),
+                    cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+        });
+
+        return OperationResult.Ok();
+    }
+
+    /// <summary>The name of a tournament both entries played, if there is one.</summary>
+    private static async Task<string?> SharedTournament(
+        TopCutDbContext db,
+        Guid keepId,
+        Guid foldId,
+        CancellationToken cancellationToken)
+    {
+        var shared = await db.Participants
+            .Where(participant => participant.StorePlayerId == keepId || participant.StorePlayerId == foldId)
+            .GroupBy(participant => participant.TournamentId)
+            .Where(group => group.Select(participant => participant.StorePlayerId).Distinct().Count() > 1)
+            .Select(group => group.Key)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (shared == Guid.Empty)
+        {
+            return null;
+        }
+
+        return await db.Tournaments
+            .Where(tournament => tournament.Id == shared)
+            .Select(tournament => tournament.Name)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<OperationResult> RenameAsync(
         Guid storePlayerId,
         string name,
