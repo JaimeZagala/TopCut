@@ -37,6 +37,10 @@ PublishProfiles/
 ## Scripts SQL generados por migraciones (se revisan, no se versionan por defecto)
 *.dacpac
 
+## Instrucciones para asistentes de codigo, locales de cada maquina
+## (el patron sin barra tambien cubre .claude/CLAUDE.md)
+CLAUDE.md
+
 ## Sistema operativo
 Thumbs.db
 desktop.ini
