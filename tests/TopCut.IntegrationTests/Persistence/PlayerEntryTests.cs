@@ -3,6 +3,7 @@ using TopCut.Application.Abstractions;
 using TopCut.Application.Tournaments;
 using TopCut.Domain.Catalog;
 using TopCut.Domain.Common;
+using TopCut.Domain.Pairings;
 using TopCut.Domain.Tenancy;
 using TopCut.Domain.Tournaments;
 using TopCut.Infrastructure.Persistence;
@@ -261,13 +262,203 @@ public class PlayerEntryTests(SqlServerFixture fixture)
         Assert.Empty(await Entries().HistoryAsync(ana));
     }
 
+    // --- La mesa del jugador -------------------------------------------------------------------------
+
+    [Fact]
+    public async Task The_player_sees_their_own_table_read_from_their_own_side()
+    {
+        var (ana, bruno) = (NewPlayer(), NewPlayer());
+        var store = await NewStore();
+        var id = await NewTournament(store, published: true);
+
+        await Players().JoinAsync(id, ana, "Ana");
+        await Players().JoinAsync(id, bruno, "Bruno");
+        await StartFirstRound(store, id);
+
+        var hers = await Players().BoardAsync(id, ana);
+        var his = await Players().BoardAsync(id, bruno);
+
+        Assert.NotNull(hers?.Match);
+        Assert.NotNull(his?.Match);
+
+        // Same table, and each of them is the other's opponent. Getting this backwards is how a
+        // player reports their own loss as a win.
+        Assert.Equal(hers!.Match!.Table, his!.Match!.Table);
+        Assert.Equal("Bruno", hers.Match.OpponentName);
+        Assert.Equal("Ana", his.Match.OpponentName);
+        Assert.NotEqual(hers.Match.IAmPlayerA, his.Match.IAmPlayerA);
+        Assert.True(hers.Match.CanReport);
+    }
+
+    [Fact]
+    public async Task Player_B_reporting_a_win_is_stored_as_a_win_for_player_B()
+    {
+        var (ana, bruno) = (NewPlayer(), NewPlayer());
+        var store = await NewStore();
+        var id = await NewTournament(store, published: true);
+
+        await Players().JoinAsync(id, ana, "Ana");
+        await Players().JoinAsync(id, bruno, "Bruno");
+        await StartFirstRound(store, id);
+
+        // Bruno reports winning 2-0 from his own side, whichever side the pairer sat him on.
+        var seated = await Players().BoardAsync(id, bruno);
+        var match = seated!.Match!;
+        var mine = match.IAmPlayerA ? GameWinner.PlayerA : GameWinner.PlayerB;
+
+        var reported = await Players().ReportAsync(id, bruno, match.RoundId, match.PairingId, [mine, mine]);
+
+        Assert.True(reported.Succeeded, string.Join(" ", reported.Errors));
+
+        var his = (await Players().BoardAsync(id, bruno))!.Match!;
+        var hers = (await Players().BoardAsync(id, ana))!.Match!;
+
+        Assert.Equal("2-0", his.Score);
+        Assert.True(his.IWon);
+        Assert.True(his.ReportedByMe);
+
+        // The same result, mirrored, on the other phone.
+        Assert.Equal("0-2", hers.Score);
+        Assert.False(hers.IWon);
+        Assert.False(hers.ReportedByMe);
+    }
+
+    [Fact]
+    public async Task A_result_can_only_be_reported_once_and_the_rest_is_for_the_desk()
+    {
+        var (ana, bruno) = (NewPlayer(), NewPlayer());
+        var store = await NewStore();
+        var id = await NewTournament(store, published: true);
+
+        await Players().JoinAsync(id, ana, "Ana");
+        await Players().JoinAsync(id, bruno, "Bruno");
+        await StartFirstRound(store, id);
+
+        var match = (await Players().BoardAsync(id, ana))!.Match!;
+        var hers = match.IAmPlayerA ? GameWinner.PlayerA : GameWinner.PlayerB;
+
+        Assert.True((await Players().ReportAsync(id, ana, match.RoundId, match.PairingId, [hers, hers])).Succeeded);
+
+        // Bruno disagrees. Two phones correcting each other is how a table ends up with a score
+        // neither player agreed to, so the second one is refused and sent to the desk.
+        var his = match.IAmPlayerA ? GameWinner.PlayerB : GameWinner.PlayerA;
+        var refused = await Players().ReportAsync(id, bruno, match.RoundId, match.PairingId, [his, his]);
+
+        Assert.False(refused.Succeeded);
+        Assert.Contains("selo a la tienda", string.Join(" ", refused.Errors));
+        Assert.Equal("2-0", (await Players().BoardAsync(id, ana))!.Match!.Score);
+    }
+
+    [Fact]
+    public async Task Nobody_can_report_a_table_that_is_not_theirs()
+    {
+        var (ana, bruno, carla) = (NewPlayer(), NewPlayer(), NewPlayer());
+        var store = await NewStore();
+        var id = await NewTournament(store, published: true);
+
+        foreach (var (account, name) in new[] { (ana, "Ana"), (bruno, "Bruno"), (carla, "Carla") })
+        {
+            await Players().JoinAsync(id, account, name);
+        }
+
+        await FillWithWalkIns(store, id, 1);
+        await StartFirstRound(store, id);
+
+        var mine = (await Players().BoardAsync(id, ana))!.Match!;
+        var theirs = (await Players().BoardAsync(id, carla))!.Match!;
+
+        // Only meaningful if the pairer put them on different tables, which with four players it did.
+        Assert.NotEqual(mine.PairingId, theirs.PairingId);
+
+        // The pairing id travels in a form, so somebody could post another table's.
+        var refused = await Players().ReportAsync(
+            id, ana, theirs.RoundId, theirs.PairingId, [GameWinner.PlayerA, GameWinner.PlayerA]);
+
+        Assert.False(refused.Succeeded);
+        Assert.Contains("no es la tuya", string.Join(" ", refused.Errors));
+    }
+
+    [Fact]
+    public async Task A_bye_needs_no_reporting_and_arrives_already_won()
+    {
+        var (ana, bruno, carla) = (NewPlayer(), NewPlayer(), NewPlayer());
+        var store = await NewStore();
+        var id = await NewTournament(store, published: true);
+
+        foreach (var (account, name) in new[] { (ana, "Ana"), (bruno, "Bruno"), (carla, "Carla") })
+        {
+            await Players().JoinAsync(id, account, name);
+        }
+
+        await StartFirstRound(store, id);
+
+        var byes = new List<PlayerMatch>();
+
+        foreach (var account in new[] { ana, bruno, carla })
+        {
+            var match = (await Players().BoardAsync(id, account))!.Match!;
+
+            if (match.IsBye)
+            {
+                byes.Add(match);
+            }
+        }
+
+        // Three players, one bye, and it is born resolved.
+        var bye = Assert.Single(byes);
+
+        Assert.False(bye.CanReport);
+        Assert.True(bye.Reported);
+        Assert.True(bye.IWon);
+    }
+
+    [Fact]
+    public async Task Between_rounds_the_player_gets_their_standing_and_no_table()
+    {
+        var (ana, bruno) = (NewPlayer(), NewPlayer());
+        var store = await NewStore();
+        var id = await NewTournament(store, published: true);
+
+        await Players().JoinAsync(id, ana, "Ana");
+        await Players().JoinAsync(id, bruno, "Bruno");
+        await StartFirstRound(store, id);
+
+        var match = (await Players().BoardAsync(id, ana))!.Match!;
+        var hers = match.IAmPlayerA ? GameWinner.PlayerA : GameWinner.PlayerB;
+        await Players().ReportAsync(id, ana, match.RoundId, match.PairingId, [hers, hers]);
+
+        await CloseRound(store, id, match.RoundId);
+
+        var board = (await Players().BoardAsync(id, ana))!;
+
+        Assert.Null(board.Match);
+        Assert.Equal(1, board.Rank);
+        Assert.Equal(3, board.MatchPoints);
+        Assert.Equal("1-0-0", board.Record);
+    }
+
+    [Fact]
+    public async Task Somebody_who_is_not_in_the_tournament_has_no_board()
+    {
+        var store = await NewStore();
+        var published = await NewTournament(store, published: true);
+        var draft = await NewTournament(store, published: false);
+
+        Assert.Null(await Players().BoardAsync(published, NewPlayer()));
+
+        // And a draft answers the same, whoever asks: from outside, "not yours" and "does not
+        // exist" have to read alike.
+        Assert.Null(await Players().BoardAsync(draft, NewPlayer()));
+    }
+
     // --- Harness ---------------------------------------------------------------------------------------
 
     /// <summary>
     /// The player's side, with <b>no store in scope</b>: that is what a signed-in player browsing
     /// the public sheet looks like, and what the tenant filter would otherwise close down.
     /// </summary>
-    private PlayerEntryService Players() => new(new TournamentRepository(fixture.CreateContextFactory()));
+    private PlayerEntryService Players() =>
+        new(new TournamentRepository(fixture.CreateContextFactory()), TimeProvider.System);
 
     /// <summary>
     /// An account id nobody else's test is using. The suite shares one database and a player's
@@ -340,7 +531,11 @@ public class PlayerEntryTests(SqlServerFixture fixture)
         });
 
     private Task StartFirstRound(Guid storeId, Guid tournamentId) =>
-        AsStore(storeId, tournamentId, tournament => tournament.StartRound(Phase.Swiss, DateTimeOffset.UtcNow));
+        AsStore(storeId, tournamentId, tournament =>
+            TournamentEngine.StartNextRound(tournament, DateTimeOffset.UtcNow));
+
+    private Task CloseRound(Guid storeId, Guid tournamentId, Guid roundId) =>
+        AsStore(storeId, tournamentId, tournament => tournament.CloseRound(roundId, DateTimeOffset.UtcNow));
 
     private async Task AsStore(Guid storeId, Guid tournamentId, Action<Tournament> change)
     {

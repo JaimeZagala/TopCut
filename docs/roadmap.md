@@ -23,7 +23,7 @@
 - ✅ Repositorio remoto: `JaimeZagala/TopCut` (privado), `main` sincronizada (ADR-0007)
 - ⏸ Correo dedicado del proyecto para Azure, Google Cloud y Play Console (ADR-0007)
 
-### Hito 1 — Modelo de datos, multi-tenancy e identidad 🔨
+### Hito 1 — Modelo de datos, multi-tenancy e identidad ✅
 
 Partido en tres tramos para que cada uno sea revisable por separado.
 
@@ -183,7 +183,7 @@ Partido en cuatro tramos para que cada uno sea revisable por separado.
 *Criterio de cierre del hito 3 alcanzado*: una tienda crea un torneo, apunta a los jugadores, lanza
 rondas, registra y corrige resultados y lo cierra, todo desde el navegador.
 
-### Hito 4 — Tiempo real: pantalla en vivo y cronómetro 🔨
+### Hito 4 — Tiempo real: pantalla en vivo y cronómetro ✅
 
 - ✅ **Las pantallas se actualizan solas**: lanzar una ronda, meter un resultado, corregirlo, cerrar
   la ronda o dar una baja aparece en cualquier otra pantalla abierta de ese torneo sin recargar
@@ -200,11 +200,11 @@ rondas, registra y corrige resultados y lo cierra, todo desde el navegador.
   Server y **ya tiene su WebSocket**; un hub aparte serían dos conexiones por espectador cuando el
   plan gratuito de App Service permite cinco en total. El hub sigue teniendo sentido para clientes
   **externos** (la app móvil), y va con la Web API externa del hito 8
-- 🔁 **Pantalla móvil del jugador para reportar en un par de toques**: necesita que un jugador este
-  vinculado a su participante, y ese vínculo lo crea la inscripción. Confirmado que se hace **dentro
-  del hito 5**, en el tramo 5c, en cuanto el 5b cree el vínculo
+- ✅ **Pantalla móvil del jugador para reportar en un par de toques**: necesitaba que un jugador
+  estuviera vinculado a su participante, y ese vínculo lo crea la inscripción. Hecha en el tramo
+  **5c**, en cuanto el 5b creó el vínculo
 
-### Hito 5 — Cara pública: búsqueda, inscripción y lista de espera 🔨
+### Hito 5 — Cara pública: búsqueda, inscripción y lista de espera ✅
 
 Partido en tres tramos. El último recoge lo que quedó pendiente del hito 4, porque la pantalla del
 jugador necesita el vínculo entre cuenta y participante que crea la inscripción.
@@ -252,10 +252,25 @@ jugador necesita el vínculo entre cuenta y participante que crea la inscripció
 - ✅ **20 pruebas nuevas**: 4 de dominio, 11 sobre el camino del jugador contra SQL Server real
   (carrera por la última plaza incluida) y 6 que recorren las pantallas por HTTP
 
-#### 5c — Pantalla móvil del jugador ⬜
+#### 5c — Pantalla móvil del jugador ✅
 
-Reportar el resultado en un par de toques. Es lo que quedó del hito 4; el vínculo entre cuenta y
-participante ya existe, lo crea la inscripción del 5b.
+Lo que quedaba del hito 4, hecho en cuanto la inscripción del 5b creó el vínculo entre cuenta y
+participante.
+
+- ✅ **`/torneos/{id}/mi-mesa`**: su mesa, su rival, el reloj de la ronda y cómo va en la
+  clasificación, en una pantalla pensada para un móvil encima de la mesa
+- ✅ **Reportar en un toque**, con los botones leídos **desde el jugador** ("Gano 2-1", no "1-2") y
+  en el mismo orden para los dos lados de la mesa (ADR-0034)
+- ✅ **Se reporta una sola vez**: el primero cierra la partida y las discrepancias las arregla la
+  tienda, como un acta firmada. La mesa que se reporta se comprueba en el servidor, porque el
+  identificador viaja en un formulario
+- ✅ **Sin circuito** (ADR-0033). Es la única pantalla en vivo que se multiplica por jugador, y el
+  plan gratuito da cinco WebSockets en total. El reloj lo arranca un módulo desde la propia página
+  y, mientras no haya nada que pulsar, la página se refresca sola cada 25 segundos
+- ✅ El bye llega ya resuelto y lo dice; la lista de espera y las bajas también tienen su mensaje
+- ✅ **13 pruebas nuevas**: 7 sobre la mesa del jugador contra SQL Server real (incluida la que
+  comprueba que lo que reporta el jugador B se guarda como victoria de B) y 6 sobre la pantalla
+  por HTTP
 
 ### Hito 6 — Ligas por temporada ⬜
 

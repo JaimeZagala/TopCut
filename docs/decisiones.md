@@ -777,3 +777,58 @@ que plazas, sin error y sin rastro.
 - **La prueba** monta la carrera de verdad contra SQL Server: Bruno carga, se apunta y guarda
   mientras Ana todavía tiene el agregado en la mano. Ana recibe el mensaje de recargar, y el torneo
   acaba con exactamente las plazas que tiene.
+
+---
+
+## ADR-0033 — La pantalla del jugador no abre circuito: se refresca sola
+
+**Fecha**: 2026-09-21 · **Estado**: aceptada · **Impacto**: alto
+
+La mesa de control y la pantalla de la sala son páginas interactivas de Blazor, y cada una gasta un
+WebSocket. El plan gratuito de App Service permite **cinco en total** (ADR-0027). Un torneo de
+dieciséis personas con el móvil abierto pediría dieciséis más.
+
+- **Decisión**: la pantalla del jugador va en **SSR estático**. Es la única de las tres pantallas en
+  vivo que se multiplica por el número de jugadores, así que es la única que no puede permitirse un
+  circuito.
+- **El reloj**, en consecuencia, no se arranca por interoperabilidad desde el servidor sino desde
+  una etiqueta `<script type="module">` de la propia página, leyendo los mismos atributos `data-`
+  que ya pinta el componente. El JavaScript es exactamente el mismo del ADR-0028; lo único que
+  cambia es quién lo pone en marcha. Sigue sin costar un mensaje por segundo y por jugador.
+- **Y lo que sustituye al circuito** es un `<meta http-equiv="refresh">` de 25 segundos, puesto
+  **solo cuando no hay nada que pulsar**: esperando emparejamiento, o con el resultado ya dado. En
+  cuanto aparecen los botones deja de refrescarse, porque recargar la página debajo del pulgar de
+  alguien es peor que esperar. Un GET pequeño cada 25 segundos es mucho más barato que mantener
+  abierto un WebSocket, y funciona en cualquier teléfono.
+- **Alternativa descartada**: hacerla interactiva y confiar en que no vengan tantos jugadores. Es
+  apostar a que la aplicación no se use.
+- **Alternativa descartada**: un hub de SignalR aparte para los móviles. Mismo problema de
+  conexiones, más superficie, y ya está decidido que el hub va con la Web API externa (hito 8).
+
+---
+
+## ADR-0034 — El resultado se reporta una vez, y desde el lado de quien lo reporta
+
+**Fecha**: 2026-09-21 · **Estado**: aceptada · **Impacto**: medio
+
+Dos decisiones sobre cómo un jugador reporta su propia partida.
+
+**Los botones se leen desde el jugador, no desde la mesa.** La mesa de control lee todos los
+enfrentamientos desde el lado del jugador A, porque está mirando una lista. Quien está sentado a una
+mesa no: sabe quién es, y el botón que busca es el que dice lo que le ha pasado **a él**. Así que en
+su pantalla pone "Gano 2-1", no "1-2". La vuelta a la representación del torneo —que guarda siempre
+desde el lado de A— se hace en un solo sitio (`PlayerOutcome`), y el orden de los botones es el
+mismo para los dos jugadores: leerlos en espejo es un toque equivocado esperando a pasar.
+
+**Una vez reportado, no se cambia desde el móvil.** El primero que reporta cierra la partida; si el
+otro no está de acuerdo, se habla con la tienda, que ya tenía desde el hito 3d el botón de corregir
+y deja marcado que lo hizo.
+
+- **Alternativa descartada**: que el rival confirme. Duplica los toques y deja partidas a medias
+  cuando alguien se va sin confirmar, que es exactamente lo que pasa en una tienda.
+- **Alternativa descartada**: que cualquiera de los dos pueda sobrescribir. Dos teléfonos
+  corrigiéndose es como una mesa acaba con un resultado que no habían acordado ninguno de los dos.
+- Es además como funciona un acta de papel firmada, que es el procedimiento que esto sustituye.
+- **La mesa que se reporta se comprueba en el servidor**, no solo al pintar la pantalla: el
+  identificador del emparejamiento viaja en un formulario, así que alguien podría enviar el de otra
+  mesa.

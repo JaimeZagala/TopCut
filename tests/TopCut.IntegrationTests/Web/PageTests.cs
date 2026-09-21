@@ -666,6 +666,107 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         Assert.StartsWith("/cuenta/acceso", Target(response));
     }
 
+    // --- La mesa del jugador (hito 5c) --------------------------------------------------------
+
+    [Fact]
+    public async Task My_table_is_not_for_anonymous_visitors()
+    {
+        var tournamentId = await PublishedTournament();
+
+        var response = await Browser().GetAsync($"/torneos/{tournamentId}/mi-mesa");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.StartsWith("/cuenta/acceso", Target(response));
+    }
+
+    [Fact]
+    public async Task Somebody_who_is_not_playing_is_pointed_at_the_tournaments_they_are_in()
+    {
+        var tournamentId = await PublishedTournament();
+        var stranger = Browser();
+        await SubmitRegistration(stranger, NewEmail(), "Nadie", consent: true);
+
+        var html = await stranger.GetStringAsync($"/torneos/{tournamentId}/mi-mesa");
+
+        Assert.Contains("No estás en este torneo", html);
+        Assert.Contains("/mis-torneos", html);
+    }
+
+    [Fact]
+    public async Task The_player_sees_their_table_their_opponent_and_the_clock_without_a_circuit()
+    {
+        var player = Browser();
+        await SubmitRegistration(player, NewEmail(), "Ana", consent: true);
+        var tournamentId = await TournamentWithARoundUnderWay(player);
+
+        var html = await player.GetStringAsync($"/torneos/{tournamentId}/mi-mesa");
+
+        Assert.Contains("Mesa ", html);
+        Assert.Contains("Contra ", html);
+        Assert.Contains("Ronda 1", html);
+
+        // The clock is rendered by the server first and then driven by the same module the
+        // projector uses, started from the page because there is no circuit to call it (ADR-0033).
+        Assert.Contains("topcut-clock", html);
+        Assert.Contains("data-state=\"running\"", html);
+        Assert.Contains("roundClock.js", html);
+
+        // Sixteen phones on sixteen circuits would not fit in the free tier's five WebSockets.
+        Assert.DoesNotContain("<!--Blazor:", html);
+    }
+
+    [Fact]
+    public async Task The_buttons_are_worded_from_the_players_own_side()
+    {
+        var player = Browser();
+        await SubmitRegistration(player, NewEmail(), "Ana", consent: true);
+        var tournamentId = await TournamentWithARoundUnderWay(player);
+
+        var html = await player.GetStringAsync($"/torneos/{tournamentId}/mi-mesa");
+
+        // Not "2-0", which would leave the player working out which side of the table they are.
+        Assert.Contains("Gano 2-0", html);
+        Assert.Contains("Gano 2-1", html);
+        Assert.Contains("Pierdo 1-2", html);
+        Assert.Contains("Pierdo 0-2", html);
+    }
+
+    [Fact]
+    public async Task Reporting_from_the_phone_stores_the_result_and_closes_the_buttons()
+    {
+        var player = Browser();
+        await SubmitRegistration(player, NewEmail(), "Ana", consent: true);
+        var tournamentId = await TournamentWithARoundUnderWay(player);
+        var url = $"/torneos/{tournamentId}/mi-mesa";
+
+        var after = await Submit(player, url, "reportar-2-0-r");
+
+        Assert.Contains("Ganada por 2-0", after);
+        Assert.Contains("díselo a la tienda", after);
+        Assert.DoesNotContain("Gano 2-1", after);
+
+        // And the desk sees the same match reported, whichever side of it the player sat on.
+        var desk = Browser();
+        var (storeEmail, _) = StoreOf(tournamentId);
+        await SubmitSignIn(desk, storeEmail, "/tienda");
+
+        Assert.Contains("1 sin resultado", await desk.GetStringAsync($"/tienda/torneos/{tournamentId}/mesa"));
+    }
+
+    [Fact]
+    public async Task With_nothing_to_report_the_page_refreshes_itself_instead_of_holding_a_connection()
+    {
+        var player = Browser();
+        await SubmitRegistration(player, NewEmail(), "Ana", consent: true);
+        var tournamentId = await PublishedTournament();
+        await Join(player, tournamentId);
+
+        var html = await player.GetStringAsync($"/torneos/{tournamentId}/mi-mesa");
+
+        Assert.Contains("El torneo todavía no ha empezado", html);
+        Assert.Contains("http-equiv=\"refresh\"", html);
+    }
+
     // --- Helpers ----------------------------------------------------------------------------------------
 
     /// <summary>Where a redirect points, as a path, whether the header is absolute or relative.</summary>
@@ -744,6 +845,29 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
 
         Assert.True(result.Succeeded, string.Join(" ", result.Errors));
     }
+
+    /// <summary>
+    /// A four-player tournament with the first round paired and the given browser signed up in it,
+    /// which is the only state where the player's screen has anything to do.
+    /// </summary>
+    private async Task<Guid> TournamentWithARoundUnderWay(HttpClient player)
+    {
+        var (email, storeId) = await RegisterApprovedStore(Browser());
+        var tournamentId = await CreateTournament(storeId, "Torneo en marcha", city: NewCity());
+
+        await SignUp(storeId, tournamentId, "Rival", "Otro", "Uno mas");
+        await Publish(storeId, tournamentId);
+        await Join(player, tournamentId);
+        await StartRound(storeId, tournamentId);
+
+        _stores[tournamentId] = email;
+        return tournamentId;
+    }
+
+    /// <summary>The account of the store that organises a tournament these tests created.</summary>
+    private (string Email, Guid TournamentId) StoreOf(Guid tournamentId) => (_stores[tournamentId], tournamentId);
+
+    private readonly Dictionary<Guid, string> _stores = [];
 
     /// <summary>A published tournament of some store the player has nothing to do with.</summary>
     private async Task<Guid> PublishedTournament(string name = "Prerelease de invierno")

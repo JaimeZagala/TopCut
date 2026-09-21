@@ -61,6 +61,17 @@ else
                                 ? string.Format(Textos.MyTournamentsWaiting, place)
                                 : Textos.MyTournamentsIn)
                         </MudText>
+
+                        @* Con el torneo en marcha, lo que hace falta es la mesa, no la ficha. *@
+                        @if (row.TournamentStatus == TournamentStatus.InProgress)
+                        {
+                            <MudButton Href="@($"/torneos/{row.TournamentId}/mi-mesa")"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Small">
+                                @Textos.MyTableOpen
+                            </MudButton>
+                        }
                     </MudStack>
                 </MudStack>
             </MudPaper>

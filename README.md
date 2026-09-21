@@ -3,9 +3,9 @@
 Plataforma multi-tenant para organizar y gestionar torneos y ligas de juegos de cartas
 coleccionables (TCG). La v1 arranca con **Magic: The Gathering** y **One Piece Card Game**.
 
-> Estado: **hito 5 (en curso)** — la tienda lleva un torneo entero desde el navegador, las
-> pantallas se actualizan solas, y los jugadores buscan torneos y se inscriben
-> ([`docs/roadmap.md`](docs/roadmap.md)).
+> Estado: **hitos 0 a 5 cerrados** — la tienda lleva un torneo entero desde el navegador, y los
+> jugadores buscan torneos, se inscriben y reportan su resultado desde el móvil. Siguiente: ligas
+> por temporada ([`docs/roadmap.md`](docs/roadmap.md)).
 
 ## Documentación
 

@@ -96,9 +96,19 @@
                 }
                 else if (!sheet.AcceptsRegistrations)
                 {
-                    <MudText Typo="Typo.body1">
+                    <MudText Typo="Typo.body1" Class="mb-3">
                         @(entry is { HasWithdrawn: false } ? Textos.JoinStartedYouAreIn : Textos.JoinClosed)
                     </MudText>
+                }
+
+                @if (entry is { HasWithdrawn: false } && sheet.Status == TournamentStatus.InProgress)
+                {
+                    <MudButton Href="@($"/torneos/{Id}/mi-mesa")"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.TableRestaurant">
+                        @Textos.MyTableOpen
+                    </MudButton>
                 }
             </Authorized>
         </AuthorizeView>

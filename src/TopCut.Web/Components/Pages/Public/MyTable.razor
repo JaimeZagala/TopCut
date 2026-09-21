@@ -1,0 +1,215 @@
+@page "/torneos/{Id:guid}/mi-mesa"
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [Authorize]
+@using TopCut.Application.Tournaments
+@inject PlayerEntryService Players
+@inject LocalTime Clock
+
+@* La pantalla del jugador, pensada para un móvil sobre la mesa.
+
+   SSR estático, y esta vez no es solo por ahorrar: el plan gratuito de App Service permite unos
+   cinco WebSockets en total (ADR-0027), y la mesa de control y la pantalla de la sala ya gastan
+   dos. Un torneo de dieciséis personas con el móvil abierto lo reventaría sin acercarse a la
+   funcionalidad. Así que aquí no hay circuito (ADR-0033): el reloj lo arranca un módulo desde la
+   propia página, y mientras no haya nada que reportar la página se refresca sola para que los
+   emparejamientos aparezcan sin que nadie tenga que tirar de la pantalla. *@
+
+<PageTitle>@(board?.Name ?? Textos.MyTableTitle) - @Textos.AppName</PageTitle>
+
+@if (board is null)
+{
+    <MudText Typo="Typo.h1" GutterBottom="true">@Textos.MyTableNotYours</MudText>
+    <MudText Typo="Typo.body1" Class="mb-6">@Textos.MyTableNotYoursBody</MudText>
+    <MudButton Href="/mis-torneos" Variant="Variant.Filled" Color="Color.Primary">
+        @Textos.MyTournamentsTitle
+    </MudButton>
+}
+else
+{
+    @* Mientras no toque hacer nada, la página se refresca sola: es la sustituta del circuito que
+       esta pantalla no tiene. En cuanto hay botones que pulsar deja de hacerlo, porque recargar
+       debajo del pulgar de alguien es peor que esperar. *@
+    @if (WaitingForSomething)
+    {
+        <HeadContent>
+            <meta http-equiv="refresh" content="25" />
+        </HeadContent>
+    }
+
+    <MudText Typo="Typo.h1" GutterBottom="true">@board.Name</MudText>
+    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-6">
+        @string.Format(Textos.MyTableAsName, board.PlayerName)
+    </MudText>
+
+    @if (refused.Count > 0)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4" role="alert">
+            <MudText Typo="Typo.body2">@string.Join(" ", refused)</MudText>
+        </MudAlert>
+    }
+
+    @if (board.PlayerStatus == ParticipantStatus.Waitlisted)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-4">@Textos.MyTableWaitlisted</MudAlert>
+    }
+    else if (board.PlayerStatus == ParticipantStatus.Dropped)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-4">@Textos.MyTableDropped</MudAlert>
+    }
+
+    <MudPaper Outlined="true" Elevation="0" Class="pa-4 mb-4">
+        @if (board.Match is { } match)
+        {
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                <div>
+                    <MudText Typo="Typo.overline" Class="mud-text-secondary">
+                        @string.Format(Textos.LiveRoundHeading, board.RoundNumber)
+                    </MudText>
+                    <MudText Typo="Typo.h5">@string.Format(Textos.MyTableNumber, match.Table)</MudText>
+                </div>
+
+                @if (board.ClockRunning)
+                {
+                    <RoundClock EndsAt="board.RegularTimeEndsAt!.Value"
+                                ExtraEndsAt="board.ExtraTimeEndsAt ?? board.RegularTimeEndsAt!.Value"
+                                ServerNow="board.ServerNow"
+                                SelfStart="true" />
+                }
+            </MudStack>
+
+            @if (match.IsBye)
+            {
+                <MudText Typo="Typo.h6">@Textos.MyTableBye</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@Textos.MyTableByeHint</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.h6" Class="mb-4">
+                    @string.Format(Textos.MyTableVersus, match.OpponentName)
+                </MudText>
+
+                @if (match.Reported)
+                {
+                    <MudAlert Severity="@(match.IWon ? Severity.Success : match.ItWasADraw ? Severity.Info : Severity.Normal)"
+                              Class="mb-2">
+                        @ReportedLine(match)
+                    </MudAlert>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@Textos.MyTableFixAtTheDesk</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">@Textos.MyTableHowDidItGo</MudText>
+
+                    <MudStack Spacing="2">
+                        @foreach (var outcome in PlayerOutcome.For(match.Format, match.IAmPlayerA))
+                        {
+                            <EditForm Model="this" FormName="@FormNameFor(outcome)" OnValidSubmit="() => ReportAsync(outcome)" method="post">
+                                <MudButton ButtonType="ButtonType.Submit"
+                                           Variant="Variant.Outlined"
+                                           Color="@(outcome.IWin ? Color.Success : outcome.IsDraw ? Color.Default : Color.Error)"
+                                           FullWidth="true"
+                                           Size="Size.Large">
+                                    @outcome.Label
+                                </MudButton>
+                            </EditForm>
+                        }
+                    </MudStack>
+                }
+            }
+        }
+        else
+        {
+            <MudText Typo="Typo.h6">@(board.UnderWay ? Textos.MyTableBetweenRounds : Textos.MyTableNotStarted)</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@Textos.MyTableWillRefresh</MudText>
+        }
+    </MudPaper>
+
+    @if (board.Rank is { } rank)
+    {
+        <MudPaper Outlined="true" Elevation="0" Class="pa-4">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <div>
+                    <MudText Typo="Typo.overline" Class="mud-text-secondary">@Textos.MyTableStanding</MudText>
+                    <MudText Typo="Typo.h5">@string.Format(Textos.MyTableRank, rank)</MudText>
+                </div>
+                <div class="text-right">
+                    <MudText Typo="Typo.body1">@string.Format(Textos.MyTablePoints, board.MatchPoints)</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@board.Record</MudText>
+                </div>
+            </MudStack>
+        </MudPaper>
+    }
+
+    <MudButton Href="@($"/torneos/{Id}")"
+               Variant="Variant.Text"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.ArrowBack"
+               Class="mt-6">
+        @Textos.MyTableSheet
+    </MudButton>
+}
+
+@code {
+    private PlayerBoard? board;
+    private List<string> refused = [];
+    private Guid loaded;
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? Authentication { get; set; }
+
+    /// <summary>Nothing to do but wait, which is when refreshing by itself earns its keep.</summary>
+    private bool WaitingForSomething => board is not null && board.Match is null or { CanReport: false };
+
+    /// <summary>
+    /// One form per button, so each posts on its own. They all target the same handler, but Blazor
+    /// needs the names to differ within a page.
+    /// </summary>
+    private static string FormNameFor(PlayerOutcome outcome) =>
+        $"reportar-{outcome.MyGames}-{outcome.OpponentGames}-{(outcome.IsDraw ? "e" : "r")}";
+
+    private static string ReportedLine(PlayerMatch match) => match switch
+    {
+        { DecidedByTimeExpiry: true } => string.Format(Textos.MyTableByTimeExpiry, match.Score),
+        { AmendedByOrganizer: true } => string.Format(Textos.MyTableAmended, match.Score),
+        { ItWasADraw: true } => Textos.MyTableDrawn,
+        { IWon: true } => string.Format(Textos.MyTableWon, match.Score),
+        _ => string.Format(Textos.MyTableLost, match.Score)
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loaded == Id)
+        {
+            return;
+        }
+
+        loaded = Id;
+        await ReadAsync();
+    }
+
+    private async Task ReportAsync(PlayerOutcome outcome)
+    {
+        if (await UserIdAsync() is not { } userId || board?.Match is not { } match)
+        {
+            return;
+        }
+
+        var result = await Players.ReportAsync(Id, userId, match.RoundId, match.PairingId, outcome.Games);
+
+        refused = result.Succeeded ? [] : [.. result.Errors];
+        await ReadAsync();
+    }
+
+    private async Task ReadAsync()
+    {
+        board = await UserIdAsync() is { } userId ? await Players.BoardAsync(Id, userId) : null;
+    }
+
+    private async Task<string?> UserIdAsync() =>
+        Authentication is null
+            ? null
+            : (await Authentication).User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+}

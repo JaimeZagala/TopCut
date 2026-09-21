@@ -95,6 +95,10 @@ dos WebSockets por espectador cuando el plan gratuito permite cinco.
 - **Cronómetro de ronda** (ADR-0028): el servidor manda el instante de fin en UTC **y su propia
   hora**; el navegador mide la diferencia una vez y cuenta el solo. Recargar no reinicia el reloj y
   no se gasta un mensaje por segundo y espectador.
+- **La pantalla del jugador es la excepción**: va en SSR estático (ADR-0033). Es la única de las
+  tres que se multiplica por el número de jugadores, y cinco WebSockets no dan para un torneo de
+  dieciséis móviles. El reloj lo arranca un módulo desde la propia página, con el mismo JavaScript,
+  y mientras no haya nada que pulsar la página se refresca sola cada 25 segundos.
 - **Un hub propio** queda para los clientes **externos** (la app móvil, que no tiene circuito), con
   la Web API externa.
 

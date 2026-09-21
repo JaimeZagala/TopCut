@@ -76,15 +76,30 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
     private static void GuardTheWholeAggregate(TopCutDbContext db, Tournament tournament) =>
         db.Entry(tournament).Property(candidate => candidate.UpdatedAt).IsModified = true;
 
-    public async Task<T> ReadAsync<T>(
+    public Task<T> ReadAsync<T>(
         Guid tournamentId,
         Func<Tournament, T> read,
         T whenMissing,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        Read(tournamentId, read, whenMissing, onlyPublic: false, cancellationToken);
+
+    public Task<T> ReadOnPublicAsync<T>(
+        Guid tournamentId,
+        Func<Tournament, T> read,
+        T whenMissing,
+        CancellationToken cancellationToken = default) =>
+        Read(tournamentId, read, whenMissing, onlyPublic: true, cancellationToken);
+
+    private async Task<T> Read<T>(
+        Guid tournamentId,
+        Func<Tournament, T> read,
+        T whenMissing,
+        bool onlyPublic,
+        CancellationToken cancellationToken)
     {
         await using var db = contexts.CreateDbContext();
 
-        var tournament = await LoadAsync(db, tournamentId, cancellationToken, tracked: false);
+        var tournament = await LoadAsync(db, tournamentId, cancellationToken, tracked: false, onlyPublic);
 
         return tournament is null ? whenMissing : read(tournament);
     }

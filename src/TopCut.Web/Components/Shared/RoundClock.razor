@@ -7,7 +7,34 @@
    El texto se pinta ya desde el servidor para que se vea algo en el primer render, antes de que
    el JavaScript tome el relevo. *@
 
-<span @ref="host" class="topcut-clock" data-state="@InitialState">@InitialText</span>
+<span @ref="host"
+      class="topcut-clock"
+      data-state="@InitialState"
+      data-ends-at="@EndsAt.ToUnixTimeMilliseconds()"
+      data-extra-ends-at="@ExtraEndsAt.ToUnixTimeMilliseconds()"
+      data-server-now="@ServerNow.ToUnixTimeMilliseconds()"
+      data-extra-label="@Textos.ClockExtraTime"
+      data-over-label="@Textos.ClockOver">@InitialText</span>
+
+@if (SelfStart)
+{
+    @* En SSR estático no hay circuito, así que nadie va a llamar al módulo por interoperabilidad:
+       lo arranca esta etiqueta leyendo los mismos datos del propio elemento. El JavaScript es el de
+       siempre; lo único que cambia es quién lo pone en marcha. *@
+    <script type="module" suppress-error="BL9992">
+        import { start } from './js/roundClock.js';
+
+        for (const clock of document.querySelectorAll('.topcut-clock[data-ends-at]')) {
+            start(clock, {
+                endsAtMs: Number(clock.dataset.endsAt),
+                extraEndsAtMs: Number(clock.dataset.extraEndsAt),
+                serverNowMs: Number(clock.dataset.serverNow),
+                extraLabel: clock.dataset.extraLabel,
+                overLabel: clock.dataset.overLabel
+            });
+        }
+    </script>
+}
 
 @code {
     private ElementReference host;
@@ -28,6 +55,14 @@
     /// </summary>
     [Parameter, EditorRequired]
     public DateTimeOffset ServerNow { get; set; }
+
+    /// <summary>
+    /// Start the countdown from a script tag instead of waiting for a circuit. For the pages served
+    /// as static SSR — the player's own screen — where <c>OnAfterRenderAsync</c> never gets an
+    /// interactive renderer to talk to.
+    /// </summary>
+    [Parameter]
+    public bool SelfStart { get; set; }
 
     private string InitialText => Remaining switch
     {

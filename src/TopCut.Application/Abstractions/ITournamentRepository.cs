@@ -51,5 +51,15 @@ public interface ITournamentRepository
         Func<Tournament, OperationResult> work,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// The read counterpart of <see cref="ExecuteOnPublicAsync"/>: the whole aggregate for a
+    /// tournament of a store the caller is not scoped to, under the same visibility rule.
+    /// </summary>
+    Task<T> ReadOnPublicAsync<T>(
+        Guid tournamentId,
+        Func<Tournament, T> read,
+        T whenMissing,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(Tournament tournament, CancellationToken cancellationToken = default);
 }

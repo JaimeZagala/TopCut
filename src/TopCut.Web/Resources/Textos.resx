@@ -942,4 +942,87 @@
   <data name="MyTournamentsIn" xml:space="preserve">
     <value>Inscrito</value>
   </data>
+
+  <!-- Hito 5c: pantalla del jugador -->
+  <data name="PlayerWinBy" xml:space="preserve">
+    <value>Gano {0}-{1}</value>
+  </data>
+  <data name="PlayerLoseBy" xml:space="preserve">
+    <value>Pierdo {0}-{1}</value>
+  </data>
+  <data name="MyTableTitle" xml:space="preserve">
+    <value>Mi mesa</value>
+  </data>
+  <data name="MyTableNotYours" xml:space="preserve">
+    <value>No estás en este torneo</value>
+  </data>
+  <data name="MyTableNotYoursBody" xml:space="preserve">
+    <value>O no existe, o no te has apuntado. Aquí tienes los torneos en los que sí estás.</value>
+  </data>
+  <data name="MyTableAsName" xml:space="preserve">
+    <value>Juegas como «{0}».</value>
+  </data>
+  <data name="MyTableNumber" xml:space="preserve">
+    <value>Mesa {0}</value>
+  </data>
+  <data name="MyTableVersus" xml:space="preserve">
+    <value>Contra {0}</value>
+  </data>
+  <data name="MyTableBye" xml:space="preserve">
+    <value>Esta ronda descansas</value>
+  </data>
+  <data name="MyTableByeHint" xml:space="preserve">
+    <value>El bye cuenta como victoria. No tienes que reportar nada.</value>
+  </data>
+  <data name="MyTableHowDidItGo" xml:space="preserve">
+    <value>¿Cómo ha quedado? Se reporta una sola vez.</value>
+  </data>
+  <data name="MyTableWon" xml:space="preserve">
+    <value>Ganada por {0}.</value>
+  </data>
+  <data name="MyTableLost" xml:space="preserve">
+    <value>Perdida por {0}.</value>
+  </data>
+  <data name="MyTableDrawn" xml:space="preserve">
+    <value>Empatada.</value>
+  </data>
+  <data name="MyTableByTimeExpiry" xml:space="preserve">
+    <value>Resuelta al acabarse el tiempo: {0}.</value>
+  </data>
+  <data name="MyTableAmended" xml:space="preserve">
+    <value>Corregida por la tienda: {0}.</value>
+  </data>
+  <data name="MyTableFixAtTheDesk" xml:space="preserve">
+    <value>Si no es correcto, díselo a la tienda: desde aquí ya no se puede cambiar.</value>
+  </data>
+  <data name="MyTableBetweenRounds" xml:space="preserve">
+    <value>Esperando a la siguiente ronda</value>
+  </data>
+  <data name="MyTableNotStarted" xml:space="preserve">
+    <value>El torneo todavía no ha empezado</value>
+  </data>
+  <data name="MyTableWillRefresh" xml:space="preserve">
+    <value>Esta pantalla se actualiza sola. Déjala abierta.</value>
+  </data>
+  <data name="MyTableWaitlisted" xml:space="preserve">
+    <value>Estás en la lista de espera: no juegas salvo que se libere una plaza.</value>
+  </data>
+  <data name="MyTableDropped" xml:space="preserve">
+    <value>Estás dado de baja de este torneo.</value>
+  </data>
+  <data name="MyTableStanding" xml:space="preserve">
+    <value>Vas</value>
+  </data>
+  <data name="MyTableRank" xml:space="preserve">
+    <value>{0}.º</value>
+  </data>
+  <data name="MyTablePoints" xml:space="preserve">
+    <value>{0} puntos</value>
+  </data>
+  <data name="MyTableSheet" xml:space="preserve">
+    <value>Ver la ficha del torneo</value>
+  </data>
+  <data name="MyTableOpen" xml:space="preserve">
+    <value>Mi mesa</value>
+  </data>
 </root>
