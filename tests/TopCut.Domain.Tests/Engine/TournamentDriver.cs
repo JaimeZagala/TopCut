@@ -22,15 +22,20 @@ internal sealed class TournamentDriver
     private readonly Dictionary<Guid, int> _seeds = [];
     private DateTimeOffset _now = Start;
 
-    private TournamentDriver(Ruleset ruleset, int players, int swissRounds, int? topCut)
+    private TournamentDriver(
+        Ruleset ruleset,
+        IReadOnlyList<(Guid? Book, string Name)> field,
+        int swissRounds,
+        int? topCut,
+        DateTimeOffset startsAt)
     {
         Tournament = Tournament.Create(
             Guid.CreateVersion7(),
             ruleset,
             "Torneo simulado",
-            Start.AddDays(1),
+            startsAt,
             new Address("Calle Mayor 1", "Valencia", "Valencia", "46001"),
-            capacity: Math.Max(players, 2),
+            capacity: Math.Max(field.Count, 2),
             swissRounds: swissRounds);
 
         if (topCut is { } size)
@@ -40,28 +45,49 @@ internal sealed class TournamentDriver
 
         Tournament.Publish();
 
-        for (var seed = 1; seed <= players; seed++)
+        for (var seed = 1; seed <= field.Count; seed++)
         {
-            var participant = Tournament.SignUp($"P{seed}");
+            var (book, name) = field[seed - 1];
+
+            // No book entry means "somebody new every time", which is what a tournament on its own
+            // wants. A league leg passes the same entries again, because that is what makes the
+            // season add up to one person.
+            var participant = book is { } entry
+                ? Tournament.Register(entry, name)
+                : Tournament.SignUp(name);
+
             _seeds[participant.Id] = seed;
         }
     }
 
+    private static IReadOnlyList<(Guid?, string)> Unknowns(int players) =>
+        [.. Enumerable.Range(1, players).Select(seed => ((Guid?)null, $"P{seed}"))];
+
     public Tournament Tournament { get; }
 
     public static TournamentDriver Magic(int players, int swissRounds, int? topCut = null) =>
-        new(SeedCatalog.MagicRuleset(tcgId: 1), players, swissRounds, topCut);
+        new(SeedCatalog.MagicRuleset(tcgId: 1), Unknowns(players), swissRounds, topCut, Start.AddDays(1));
+
+    /// <summary>
+    /// One leg of a league: the same book entries turning up again, which is the only way the
+    /// season can tell that this is the same person as last month (ADR-0035).
+    /// </summary>
+    public static TournamentDriver Leg(
+        IReadOnlyList<(Guid? Book, string Name)> field,
+        int swissRounds,
+        DateTimeOffset startsAt) =>
+        new(SeedCatalog.MagicRuleset(tcgId: 1), field, swissRounds, topCut: null, startsAt);
 
     /// <summary>Magic's scoring with a different tiebreaker order, to prove the order is data.</summary>
     public static TournamentDriver MagicWithTiebreakers(int players, int swissRounds, params Tiebreaker[] tiebreakers)
     {
         var ruleset = SeedCatalog.MagicRuleset(tcgId: 1);
         ruleset.SetTiebreakers(tiebreakers);
-        return new TournamentDriver(ruleset, players, swissRounds, topCut: null);
+        return new TournamentDriver(ruleset, Unknowns(players), swissRounds, topCut: null, Start.AddDays(1));
     }
 
     public static TournamentDriver OnePiece(int players, int swissRounds, int? topCut = null) =>
-        new(SeedCatalog.OnePieceRuleset(tcgId: 2), players, swissRounds, topCut);
+        new(SeedCatalog.OnePieceRuleset(tcgId: 2), Unknowns(players), swissRounds, topCut, Start.AddDays(1));
 
     public int Seed(Guid participantId) => _seeds[participantId];
 
@@ -173,6 +199,20 @@ internal sealed class TournamentDriver
         games.AddRange(Enumerable.Repeat(winnerSide, round.Format.GamesToWin()));
 
         Tournament.ReportResult(round.Id, pairing.Id, games, reportedBy: null);
+    }
+
+    /// <summary>A drawn match, which in Bo3 is the one everybody reports as 1-1.</summary>
+    public void ReportDraw(Round round, int seedA, int seedB)
+    {
+        var pairing = round.Pairings.Single(p =>
+            !p.IsBye
+            && new[] { Seed(p.PlayerAId), Seed(p.PlayerBId!.Value) }.Order().SequenceEqual(new[] { seedA, seedB }.Order()));
+
+        Tournament.ReportResult(
+            round.Id,
+            pairing.Id,
+            [GameWinner.PlayerA, GameWinner.PlayerB],
+            reportedBy: null);
     }
 
     private Round Lay(Phase phase, IReadOnlyList<ProposedPairing> proposed)

@@ -1,0 +1,97 @@
+@page "/ligas/{Id:guid}"
+@attribute [ExcludeFromInteractiveRouting]
+@inject IPublicLeagues Leagues
+@inject LocalTime Clock
+
+@* Página pública de una liga: la clasificación de la temporada y los torneos que la han ido
+   llenando. Sin cuenta y sin circuito, como el resto de la cara pública (ADR-0020), porque es una
+   dirección que se comparte por el grupo de la tienda y la abre mucha más gente de la que juega.
+
+   Una liga existe aquí en cuanto tiene algún torneo publicado, y solo esos cuentan: un borrador es
+   el cuaderno de la tienda y su lista de inscritos no tiene por qué verse desde fuera. *@
+
+@if (league is not null)
+{
+    <PageTitle>@league.Name - @Textos.AppName</PageTitle>
+
+    <MudStack Row="true" Spacing="2" Class="mb-2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
+        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
+            @league.TcgName
+        </MudChip>
+        @if (!league.IsOpen)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Dark">@Textos.LeagueSheetClosed</MudChip>
+        }
+    </MudStack>
+
+    <MudText Typo="Typo.h1" GutterBottom="true">@league.Name</MudText>
+    <MudText Typo="Typo.h6" Class="mud-text-secondary">@league.StoreName</MudText>
+    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-6">
+        @Textos.LeagueSheetSeason: @Labels.Season(league.StartsOn, league.EndsOn)
+    </MudText>
+
+    <LeagueStandings Rows="league.Standings" />
+
+    <MudText Typo="Typo.h4" Class="mt-10 mb-4">@Textos.LeagueTournamentsTitle</MudText>
+
+    @if (league.Tournaments.Count == 0)
+    {
+        <MudPaper Class="pa-6" Elevation="0" Outlined="true">
+            <MudText Typo="Typo.body2">@Textos.LeagueSheetNoTournaments</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudTable Items="league.Tournaments" Hover="true" Elevation="0" Outlined="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>@Textos.ColumnTournament</MudTh>
+                <MudTh>@Textos.ColumnDate</MudTh>
+                <MudTh>@Textos.ColumnPlayers</MudTh>
+                <MudTh>@Textos.ColumnStatus</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="row">
+                <MudTd DataLabel="@Textos.ColumnTournament">
+                    <MudLink Href="@($"/torneos/{row.Id}")" Typo="Typo.body1">@row.Name</MudLink>
+                </MudTd>
+                <MudTd DataLabel="@Textos.ColumnDate">@Clock.Format(row.StartsAt)</MudTd>
+                <MudTd DataLabel="@Textos.ColumnPlayers">@row.Players</MudTd>
+                <MudTd DataLabel="@Textos.ColumnStatus">
+                    <MudChip T="string" Size="Size.Small" Color="@Labels.ColourFor(row.Status)">
+                        @Labels.For(row.Status)
+                    </MudChip>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+
+    <MudButton Href="/torneos" Variant="Variant.Text" Class="mt-6">@Textos.SearchBack</MudButton>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [CascadingParameter]
+    private HttpContext? Request { get; set; }
+
+    private PublicLeagueInfo? league;
+    private Guid loaded;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loaded == Id)
+        {
+            return;
+        }
+
+        loaded = Id;
+        league = await Leagues.FindAsync(Id);
+
+        // Mismo trato que la ficha de un torneo (ADR-0030): 404 de verdad y el cuerpo lo pinta
+        // /not-found, porque Blazor descarta el de una página que en SSR estático cambia el código.
+        if (league is null && Request is not null)
+        {
+            Request.Response.StatusCode = StatusCodes.Status404NotFound;
+        }
+    }
+}

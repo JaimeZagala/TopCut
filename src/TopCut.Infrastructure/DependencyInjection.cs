@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<IPlayerEntries, PlayerEntries>();
         services.AddScoped<IStorePlayers, StorePlayers>();
         services.AddScoped<ILeagues, Leagues>();
+        services.AddScoped<IPublicLeagues, PublicLeagues>();
         services.AddScoped<ITcgCatalog, TcgCatalog>();
         services.AddScoped<TournamentService>();
         services.AddScoped<TournamentSetupService>();

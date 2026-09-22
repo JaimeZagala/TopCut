@@ -77,7 +77,9 @@ public sealed record PublicTournamentInfo(
     PhaseSettings SwissPhase,
     PhaseSettings TopCutPhase,
     TimeExpiryPolicy TimeExpiry,
-    string RulesVersion)
+    string RulesVersion,
+    Guid? LeagueId,
+    string? LeagueName)
 {
     public bool IsFull => Registered >= Capacity;
 

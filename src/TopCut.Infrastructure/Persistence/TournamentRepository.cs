@@ -104,6 +104,33 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
         return tournament is null ? whenMissing : read(tournament);
     }
 
+    public Task<T> ReadLeagueAsync<T>(
+        Guid leagueId,
+        Func<IReadOnlyList<Tournament>, T> read,
+        CancellationToken cancellationToken = default) =>
+        ReadLeague(leagueId, read, onlyPublic: false, cancellationToken);
+
+    public Task<T> ReadPublicLeagueAsync<T>(
+        Guid leagueId,
+        Func<IReadOnlyList<Tournament>, T> read,
+        CancellationToken cancellationToken = default) =>
+        ReadLeague(leagueId, read, onlyPublic: true, cancellationToken);
+
+    private async Task<T> ReadLeague<T>(
+        Guid leagueId,
+        Func<IReadOnlyList<Tournament>, T> read,
+        bool onlyPublic,
+        CancellationToken cancellationToken)
+    {
+        await using var db = contexts.CreateDbContext();
+
+        var tournaments = await Aggregates(db, tracked: false, onlyPublic)
+            .Where(tournament => tournament.LeagueId == leagueId)
+            .ToListAsync(cancellationToken);
+
+        return read(tournaments);
+    }
+
     public async Task AddAsync(Tournament tournament, CancellationToken cancellationToken = default)
     {
         await using var db = contexts.CreateDbContext();
@@ -112,8 +139,17 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
         await db.SaveChangesAsync(cancellationToken);
     }
 
+    private static Task<Tournament?> LoadAsync(
+        TopCutDbContext db,
+        Guid tournamentId,
+        CancellationToken cancellationToken,
+        bool tracked = true,
+        bool onlyPublic = false) =>
+        Aggregates(db, tracked, onlyPublic)
+            .SingleOrDefaultAsync(tournament => tournament.Id == tournamentId, cancellationToken);
+
     /// <summary>
-    /// Pulls the whole aggregate in one go. Pairing and standings both walk every round, so lazy
+    /// Pulls whole aggregates in one go. Pairing and standings both walk every round, so lazy
     /// loading would turn one operation into dozens of round trips against a database that, on the
     /// free tier, is charged by the second.
     /// <para>
@@ -121,16 +157,12 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
     /// which is not the order they were created in: the round buttons came out as 2, 4, 3, 1.
     /// </para>
     /// <para>
-    /// No <c>IgnoreQueryFilters</c> here: the tenant filter is exactly what stops a store from
-    /// reaching another store's tournament by guessing its id.
+    /// No <c>IgnoreQueryFilters</c> unless <paramref name="onlyPublic"/> asks for it: the tenant
+    /// filter is exactly what stops a store from reaching another store's tournament by guessing
+    /// its id.
     /// </para>
     /// </summary>
-    private static Task<Tournament?> LoadAsync(
-        TopCutDbContext db,
-        Guid tournamentId,
-        CancellationToken cancellationToken,
-        bool tracked = true,
-        bool onlyPublic = false)
+    private static IQueryable<Tournament> Aggregates(TopCutDbContext db, bool tracked, bool onlyPublic)
     {
         var tournaments = tracked ? db.Tournaments : db.Tournaments.AsNoTracking();
 
@@ -149,7 +181,6 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
             .Include(tournament => tournament.Rounds.OrderBy(round => round.Number))
                 .ThenInclude(round => round.Pairings.OrderBy(pairing => pairing.Table))
                     .ThenInclude(pairing => pairing.Games.OrderBy(game => game.Number))
-            .AsSplitQuery()
-            .SingleOrDefaultAsync(tournament => tournament.Id == tournamentId, cancellationToken);
+            .AsSplitQuery();
     }
 }

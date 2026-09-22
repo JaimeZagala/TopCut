@@ -61,5 +61,24 @@ public interface ITournamentRepository
         T whenMissing,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Every tournament scoring towards one league, whole, in a single set of queries. The
+    /// cumulative table adds up what each of them scored, so there is no slice of this to load
+    /// (ADR-0037) — and loading them one by one would be a round trip per event.
+    /// </summary>
+    Task<T> ReadLeagueAsync<T>(
+        Guid leagueId,
+        Func<IReadOnlyList<Tournament>, T> read,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The same for a league of a store the caller is not scoped to, under the visibility rule the
+    /// rest of the public path uses (ADR-0029): a draft never reaches the season's table.
+    /// </summary>
+    Task<T> ReadPublicLeagueAsync<T>(
+        Guid leagueId,
+        Func<IReadOnlyList<Tournament>, T> read,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(Tournament tournament, CancellationToken cancellationToken = default);
 }

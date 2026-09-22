@@ -140,6 +140,13 @@
                         </MudText>
                         <MudText Typo="Typo.body2" Class="mud-text-secondary">@SeatsLine</MudText>
                     </MudListItem>
+                    @if (sheet.LeagueId is { } leagueId)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.MilitaryTech">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@Textos.SheetLeague</MudText>
+                            <MudLink Href="@($"/ligas/{leagueId}")" Typo="Typo.body1">@sheet.LeagueName</MudLink>
+                        </MudListItem>
+                    }
                 </MudList>
             </MudPaper>
         </MudItem>

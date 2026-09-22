@@ -562,6 +562,35 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_league_has_no_public_address_until_one_of_its_tournaments_is_published()
+    {
+        var store = Browser();
+        var (_, storeId) = await RegisterApprovedStore(store);
+        var tournament = await CreateTournament(storeId, "Jornada de liga", city: NewCity());
+        var league = await CreateLeague(storeId, tournament, "Liga de otoño");
+
+        // Only a draft so far, so there is nothing to show and no address to stumble on.
+        var hidden = await Browser().GetAsync($"/ligas/{league}");
+
+        Assert.Equal(HttpStatusCode.NotFound, hidden.StatusCode);
+        Assert.Contains("Aquí no hay nada", await hidden.Content.ReadAsStringAsync());
+
+        await PublishTournament(storeId, tournament);
+
+        var response = await Browser().GetAsync($"/ligas/{league}");
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Liga de otoño", html);
+        Assert.Contains("Jornada de liga", html);
+        Assert.Contains("Clasificación de la liga", html);
+
+        // Anonymous and static: a league table nobody has to sign in for must not open a circuit
+        // per visitor (ADR-0020), which is the whole reason it is served this way.
+        Assert.DoesNotContain("<!--Blazor:", html);
+    }
+
+    [Fact]
     public async Task A_query_string_that_makes_no_sense_is_a_search_without_filters_and_not_an_error()
     {
         // Anybody can type into a public address, and a browser sends every empty box along too.
@@ -978,6 +1007,45 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
 
         Assert.True(created.Succeeded, string.Join(" ", created.Errors));
         return created.TournamentId!.Value;
+    }
+
+    private async Task<Guid> CreateLeague(Guid storeId, Guid tournamentId, string name)
+    {
+        using var scope = _app.Services.CreateScope();
+
+        scope.ServiceProvider.GetRequiredService<ITenantScope>().Set(storeId);
+
+        var catalog = scope.ServiceProvider.GetRequiredService<ITcgCatalog>();
+        var magic = (await catalog.ActiveAsync()).First(game => game.Code == "MTG");
+
+        var leagues = scope.ServiceProvider.GetRequiredService<ILeagues>();
+
+        var created = await leagues.CreateAsync(new LeagueDraft(
+            magic.Id,
+            name,
+            DateOnly.FromDateTime(DateTime.UtcNow),
+            DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(3))));
+
+        Assert.True(created.Succeeded, string.Join(" ", created.Errors));
+
+        var setup = scope.ServiceProvider.GetRequiredService<TournamentSetupService>();
+        var joined = await setup.AssignToLeagueAsync(tournamentId, created.LeagueId!.Value);
+
+        Assert.True(joined.Succeeded, string.Join(" ", joined.Errors));
+        return created.LeagueId!.Value;
+    }
+
+    private async Task PublishTournament(Guid storeId, Guid tournamentId)
+    {
+        using var scope = _app.Services.CreateScope();
+
+        scope.ServiceProvider.GetRequiredService<ITenantScope>().Set(storeId);
+
+        var published = await scope.ServiceProvider
+            .GetRequiredService<TournamentSetupService>()
+            .PublishAsync(tournamentId);
+
+        Assert.True(published.Succeeded, string.Join(" ", published.Errors));
     }
 
     /// <summary>A store account that a Superadmin has already approved, signed up through the API.</summary>

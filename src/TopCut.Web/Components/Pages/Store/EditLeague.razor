@@ -3,6 +3,7 @@
 @attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
 @inject ITcgCatalog Catalog
 @inject ILeagues Leagues
+@inject IPublicLeagues PublicLeagues
 @inject LocalTime Clock
 @inject IDialogService Dialogs
 @inject ISnackbar Snackbar
@@ -29,7 +30,19 @@ else
 
     <MudText Typo="Typo.caption" Class="d-block mb-6">
         @league.TcgName · @Labels.Season(league.StartsOn, league.EndsOn)
+        @if (isPublic)
+        {
+            @(" · ")
+            <MudLink Href="@($"/ligas/{LeagueId}")" Target="_blank" Typo="Typo.caption">
+                @Textos.LeaguePublicLink
+            </MudLink>
+        }
     </MudText>
+
+    @if (!isPublic)
+    {
+        <MudText Typo="Typo.caption" Class="d-block mb-6">@Textos.LeaguePublicPending</MudText>
+    }
 
     @if (!league.IsOpen)
     {
@@ -68,6 +81,10 @@ else
                 GameLocked="true"
                 Busy="busy"
                 OnSubmit="SaveAsync" />
+
+    <div class="mt-10">
+        <LeagueStandings Rows="standings" />
+    </div>
 
     <MudText Typo="Typo.h4" Class="mt-10 mb-4">@Textos.LeagueTournamentsTitle</MudText>
 
@@ -111,6 +128,8 @@ else
     private IReadOnlyList<TcgOption>? games;
     private LeagueDetails? league;
     private LeagueFormModel? model;
+    private IReadOnlyList<LeagueStanding> standings = [];
+    private bool isPublic;
     private bool loading = true;
     private bool busy;
 
@@ -138,6 +157,11 @@ else
         games = await Catalog.ActiveAsync();
         league = await Leagues.DetailsAsync(LeagueId);
         model = league is null ? null : LeagueFormModel.From(league);
+        standings = league is null ? [] : await Leagues.StandingsAsync(LeagueId);
+
+        // Asked of the public side rather than worked out here: "¿se ve esto desde fuera?" only has
+        // one right answer, and it is the one that page uses (ADR-0037).
+        isPublic = league is not null && await PublicLeagues.IsPublicAsync(LeagueId);
 
         loading = false;
     }

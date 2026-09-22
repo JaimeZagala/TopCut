@@ -1204,4 +1204,34 @@
   <data name="NoticeLeagueAssigned" xml:space="preserve">
     <value>Liga del torneo actualizada.</value>
   </data>
+  <data name="LeagueStandingsTitle" xml:space="preserve">
+    <value>Clasificación de la liga</value>
+  </data>
+  <data name="LeagueStandingsEmpty" xml:space="preserve">
+    <value>Todavía no hay resultados. La clasificación se llena sola según se van jugando los torneos.</value>
+  </data>
+  <data name="LeagueStandingsHow" xml:space="preserve">
+    <value>Se suman los puntos de partida de cada torneo de la liga. A igualdad de puntos manda quien más partidas ha ganado y, después, quien lo consiguió en menos torneos.</value>
+  </data>
+  <data name="LeagueColumnPlayed" xml:space="preserve">
+    <value>Torneos</value>
+  </data>
+  <data name="LeaguePublicLink" xml:space="preserve">
+    <value>Ver la página pública</value>
+  </data>
+  <data name="LeaguePublicPending" xml:space="preserve">
+    <value>Esta liga tendrá página pública en cuanto publiques alguno de sus torneos.</value>
+  </data>
+  <data name="LeagueSheetSeason" xml:space="preserve">
+    <value>Temporada</value>
+  </data>
+  <data name="LeagueSheetClosed" xml:space="preserve">
+    <value>Temporada cerrada</value>
+  </data>
+  <data name="SheetLeague" xml:space="preserve">
+    <value>Puntúa para la liga</value>
+  </data>
+  <data name="LeagueSheetNoTournaments" xml:space="preserve">
+    <value>Esta liga todavía no tiene torneos publicados.</value>
+  </data>
 </root>

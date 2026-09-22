@@ -163,7 +163,8 @@ parece la misma persona la pantalla lo señala y es la tienda quien las junta.
 
 `League` pertenece a una tienda y a un TCG, con temporada (`StartsOn` / `EndsOn`) y bandera de
 abierta. `Tournament.LeagueId` apunta a ella, así que un torneo puntua **como mucho para una liga**. La
-clasificación acumulada llega en el tramo 6d.
+clasificación acumulada **no se guarda**: se calcula al leer, sumando por ficha del fichero los
+puntos que el mismo calculador del torneo saca de cada uno de los torneos de la liga (ADR-0037).
 
 Cerrar una liga no borra nada: deja de admitir torneos nuevos y los que ya tenía siguen contando.
 El juego no se cambia después de crearla, porque los torneos que ya apuntan a ella son de ese juego.
@@ -226,6 +227,7 @@ No añade tablas: son funciones puras sobre el agregado ya cargado, en `src/TopC
 | `SwissPairer` | Emparejamiento Dutch por backtracking (ADR-0016) y asignación del bye. |
 | `TopCutBracket` | Sembrado del cuadro desde la clasificación final y estrechamiento por rondas. |
 | `TournamentEngine` | Decide que fase toca y lanza la ronda. Es el único punto de entrada que necesita la aplicación. |
+| `LeagueTable` | Suma por ficha del fichero lo que el calculador saca de cada torneo de una liga (ADR-0037). |
 
 `Standing` es un registro de solo lectura, no una entidad: se recalcula a partir de los resultados
 cada vez que se pide. Guardarlo sería una copia que puede quedar desincronizada de los
@@ -233,4 +235,6 @@ enfrentamientos, que son la verdad.
 
 ## Pendiente
 
-- **Hito 6**: acumulación de puntos de liga entre torneos, que si necesitara consultas propias.
+- **Hito 6**: la clasificación de liga se resolvió sin esquema nuevo, cargando los agregados de sus
+  torneos y sumando en memoria (ADR-0037). Si algún día pesa, lo que hay que añadir es el resultado
+  de cada torneo materializado al completarlo.

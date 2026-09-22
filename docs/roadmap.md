@@ -272,7 +272,7 @@ participante.
   comprueba que lo que reporta el jugador B se guarda como victoria de B) y 6 sobre la pantalla
   por HTTP
 
-### Hito 6 — Ligas por temporada 🔨
+### Hito 6 — Ligas por temporada ✅
 
 Partido en cuatro tramos. Los dos primeros construyen a **quién** se le suman los puntos, que es lo
 que faltaba: hasta ahora un participante era un nombre suelto de un torneo.
@@ -326,10 +326,24 @@ que faltaba: hasta ahora un participante era un nombre suelto de un torneo.
 - ✅ Corregido en el navegador: al elegir liga se guardaba bien pero el desplegable volvía a
   "Ninguna" hasta recargar, porque durante el guardado se le devolvía el valor viejo
 
-#### 6d — Clasificación acumulada ⬜
+#### 6d — Clasificación acumulada ✅
 
-Suma de puntos a lo largo de la temporada reutilizando el modelo de puntuación del torneo, y página
-pública de la liga.
+- ✅ **La clasificación de la temporada** se calcula con el **mismo calculador** que usa un torneo
+  suelto, aplicado a cada torneo de la liga y sumando sus puntos por ficha del fichero (ADR-0037)
+- ✅ **Los desempates oficiales no se suman**: un porcentaje de victorias de los rivales describe un
+  torneo suizo, no una temporada. A igualdad de puntos mandan las partidas ganadas y, después,
+  haberlo conseguido en menos torneos
+- ✅ **Un torneo cancelado no puntúa** aunque se cancelara después de jugarse, y apuntarse a algo que
+  nadie llegó a jugar no cuenta como torneo jugado
+- ✅ **Página pública de la liga** en `/ligas/{id}`, en SSR estático y sin circuito, con la
+  clasificación y los torneos que la han ido llenando. La ficha de cada torneo enlaza a su liga
+- ✅ **Una liga es pública cuando alguno de sus torneos lo es**: la misma regla de ADR-0029
+  preguntada a la liga, así que una temporada en borradores no tiene dirección que encontrar y
+  revocar una tienda se lleva su liga en la siguiente petición
+- ✅ **Se calcula al leer, sin tabla materializada**: corregir un resultado del mes pasado cambia la
+  clasificación en la siguiente lectura. Los agregados se cargan en una sola tanda de consultas
+- ✅ **13 pruebas nuevas**: 6 de dominio sobre cómo se suma y cómo se desempata, y 7 contra SQL
+  Server real sobre el fichero, la visibilidad pública y el 404 de una liga sin publicar
 
 ### Hito 7 — Panel de Superadmin ⬜
 

@@ -944,3 +944,55 @@ coincidir, y la que se salta sería la del servidor.
 - **Las fechas de temporada no filtran nada**, son para leerlas y para ordenar la lista. Obligar a
   que el torneo caiga dentro añadiría un motivo de rechazo sin resolver ningún problema real, y la
   tienda ya elige la liga a mano.
+
+---
+
+## ADR-0037 — La liga suma puntos; los desempates oficiales no se suman
+
+**Fecha**: 2026-09-22 · **Estado**: aceptada · **Impacto**: medio · **Cambia**: nada del esquema
+
+Una liga «reutiliza el mismo modelo de puntuación, acumulando puntos a lo largo de varios eventos»
+([vision.md](vision.md)). La clasificación de la temporada se calcula con el **mismo
+`StandingsCalculator`** que usa un torneo suelto, aplicado a cada uno de los torneos de la liga, y
+sumando después sus puntos de partida por **ficha del fichero** (ADR-0035), que es lo único que
+sobrevive de un torneo al siguiente.
+
+- **Los desempates oficiales no se acumulan ni se recalculan.** Un porcentaje de victorias de los
+  rivales describe **un** torneo suizo: promediar los rivales de marzo con los de mayo no describe
+  nada. Lo que separa a dos jugadores igualados a puntos es una decisión de producto, no una regla
+  de Wizards, y está escrita en `LeagueTable.Rank`: más partidas ganadas y, después, menos torneos
+  para conseguir los mismos puntos. El último criterio es el nombre, para que dos personas
+  realmente iguales no cambien de orden entre dos lecturas de la misma página.
+- **Menos torneos no penaliza a quien va más.** Solo se aplica a igualdad de puntos, y ahí los
+  mismos puntos en menos eventos es la mejor temporada. Sumar puntos totales, y no medias, es lo
+  que premia aparecer todos los sábados, que es lo que le interesa a la tienda.
+- **Un torneo cancelado no puntúa**, aunque se cancelara después de jugarse. Es la misma regla que
+  `AssignToLeague` aplica a la entrada (ADR-0036), y las dos tienen que decir lo mismo.
+- **Apuntarse a algo que nadie llegó a jugar no es un torneo jugado**: cuenta la ficha que jugó al
+  menos una ronda. De otro modo una inscripción a un torneo que se quedó en borrador le restaría en
+  el segundo desempate.
+- **El nombre de la fila es el último con el que esa persona se apuntó.** El nombre del participante
+  es una foto del momento (ADR-0035) y aquí se elige la foto más reciente, que es la que usó la sala.
+
+### Se calcula al leer, no se guarda
+
+La tabla se construye cargando los agregados de los torneos de la liga y pasándolos por el
+calculador. No hay tabla materializada ni caché.
+
+- **Lo que se gana**: no hay dos versiones de la verdad. Corregir un resultado del mes pasado
+  cambia la clasificación de la liga en la siguiente lectura, sin nada que invalidar.
+- **Lo que cuesta**: una temporada de doce torneos son doce agregados. Se cargan en **una sola
+  tanda de consultas** (`ReadLeagueAsync`), no una por torneo, que es la diferencia que importa en
+  el nivel gratuito. Si algún día duele, lo que hay que hacer es materializar el resultado de cada
+  torneo al completarlo; hasta entonces sería complicar sin medida.
+
+### Cuándo tiene página pública una liga
+
+Cuando **alguno de sus torneos es público**: la misma regla de siempre (ADR-0029), preguntada a la
+liga. No hay un segundo concepto de «publicada» que mantener sincronizado, una temporada que la
+tienda está montando en borradores no tiene dirección que encontrar, y una tienda a la que se le
+revoca la aprobación se lleva su liga en la siguiente petición.
+
+La tabla pública se calcula **solo con los torneos públicos**. Un borrador no tiene resultados, así
+que no cambiaría los puntos; lo que evita es que su lista de inscritos, que es el cuaderno de la
+tienda, aparezca en la página pública de la liga.

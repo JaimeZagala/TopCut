@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TopCut.Application.Abstractions;
 using TopCut.Domain.Common;
 using TopCut.Domain.Leagues;
+using TopCut.Domain.Standings;
 using TopCut.Domain.Tournaments;
 
 namespace TopCut.Infrastructure.Persistence;
@@ -13,7 +14,10 @@ namespace TopCut.Infrastructure.Persistence;
 /// of mine", so a league from another store reads exactly like one that does not exist.
 /// </para>
 /// </summary>
-public sealed class Leagues(IDbContextFactory<TopCutDbContext> contexts, ITenantContext tenant) : ILeagues
+public sealed class Leagues(
+    IDbContextFactory<TopCutDbContext> contexts,
+    ITournamentRepository tournaments,
+    ITenantContext tenant) : ILeagues
 {
     public async Task<IReadOnlyList<LeagueRow>> ForCurrentStoreAsync(
         CancellationToken cancellationToken = default)
@@ -181,6 +185,15 @@ public sealed class Leagues(IDbContextFactory<TopCutDbContext> contexts, ITenant
         await db.SaveChangesAsync(cancellationToken);
         return OperationResult.Ok();
     }
+
+    /// <summary>
+    /// The season's table. The aggregates are loaded whole and handed to the same calculator a
+    /// single tournament uses, so the league cannot drift from what each event scored (ADR-0037).
+    /// </summary>
+    public Task<IReadOnlyList<LeagueStanding>> StandingsAsync(
+        Guid leagueId,
+        CancellationToken cancellationToken = default) =>
+        tournaments.ReadLeagueAsync(leagueId, LeagueTable.For, cancellationToken);
 
     /// <summary>The catalog keyed by id: two rows in v1, cheaper read whole than joined per query.</summary>
     private static async Task<Dictionary<int, string>> GameNamesAsync(

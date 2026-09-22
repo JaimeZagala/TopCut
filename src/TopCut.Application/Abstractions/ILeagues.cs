@@ -1,3 +1,4 @@
+using TopCut.Domain.Standings;
 using TopCut.Domain.Tournaments;
 
 namespace TopCut.Application.Abstractions;
@@ -81,4 +82,12 @@ public interface ILeagues
     Task<OperationResult> CloseAsync(Guid leagueId, CancellationToken cancellationToken = default);
 
     Task<OperationResult> ReopenAsync(Guid leagueId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The season's cumulative table (ADR-0037). Empty when the league does not exist, belongs to
+    /// another store, or nobody has played a round in it yet.
+    /// </summary>
+    Task<IReadOnlyList<LeagueStanding>> StandingsAsync(
+        Guid leagueId,
+        CancellationToken cancellationToken = default);
 }

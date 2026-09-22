@@ -142,16 +142,20 @@ De donde sale la tienda en contexto depende de por donde entre la petición (ADR
 `HttpContext` en una petición HTTP, y fijada por `StoreLayout` desde el principal autenticado cuando
 se trata de una página interactiva, porque **dentro de un circuito de SignalR no hay `HttpContext`**.
 
-### La única puerta que cruza la frontera
+### La puerta que cruza la frontera
 
 La cara pública necesita lo contrario que todo lo demás: un jugador anónimo tiene que ver los
-torneos de **todas** las tiendas. Ese cruce está concentrado en **una sola clase**,
-`PublicTournaments`, que apaga el filtro con `IgnoreQueryFilters()` y lo sustituye por una regla
-escrita a mano en un único método (ADR-0029): torneo publicado, tienda aprobada en este momento y
-que no sea tienda de pruebas. Cualquier otro `IgnoreQueryFilters` en el código es sospechoso por
-definición, y por eso hay pruebas que tiran en las dos direcciones: que un visitante sin tienda en
-contexto **si** ve los torneos ajenos publicados, y que no ve borradores, tiendas sin aprobar ni
-tiendas de prueba.
+torneos de **todas** las tiendas. La regla que sustituye al filtro está escrita **una sola vez**, en
+`PublicVisibility.OnlyPublic` (ADR-0029): torneo publicado, tienda aprobada en este momento y que no
+sea tienda de pruebas. Quien la usa apaga el filtro con `IgnoreQueryFilters()` y llama a ese método;
+cualquier otro `IgnoreQueryFilters` en el código es sospechoso por definición, y por eso hay pruebas
+que tiran en las dos direcciones: que un visitante sin tienda en contexto **si** ve los torneos
+ajenos publicados, y que no ve borradores, tiendas sin aprobar ni tiendas de prueba.
+
+Los sitios que la usan son contados: `PublicTournaments` (búsqueda y ficha), `PlayerEntries` (las
+inscripciones de un jugador, por su cuenta) y `PublicLeagues` (la página pública de una liga). Una
+liga es pública **cuando alguno de sus torneos lo es**, que es la misma regla preguntada a la liga
+en vez de a un torneo, y su clasificación se calcula solo con esos (ADR-0037).
 
 Esa puerta también deja pasar una **escritura**, y solo una: el jugador que se apunta o se da de
 baja desde la ficha pública (ADR-0031). Entra por `ITournamentRepository.ExecuteOnPublicAsync`, que

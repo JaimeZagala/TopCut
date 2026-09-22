@@ -1,0 +1,40 @@
+@using TopCut.Domain.Standings
+
+@* La tabla de la liga, la misma para la tienda y para la página pública. Una sola copia porque las
+   dos enseñan exactamente lo mismo, y dos que se fueran separando harían dudar de cuál es la buena. *@
+
+<MudText Typo="Typo.h4" GutterBottom="true">@Textos.LeagueStandingsTitle</MudText>
+
+@if (Rows.Count == 0)
+{
+    <MudPaper Class="pa-6" Elevation="0" Outlined="true">
+        <MudText Typo="Typo.body2">@Textos.LeagueStandingsEmpty</MudText>
+    </MudPaper>
+}
+else
+{
+    <MudTable Items="Rows" Hover="true" Elevation="0" Outlined="true" Dense="true" Breakpoint="Breakpoint.Xs">
+        <HeaderContent>
+            <MudTh Style="width: 3rem">@Textos.ColumnRank</MudTh>
+            <MudTh>@Textos.ColumnPlayer</MudTh>
+            <MudTh>@Textos.ColumnPoints</MudTh>
+            <MudTh>@Textos.LeagueColumnPlayed</MudTh>
+            <MudTh>@Textos.ColumnRecord</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="row">
+            <MudTd DataLabel="@Textos.ColumnRank">@row.Rank</MudTd>
+            <MudTd DataLabel="@Textos.ColumnPlayer">@row.Name</MudTd>
+            <MudTd DataLabel="@Textos.ColumnPoints">@row.Points</MudTd>
+            <MudTd DataLabel="@Textos.LeagueColumnPlayed">@row.Tournaments</MudTd>
+            <MudTd DataLabel="@Textos.ColumnRecord">@row.Record</MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    @* Sin esto, dos jugadores con los mismos puntos en distinto orden parecen un error. *@
+    <MudText Typo="Typo.caption" Class="d-block mt-2">@Textos.LeagueStandingsHow</MudText>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<LeagueStanding> Rows { get; set; } = [];
+}

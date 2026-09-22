@@ -138,6 +138,17 @@ public sealed class PublicTournaments(IDbContextFactory<TopCutDbContext> context
 
         var games = await GamesAsync(db, cancellationToken);
 
+        // The league carries the tenant filter too. No visibility check of its own is needed: this
+        // tournament is public and points at it, which is exactly what makes a league public.
+        var leagueName = tournament.LeagueId is not { } leagueId
+            ? null
+            : await db.Leagues
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(league => league.Id == leagueId)
+                .Select(league => league.Name)
+                .SingleOrDefaultAsync(cancellationToken);
+
         return new PublicTournamentInfo(
             tournament.Id,
             tournament.Name,
@@ -155,7 +166,9 @@ public sealed class PublicTournaments(IDbContextFactory<TopCutDbContext> context
             tournament.Settings.SwissPhase,
             tournament.Settings.TopCutPhase,
             tournament.Settings.TimeExpiry,
-            tournament.Settings.RulesVersion);
+            tournament.Settings.RulesVersion,
+            tournament.LeagueId,
+            leagueName);
     }
 
     public async Task<IReadOnlyList<string>> CitiesAsync(CancellationToken cancellationToken = default)
