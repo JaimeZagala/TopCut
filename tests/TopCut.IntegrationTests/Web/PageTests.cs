@@ -588,6 +588,32 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
         // Anonymous and static: a league table nobody has to sign in for must not open a circuit
         // per visitor (ADR-0020), which is the whole reason it is served this way.
         Assert.DoesNotContain("<!--Blazor:", html);
+
+        // It is the only public page that publishes people's names, so it is shareable by link and
+        // out of the search engines (hito 6e). The sheet of a tournament, which names nobody, is not.
+        Assert.Contains("name=\"robots\" content=\"noindex", html);
+        Assert.DoesNotContain("noindex", await Browser().GetStringAsync($"/torneos/{tournament}"));
+    }
+
+    [Fact]
+    public async Task My_leagues_is_not_for_anonymous_visitors()
+    {
+        var response = await Browser().GetAsync("/mis-ligas");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.StartsWith("/cuenta/acceso", Target(response));
+    }
+
+    [Fact]
+    public async Task A_player_who_has_not_scored_in_a_league_yet_is_told_so_rather_than_shown_an_empty_table()
+    {
+        var player = Browser();
+        await SubmitRegistration(player, NewEmail(), "Ana", consent: true);
+
+        var html = await player.GetStringAsync("/mis-ligas");
+
+        Assert.Contains("Todavía no has puntuado en ninguna liga", html);
+        Assert.DoesNotContain("<!--Blazor:", html);
     }
 
     [Fact]

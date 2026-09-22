@@ -152,7 +152,91 @@ public class LeagueStandingsTests(SqlServerFixture fixture)
         Assert.Equal("Liga de invierno", sheet.LeagueName);
     }
 
+    // --- Lo que ve el jugador -----------------------------------------------------------------------
+
+    [Fact]
+    public async Task A_player_sees_the_leagues_they_have_scored_in_wherever_they_play()
+    {
+        var mine = await NewStore();
+        var theirs = await NewStore();
+        var account = NewAccount();
+
+        var here = await NewLeague(mine, "Liga de Kraken");
+        var there = await NewLeague(theirs, "Liga del Dragón");
+
+        await PlayAsync(mine, await NewTournament(mine, here), winner: "Ana Pérez", loser: "Bea Ruiz", account);
+        await PlayAsync(theirs, await NewTournament(theirs, there), winner: "Bea Ruiz", loser: "Ana Pérez", account);
+
+        var rows = await Public().ForPlayerAsync(account);
+
+        Assert.Equal(2, rows.Count);
+
+        var won = rows.Single(row => row.LeagueId == here);
+
+        Assert.Equal("Liga de Kraken", won.Name);
+        Assert.Equal(1, won.Rank);
+        Assert.Equal(2, won.Players);
+        Assert.Equal(3, won.Points);
+        Assert.Equal(1, won.Tournaments);
+
+        // The same account, second in the other store's league. The book is per store; the account
+        // is what ties the two together (ADR-0035).
+        Assert.Equal(2, rows.Single(row => row.LeagueId == there).Rank);
+    }
+
+    [Fact]
+    public async Task A_league_you_signed_up_for_but_have_not_played_is_not_yours_yet()
+    {
+        var store = await NewStore();
+        var league = await NewLeague(store);
+        var account = NewAccount();
+        var announced = await NewTournament(store, league);
+
+        // On the list for a tournament that has not started, so there is nothing to stand in.
+        await Counter(store).RegisterAsync(announced, "Ana Pérez");
+        await Book(store).ForPlayerAsync(store, account, "Ana Pérez");
+
+        Assert.Empty(await Public().ForPlayerAsync(account));
+    }
+
+    [Fact]
+    public async Task The_table_marks_which_row_belongs_to_whoever_is_reading_it()
+    {
+        var store = await NewStore();
+        var league = await NewLeague(store);
+        var account = NewAccount();
+
+        await PlayAsync(store, await NewTournament(store, league), winner: "Ana Pérez", loser: "Bea Ruiz", account);
+
+        var anonymous = await Public().FindAsync(league);
+        var signedIn = await Public().FindAsync(league, account);
+
+        Assert.Null(anonymous!.Viewer);
+        Assert.NotNull(signedIn!.Viewer);
+
+        // And it is the row they actually own, not just any row.
+        Assert.Equal("Ana Pérez", signedIn.Standings.Single(row => row.StorePlayerId == signedIn.Viewer).Name);
+    }
+
+    [Fact]
+    public async Task A_revoked_store_takes_its_league_off_the_players_list_too()
+    {
+        var store = await NewStore();
+        var league = await NewLeague(store);
+        var account = NewAccount();
+
+        await PlayAsync(store, await NewTournament(store, league), winner: "Ana Pérez", loser: "Bea Ruiz", account);
+
+        Assert.Single(await Public().ForPlayerAsync(account));
+
+        await RevokeAsync(store);
+
+        Assert.Empty(await Public().ForPlayerAsync(account));
+    }
+
     // --- Harness ------------------------------------------------------------------------------------
+
+    private static string NewAccount() => $"cuenta-{Guid.CreateVersion7():N}";
 
     private ILeagues Leagues(Guid storeId) => fixture.CreateLeagues(storeId);
 
@@ -252,6 +336,7 @@ public class LeagueStandingsTests(SqlServerFixture fixture)
         Guid tournamentId,
         string winner,
         string loser,
+        string? account = null,
         bool registerWinner = true)
     {
         if (registerWinner)
@@ -260,6 +345,22 @@ public class LeagueStandingsTests(SqlServerFixture fixture)
         }
 
         Assert.True((await Counter(storeId).RegisterAsync(tournamentId, loser)).Succeeded);
+
+        // Gives the account the book entry the counter just used, which is what a store does when
+        // the regular they have been writing down by hand finally registers.
+        if (account is not null)
+        {
+            var entry = (await Book(storeId).AllAsync()).Single(row => row.Name == "Ana Pérez");
+
+            await using var db = fixture.CreateContext(storeId);
+            var player = await db.StorePlayers.SingleAsync(candidate => candidate.Id == entry.Id);
+
+            if (player.UserId is null)
+            {
+                player.LinkAccount(account);
+                await db.SaveChangesAsync();
+            }
+        }
 
         var repository = new TournamentRepository(fixture.CreateContextFactory(storeId));
         var now = DateTimeOffset.UtcNow;

@@ -266,3 +266,11 @@ h1:focus {
 .topcut-filters .go:hover {
     background: var(--mud-palette-primary-darken);
 }
+
+/* --- Tu fila en la clasificación de una liga (hito 6e) -----------------------------------------
+   En una tabla de veinte nombres, lo primero que busca cualquiera es el suyo. El distintivo va con
+   fondo y con una etiqueta al lado del nombre: el color solo no vale para quien no lo distingue. */
+.topcut-you td {
+    background: var(--mud-palette-primary-hover);
+    font-weight: 600;
+}

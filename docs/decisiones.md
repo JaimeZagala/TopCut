@@ -996,3 +996,30 @@ revoca la aprobación se lleva su liga en la siguiente petición.
 La tabla pública se calcula **solo con los torneos públicos**. Un borrador no tiene resultados, así
 que no cambiaría los puntos; lo que evita es que su lista de inscritos, que es el cuaderno de la
 tienda, aparezca en la página pública de la liga.
+
+---
+
+## ADR-0038 — La clasificación de una liga se comparte por enlace, no por buscador
+
+**Fecha**: 2026-09-23 · **Estado**: aceptada · **Impacto**: bajo · **Cambia**: una etiqueta y el aviso
+
+La página pública de una liga es **la única de TopCut que publica nombres de personas**. La ficha de
+un torneo dice cuántos inscritos hay, no quiénes; la pantalla en vivo exige `CanOrganize`; la mesa
+del jugador es suya. Que una clasificación de liga se pueda enseñar es medio sentido de tenerla, y
+colgarla en la puerta de la tienda es lo normal en este mundillo. Que salga al **buscar el nombre de
+alguien en Google** no lo es.
+
+- **Decisión** (elegida por Jaime): la página sigue siendo pública y compartible por enlace, con
+  `<meta name="robots" content="noindex, nofollow">`.
+- **Por qué `noindex` y no `Disallow` en `robots.txt`**: prohibir el rastreo impide leer precisamente
+  esa etiqueta, y la dirección puede acabar indexada igual, solo que a ciegas y sin contenido. Para
+  "no la indexes" hay que dejar entrar al rastreador y decírselo.
+- **Alternativa descartada**: publicar el nombre recortado ("Ana P."). Protege más y rompe justo lo
+  que hace útil una tabla, que es reconocerse.
+
+### El aviso de privacidad ya lo cubría, por poco
+
+Decía que verían tu nombre y tus resultados "la tienda y el resto de jugadores de ese torneo". Con
+la página de la liga el alcance real es más ancho que eso. Se corrige ahora porque el aviso está
+**versionado** y todavía no hay usuarios que hayan aceptado una versión anterior: es el momento más
+barato que va a haber. Cualquier ampliación posterior del alcance sí obliga a versión nueva.

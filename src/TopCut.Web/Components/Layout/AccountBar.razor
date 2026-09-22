@@ -18,6 +18,14 @@
                    Class="ml-2 d-none d-sm-flex">
             @Textos.MyTournamentsTitle
         </MudButton>
+        @* Más estrecho que esto la barra ya va justa, y de ahí para abajo se llega desde la propia
+           pantalla de "Mis torneos", que es donde el jugador va a buscarlo. *@
+        <MudButton Href="/mis-ligas"
+                   Color="Color.Inherit"
+                   StartIcon="@Icons.Material.Filled.MilitaryTech"
+                   Class="ml-2 d-none d-md-flex">
+            @Textos.MyLeaguesTitle
+        </MudButton>
         <MudText Typo="Typo.body2" Class="mx-3 d-none d-sm-flex" title="@Textos.NavUserMenu">
             @DisplayNameOf(context)
         </MudText>

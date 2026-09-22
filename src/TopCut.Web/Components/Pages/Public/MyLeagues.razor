@@ -1,0 +1,98 @@
+@page "/mis-ligas"
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [Authorize]
+@inject IPublicLeagues Leagues
+
+@* Las ligas del jugador, de todas las tiendas donde juegue, con su puesto en cada una. Lo mismo que
+   "Mis torneos": el historial es suyo y no de una tienda, así que la consulta cruza la frontera y
+   lo que sustituye al filtro es la cuenta, sacada del principal autenticado y nunca de la dirección.
+
+   Dirección propia y no una sección de "Mis torneos" porque cada liga cuesta leer los torneos que
+   la componen (ADR-0037), y esa otra página se abre mucho más a menudo. *@
+
+<PageTitle>@Textos.MyLeaguesTitle - @Textos.AppName</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+    <MudText Typo="Typo.h1">@Textos.MyLeaguesTitle</MudText>
+    <MudSpacer />
+    <MudButton Href="/mis-torneos"
+               Variant="Variant.Text"
+               StartIcon="@Icons.Material.Filled.EventAvailable">
+        @Textos.MyTournamentsTitle
+    </MudButton>
+</MudStack>
+
+<MudText Typo="Typo.body1" Class="mb-6">@Textos.MyLeaguesIntro</MudText>
+
+@if (rows.Count == 0)
+{
+    <MudPaper Class="pa-8 text-center" Elevation="0" Outlined="true">
+        <MudIcon Icon="@Icons.Material.Filled.MilitaryTech" Size="Size.Large" Color="Color.Primary" Class="mb-3" />
+        <MudText Typo="Typo.body1" Class="mb-4">@Textos.MyLeaguesEmpty</MudText>
+        <MudButton Href="/torneos" Variant="Variant.Filled" Color="Color.Primary">@Textos.HomeFind</MudButton>
+    </MudPaper>
+}
+else
+{
+    <MudStack Spacing="3">
+        @foreach (var row in rows)
+        {
+            <MudPaper Outlined="true" Elevation="0" Class="pa-4">
+                <MudStack Row="true" Spacing="3" Wrap="Wrap.Wrap" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudLink Href="@($"/ligas/{row.LeagueId}")" Typo="Typo.h6" Underline="Underline.Hover">
+                            @row.Name
+                        </MudLink>
+                        <MudText Typo="Typo.body2" Class="mt-1">@row.StoreName</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            @Labels.Season(row.StartsOn, row.EndsOn)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@row.TcgName</MudText>
+                    </div>
+
+                    <MudStack Spacing="1" AlignItems="AlignItems.End" Justify="Justify.Center">
+                        <MudChip T="string" Size="Size.Small" Color="@(row.IsOpen ? Color.Primary : Color.Dark)">
+                            @(row.IsOpen ? Textos.LeagueOpen : Textos.LeagueClosed)
+                        </MudChip>
+                        <MudText Typo="Typo.h6">@string.Format(Textos.MyLeaguePosition, row.Rank, row.Players)</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            @Points(row.Points) · @Played(row.Tournaments)
+                        </MudText>
+                        <MudButton Href="@($"/ligas/{row.LeagueId}")" Variant="Variant.Text" Size="Size.Small">
+                            @Textos.MyLeagueOpenTable
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
+}
+
+@code {
+    private IReadOnlyList<PlayerLeagueRow> rows = [];
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? Authentication { get; set; }
+
+    /// <summary>"1 punto", no "1 puntos".</summary>
+    private static string Points(int points) =>
+        points == 1 ? Textos.MyLeaguePointsOne : string.Format(Textos.MyLeaguePoints, points);
+
+    private static string Played(int tournaments) => tournaments switch
+    {
+        1 => Textos.BookTournamentsOne,
+        var many => string.Format(Textos.BookTournaments, many)
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Authentication is null)
+        {
+            return;
+        }
+
+        var userId = (await Authentication).User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        rows = userId is null ? [] : await Leagues.ForPlayerAsync(userId);
+    }
+}

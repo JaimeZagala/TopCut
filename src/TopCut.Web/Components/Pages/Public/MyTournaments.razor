@@ -25,6 +25,12 @@
                Color="Color.Primary">
         @Textos.MyTournamentsPast
     </MudButton>
+    <MudSpacer />
+    <MudButton Href="/mis-ligas"
+               Variant="Variant.Text"
+               StartIcon="@Icons.Material.Filled.MilitaryTech">
+        @Textos.MyLeaguesTitle
+    </MudButton>
 </MudStack>
 
 @if (rows.Count == 0)

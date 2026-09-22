@@ -12,6 +12,11 @@ public sealed record PublicLeagueTournament(
     int Players);
 
 /// <summary>A league's public page: the season's table and the events that fed it.</summary>
+/// <param name="Viewer">
+/// The book entry of whoever is reading, in this league's store, when they are signed in and have
+/// played here. It is what lets the table say which row is theirs, which is the first thing anybody
+/// looks for in a standings table.
+/// </param>
 public sealed record PublicLeagueInfo(
     Guid Id,
     string Name,
@@ -21,7 +26,22 @@ public sealed record PublicLeagueInfo(
     DateOnly EndsOn,
     bool IsOpen,
     IReadOnlyList<LeagueStanding> Standings,
-    IReadOnlyList<PublicLeagueTournament> Tournaments);
+    IReadOnlyList<PublicLeagueTournament> Tournaments,
+    Guid? Viewer);
+
+/// <summary>One league a player has scored in, with where they stand in it.</summary>
+public sealed record PlayerLeagueRow(
+    Guid LeagueId,
+    string Name,
+    string StoreName,
+    string TcgName,
+    DateOnly StartsOn,
+    DateOnly EndsOn,
+    bool IsOpen,
+    int Rank,
+    int Players,
+    int Points,
+    int Tournaments);
 
 /// <summary>
 /// Leagues as anyone sees them, signed in or not. Crosses the tenant boundary on purpose, like the
@@ -35,8 +55,23 @@ public sealed record PublicLeagueInfo(
 public interface IPublicLeagues
 {
     /// <summary><c>null</c> when it does not exist or is not public, which read the same from outside.</summary>
-    Task<PublicLeagueInfo?> FindAsync(Guid leagueId, CancellationToken cancellationToken = default);
+    /// <param name="viewerUserId">
+    /// Who is reading, when they are signed in. Taken from the authenticated principal and never
+    /// from the address, which anybody can type.
+    /// </param>
+    Task<PublicLeagueInfo?> FindAsync(
+        Guid leagueId,
+        string? viewerUserId = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>Whether that league has an address to share, for the store's own screen.</summary>
     Task<bool> IsPublicAsync(Guid leagueId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The leagues this account has scored in, whichever store runs them, with their position in
+    /// each. A league they signed up for but have not played yet has nothing to say and is left out.
+    /// </summary>
+    Task<IReadOnlyList<PlayerLeagueRow>> ForPlayerAsync(
+        string userId,
+        CancellationToken cancellationToken = default);
 }

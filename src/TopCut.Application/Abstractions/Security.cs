@@ -48,5 +48,5 @@ public static class TopCutClaims
 /// </summary>
 public static class PrivacyNotice
 {
-    public const string CurrentVersion = "2026-09-20";
+    public const string CurrentVersion = "2026-09-23";
 }

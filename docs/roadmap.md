@@ -345,6 +345,23 @@ que faltaba: hasta ahora un participante era un nombre suelto de un torneo.
 - ✅ **13 pruebas nuevas**: 6 de dominio sobre cómo se suma y cómo se desempata, y 7 contra SQL
   Server real sobre el fichero, la visibilidad pública y el 404 de una liga sin publicar
 
+#### 6e — El jugador ve sus ligas ✅
+
+- ✅ **`/mis-ligas`**: las ligas en las que el jugador ha puntuado, de cualquier tienda donde juegue,
+  con su puesto, sus puntos y cuántos torneos lleva. Lo pedía la visión y lo prometía el aviso de
+  privacidad, y no estaba
+- ✅ **La clasificación marca tu fila** cuando la miras con la sesión abierta, con fondo y con una
+  etiqueta al lado del nombre: el color solo no vale para quien no lo distingue. Quién lee sale del
+  principal autenticado, nunca de la dirección
+- ✅ **La página pública de una liga lleva `noindex`**. Es la única página de TopCut que publica
+  nombres de personas: la ficha de un torneo enseña cuántos inscritos hay, no quiénes. Se comparte
+  por enlace a propósito, pero no sale al buscar el nombre de alguien. `noindex` y no `robots.txt`:
+  prohibir el rastreo impediría leer precisamente esa etiqueta
+- ✅ Una liga en la que te has apuntado pero no has jugado todavía no aparece: no hay nada que
+  clasificar
+- ✅ **6 pruebas nuevas**: 4 contra SQL Server real sobre lo que ve el jugador y de qué tienda, y 2
+  por HTTP sobre la página y su acceso
+
 ### Hito 7 — Panel de Superadmin ⬜
 
 Aprobar y revocar el rol de tienda, catálogo de TCGs, tiempos de ronda por defecto de la plataforma.

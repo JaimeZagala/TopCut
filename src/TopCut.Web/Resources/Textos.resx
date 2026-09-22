@@ -1234,4 +1234,28 @@
   <data name="LeagueSheetNoTournaments" xml:space="preserve">
     <value>Esta liga todavía no tiene torneos publicados.</value>
   </data>
+  <data name="LeagueStandingsYou" xml:space="preserve">
+    <value>Tú</value>
+  </data>
+  <data name="MyLeaguesTitle" xml:space="preserve">
+    <value>Mis ligas</value>
+  </data>
+  <data name="MyLeaguesIntro" xml:space="preserve">
+    <value>Las ligas en las que has puntuado, en cualquier tienda donde juegues.</value>
+  </data>
+  <data name="MyLeaguesEmpty" xml:space="preserve">
+    <value>Todavía no has puntuado en ninguna liga. En cuanto juegues un torneo que forme parte de una, aparecerá aquí.</value>
+  </data>
+  <data name="MyLeaguePosition" xml:space="preserve">
+    <value>{0}.º de {1}</value>
+  </data>
+  <data name="MyLeaguePoints" xml:space="preserve">
+    <value>{0} puntos</value>
+  </data>
+  <data name="MyLeaguePointsOne" xml:space="preserve">
+    <value>1 punto</value>
+  </data>
+  <data name="MyLeagueOpenTable" xml:space="preserve">
+    <value>Ver la clasificación</value>
+  </data>
 </root>

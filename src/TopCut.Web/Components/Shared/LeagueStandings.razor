@@ -13,7 +13,8 @@
 }
 else
 {
-    <MudTable Items="Rows" Hover="true" Elevation="0" Outlined="true" Dense="true" Breakpoint="Breakpoint.Xs">
+    <MudTable Items="Rows" Hover="true" Elevation="0" Outlined="true" Dense="true" Breakpoint="Breakpoint.Xs"
+              RowClassFunc="@((row, _) => IsViewer(row) ? "topcut-you" : string.Empty)">
         <HeaderContent>
             <MudTh Style="width: 3rem">@Textos.ColumnRank</MudTh>
             <MudTh>@Textos.ColumnPlayer</MudTh>
@@ -23,7 +24,15 @@ else
         </HeaderContent>
         <RowTemplate Context="row">
             <MudTd DataLabel="@Textos.ColumnRank">@row.Rank</MudTd>
-            <MudTd DataLabel="@Textos.ColumnPlayer">@row.Name</MudTd>
+            <MudTd DataLabel="@Textos.ColumnPlayer">
+                @row.Name
+                @if (IsViewer(row))
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Class="ml-2">
+                        @Textos.LeagueStandingsYou
+                    </MudChip>
+                }
+            </MudTd>
             <MudTd DataLabel="@Textos.ColumnPoints">@row.Points</MudTd>
             <MudTd DataLabel="@Textos.LeagueColumnPlayed">@row.Tournaments</MudTd>
             <MudTd DataLabel="@Textos.ColumnRecord">@row.Record</MudTd>
@@ -37,4 +46,10 @@ else
 @code {
     [Parameter, EditorRequired]
     public IReadOnlyList<LeagueStanding> Rows { get; set; } = [];
+
+    /// <summary>The book entry of whoever is reading, so they can find themselves at a glance.</summary>
+    [Parameter]
+    public Guid? Viewer { get; set; }
+
+    private bool IsViewer(LeagueStanding row) => Viewer is { } mine && row.StorePlayerId == mine;
 }

@@ -14,6 +14,16 @@
 {
     <PageTitle>@league.Name - @Textos.AppName</PageTitle>
 
+    @* Es la única página de TopCut que publica nombres de personas: la ficha de un torneo enseña
+       cuántos inscritos hay, no quiénes. Se comparte por enlace a propósito, pero no tiene que
+       salir al buscar el nombre de alguien en Google.
+
+       Un noindex y no un Disallow en robots.txt: prohibir el rastreo impediría leer precisamente
+       esta etiqueta, y la dirección podría acabar indexada igual, solo que a ciegas. *@
+    <HeadContent>
+        <meta name="robots" content="noindex, nofollow" />
+    </HeadContent>
+
     <MudStack Row="true" Spacing="2" Class="mb-2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
         <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
             @league.TcgName
@@ -30,7 +40,7 @@
         @Textos.LeagueSheetSeason: @Labels.Season(league.StartsOn, league.EndsOn)
     </MudText>
 
-    <LeagueStandings Rows="league.Standings" />
+    <LeagueStandings Rows="league.Standings" Viewer="league.Viewer" />
 
     <MudText Typo="Typo.h4" Class="mt-10 mb-4">@Textos.LeagueTournamentsTitle</MudText>
 
@@ -74,6 +84,9 @@
     [CascadingParameter]
     private HttpContext? Request { get; set; }
 
+    [CascadingParameter]
+    private Task<AuthenticationState>? Authentication { get; set; }
+
     private PublicLeagueInfo? league;
     private Guid loaded;
 
@@ -85,7 +98,11 @@
         }
 
         loaded = Id;
-        league = await Leagues.FindAsync(Id);
+
+        // Quién lee sale del principal autenticado y nunca de la dirección: lo único que decide es
+        // qué fila se marca como tuya, pero es una dirección pública y ahí no se acepta un
+        // identificador de nadie.
+        league = await Leagues.FindAsync(Id, await ViewerAsync());
 
         // Mismo trato que la ficha de un torneo (ADR-0030): 404 de verdad y el cuerpo lo pinta
         // /not-found, porque Blazor descarta el de una página que en SSR estático cambia el código.
@@ -94,4 +111,8 @@
             Request.Response.StatusCode = StatusCodes.Status404NotFound;
         }
     }
+
+    private async Task<string?> ViewerAsync() => Authentication is null
+        ? null
+        : (await Authentication).User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 }
