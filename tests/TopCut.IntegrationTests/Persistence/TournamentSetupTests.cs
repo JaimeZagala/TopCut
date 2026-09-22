@@ -224,6 +224,7 @@ public class TournamentSetupTests(SqlServerFixture fixture)
     private TournamentSetupService Setup(Guid storeId) => new(
         new TournamentRepository(fixture.CreateContextFactory(storeId)),
         new TcgCatalog(fixture.CreateContextFactory(storeId)),
+        fixture.CreateLeagues(storeId),
         new StoreScope(storeId));
 
     private ITournamentQueries Queries(Guid storeId) =>

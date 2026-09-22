@@ -899,3 +899,48 @@ suposición del código. Lo que cuesta es una migración y una entidad más.
   eso llega a la base, y solo entonces la superviviente la toma. Las tres escrituras van en una
   transacción, porque una fusión a medias dejaría los torneos de alguien repartidos entre una ficha
   que nadie ve y otra sin su cuenta.
+
+---
+
+## ADR-0036 — La liga de un torneo no se congela al empezar
+
+**Fecha**: 2026-09-22 · **Estado**: aceptada · **Impacto**: medio · **Cambia**: una regla de dominio
+
+Al crear un torneo se copian las reglas del juego y, en cuanto empieza la primera ronda, esa
+configuración **se congela**: cambiar el formato o el top cut con partidas jugadas invalidaría la
+clasificación. `AssignToLeague` estaba dentro de ese candado por venir del mismo sitio.
+
+Es la regla equivocada para este campo. Asignar una liga no toca nada de lo jugado: decide **qué
+tabla suma esos puntos**. Con el candado, una tienda que hubiera jugado tres torneos y luego
+decidiera que eran una temporada no tendría ninguna forma de decirlo, y esos puntos se perderían
+para siempre.
+
+- **Decisión**: la liga se puede cambiar en cualquier momento salvo en un torneo **cancelado**, que
+  no puntúa en ninguna parte.
+- **Consecuencia**: la liga no puede vivir en el formulario del torneo, que se deshabilita entero al
+  empezar. Vive encima, junto a *Publicar*, y se guarda sola al elegirla. Al crear un torneo se
+  aterriza justo en esa pantalla, así que asignarlo sigue siendo un clic.
+
+### Quién puede aceptar el torneo, en un solo sitio
+
+`OpenForAsync(tcgId, include)` responde "¿a qué ligas puede ir este torneo?" y **la misma llamada**
+sirve al desplegable y a la comprobación del servidor. Dos formas de contestar eso acabarían por no
+coincidir, y la que se salta sería la del servidor.
+
+- Una liga **cerrada** ya no admite torneos nuevos, pero **sigue apareciendo** en el torneo que ya
+  estaba dentro. Sin ese `include`, la pantalla se abriría marcando "Ninguna" y el siguiente guardado
+  soltaría la liga sin que nadie lo pidiera.
+- Una liga de **otro juego** no aparece ni se acepta: una liga de Magic sumando One Piece no
+  significa nada.
+- Una liga de **otra tienda** no llega ni a existir aquí: el filtro de inquilino la deja fuera de la
+  consulta, así que se lee igual que un identificador inventado.
+
+### Lo que no lleva
+
+- **El juego de una liga no se cambia** después de crearla, por lo mismo: los torneos que ya apuntan
+  a ella son de ese juego.
+- **No se borran ligas.** Cerrarlas es la versión que no se lleva por delante los torneos que ya
+  puntuaron.
+- **Las fechas de temporada no filtran nada**, son para leerlas y para ordenar la lista. Obligar a
+  que el torneo caiga dentro añadiría un motivo de rechazo sin resolver ningún problema real, y la
+  tienda ya elige la liga a mano.

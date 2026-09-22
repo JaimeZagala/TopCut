@@ -1,0 +1,186 @@
+@page "/tienda/ligas/{LeagueId:guid}"
+@layout StoreLayout
+@attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
+@inject ITcgCatalog Catalog
+@inject ILeagues Leagues
+@inject LocalTime Clock
+@inject IDialogService Dialogs
+@inject ISnackbar Snackbar
+
+<PageTitle>@(league?.Name ?? Textos.LeaguesTitle) - @Textos.AppName</PageTitle>
+
+@if (loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@Textos.Loading" />
+}
+else if (league is null)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-6">@Textos.LeagueNotFound</MudAlert>
+    <MudButton Href="/tienda/ligas" Variant="Variant.Filled" Color="Color.Primary">@Textos.ActionBack</MudButton>
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Spacing="3">
+        <MudText Typo="Typo.h1">@league.Name</MudText>
+        <MudChip T="string" Size="Size.Small" Color="@(league.IsOpen ? Color.Primary : Color.Dark)">
+            @(league.IsOpen ? Textos.LeagueOpen : Textos.LeagueClosed)
+        </MudChip>
+    </MudStack>
+
+    <MudText Typo="Typo.caption" Class="d-block mb-6">
+        @league.TcgName · @Labels.Season(league.StartsOn, league.EndsOn)
+    </MudText>
+
+    @if (!league.IsOpen)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-6">@Textos.LeagueClosedNotice</MudAlert>
+    }
+
+    @if (errors.Count > 0)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@string.Join(" ", errors)</MudAlert>
+    }
+
+    <MudStack Row="true" Spacing="3" Class="mb-6" Wrap="Wrap.Wrap">
+        @if (league.IsOpen)
+        {
+            <MudButton Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Lock"
+                       Disabled="busy"
+                       OnClick="CloseAsync">
+                @Textos.ActionCloseLeague
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.LockOpen"
+                       Disabled="busy"
+                       OnClick="ReopenAsync">
+                @Textos.ActionReopenLeague
+            </MudButton>
+        }
+    </MudStack>
+
+    <LeagueForm Model="model!"
+                Games="games!"
+                SubmitLabel="@Textos.ActionSave"
+                GameLocked="true"
+                Busy="busy"
+                OnSubmit="SaveAsync" />
+
+    <MudText Typo="Typo.h4" Class="mt-10 mb-4">@Textos.LeagueTournamentsTitle</MudText>
+
+    @if (league.Tournaments.Count == 0)
+    {
+        <MudPaper Class="pa-6" Elevation="0" Outlined="true">
+            <MudText Typo="Typo.body2">@Textos.LeagueNoTournaments</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudTable Items="league.Tournaments" Hover="true" Elevation="0" Outlined="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>@Textos.ColumnTournament</MudTh>
+                <MudTh>@Textos.ColumnDate</MudTh>
+                <MudTh>@Textos.ColumnPlayers</MudTh>
+                <MudTh>@Textos.ColumnStatus</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="row">
+                <MudTd DataLabel="@Textos.ColumnTournament">
+                    <MudLink Href="@($"/tienda/torneos/{row.Id}")" Typo="Typo.body1">@row.Name</MudLink>
+                </MudTd>
+                <MudTd DataLabel="@Textos.ColumnDate">@Clock.Format(row.StartsAt)</MudTd>
+                <MudTd DataLabel="@Textos.ColumnPlayers">@row.Players</MudTd>
+                <MudTd DataLabel="@Textos.ColumnStatus">
+                    <MudChip T="string" Size="Size.Small" Color="@Labels.ColourFor(row.Status)">
+                        @Labels.For(row.Status)
+                    </MudChip>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+}
+
+@code {
+    private readonly List<string> errors = [];
+
+    [Parameter]
+    public Guid LeagueId { get; set; }
+
+    private IReadOnlyList<TcgOption>? games;
+    private LeagueDetails? league;
+    private LeagueFormModel? model;
+    private bool loading = true;
+    private bool busy;
+
+    private Guid loaded;
+
+    /// <summary>
+    /// Solo recarga cuando cambia la liga que se esta mirando, por lo mismo que en la pantalla del
+    /// torneo: recargar en cada fijado de parámetros pisa el formulario con lo que hay en la base.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loaded == LeagueId)
+        {
+            return;
+        }
+
+        loaded = LeagueId;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+
+        games = await Catalog.ActiveAsync();
+        league = await Leagues.DetailsAsync(LeagueId);
+        model = league is null ? null : LeagueFormModel.From(league);
+
+        loading = false;
+    }
+
+    private Task SaveAsync() => Run(() => Leagues.UpdateAsync(LeagueId, model!.ToDraft()), Textos.NoticeSaved);
+
+    private Task ReopenAsync() => Run(() => Leagues.ReopenAsync(LeagueId), Textos.NoticeLeagueReopened);
+
+    private async Task CloseAsync()
+    {
+        var confirmed = await Dialogs.ShowMessageBoxAsync(
+            Textos.ConfirmCloseLeagueTitle,
+            Textos.ConfirmCloseLeagueBody,
+            yesText: Textos.ActionConfirm,
+            cancelText: Textos.ActionCancel);
+
+        if (confirmed is true)
+        {
+            await Run(() => Leagues.CloseAsync(LeagueId), Textos.NoticeLeagueClosed);
+        }
+    }
+
+    private async Task Run(Func<Task<OperationResult>> operation, string notice)
+    {
+        errors.Clear();
+        busy = true;
+
+        try
+        {
+            var result = await operation();
+
+            if (!result.Succeeded)
+            {
+                errors.AddRange(result.Errors);
+                return;
+            }
+
+            Snackbar.Add(notice, Severity.Success);
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}

@@ -49,6 +49,7 @@ public sealed record CreationResult(bool Succeeded, Guid? TournamentId, IReadOnl
 public sealed class TournamentSetupService(
     ITournamentRepository tournaments,
     ITcgCatalog catalog,
+    ILeagues leagues,
     ITenantContext tenant)
 {
     public async Task<CreationResult> CreateAsync(
@@ -117,6 +118,45 @@ public sealed class TournamentSetupService(
             tournament.SetTopCut(draft.TopCutSize);
             Apply(tournament, rules);
         }, cancellationToken);
+
+    /// <summary>
+    /// Points the tournament at one of the store's leagues, or at none.
+    /// <para>
+    /// Its own operation rather than a field of <see cref="UpdateAsync"/>, because it is the one
+    /// setting that stays changeable once the tournament has been played: it decides which table
+    /// adds the points up, not anything already played (ADR-0036).
+    /// </para>
+    /// </summary>
+    public async Task<OperationResult> AssignToLeagueAsync(
+        Guid tournamentId,
+        Guid? leagueId,
+        CancellationToken cancellationToken = default)
+    {
+        if (leagueId is { } chosen)
+        {
+            var tcgId = await tournaments.ReadAsync<int?>(
+                tournamentId,
+                tournament => tournament.TcgId,
+                whenMissing: null,
+                cancellationToken);
+
+            if (tcgId is not { } game)
+            {
+                return OperationResult.Fail("No existe ese torneo.");
+            }
+
+            // The same question the picker asks, so a league that is closed, of another game or of
+            // another store is refused here even if it somehow reached the form.
+            var eligible = await leagues.OpenForAsync(game, cancellationToken: cancellationToken);
+
+            if (eligible.All(league => league.Id != chosen))
+            {
+                return OperationResult.Fail("Esa liga no admite este torneo.");
+            }
+        }
+
+        return await Change(tournamentId, tournament => tournament.AssignToLeague(leagueId), cancellationToken);
+    }
 
     /// <summary>Makes it visible in public search and open to registrations.</summary>
     public Task<OperationResult> PublishAsync(Guid tournamentId, CancellationToken cancellationToken = default) =>

@@ -1,0 +1,76 @@
+@page "/tienda/ligas/nueva"
+@layout StoreLayout
+@attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
+@inject ITcgCatalog Catalog
+@inject ILeagues Leagues
+@inject LocalTime Clock
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>@Textos.LeagueNewTitle - @Textos.AppName</PageTitle>
+
+<MudText Typo="Typo.h1" GutterBottom="true">@Textos.LeagueNewTitle</MudText>
+
+@if (games is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@Textos.Loading" />
+}
+else if (games.Count == 0)
+{
+    <MudAlert Severity="Severity.Warning">@Textos.ValidationGameRequired</MudAlert>
+}
+else
+{
+    @if (errors.Count > 0)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@string.Join(" ", errors)</MudAlert>
+    }
+
+    <LeagueForm Model="model!"
+                Games="games"
+                SubmitLabel="@Textos.LeaguesNew"
+                Busy="busy"
+                OnSubmit="CreateAsync" />
+}
+
+@code {
+    private readonly List<string> errors = [];
+
+    private IReadOnlyList<TcgOption>? games;
+    private LeagueFormModel? model;
+    private bool busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        games = await Catalog.ActiveAsync();
+
+        if (games.Count > 0)
+        {
+            model = LeagueFormModel.For(games[0].Id, Clock.ToLocal(DateTimeOffset.UtcNow));
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        errors.Clear();
+        busy = true;
+
+        try
+        {
+            var result = await Leagues.CreateAsync(model!.ToDraft());
+
+            if (!result.Succeeded)
+            {
+                errors.AddRange(result.Errors);
+                return;
+            }
+
+            Snackbar.Add(Textos.NoticeLeagueCreated, Severity.Success);
+            Navigation.NavigateTo($"/tienda/ligas/{result.LeagueId}");
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}

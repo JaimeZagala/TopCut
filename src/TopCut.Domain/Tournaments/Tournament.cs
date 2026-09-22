@@ -183,9 +183,21 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
         SwissRounds = swissRounds;
     }
 
+    /// <summary>
+    /// Which league this tournament scores towards, or none.
+    /// <para>
+    /// Deliberately <b>not</b> frozen when the tournament starts, unlike the rest of the settings:
+    /// it changes which table adds the points up, never anything already played. A store that ran
+    /// three tournaments and then decided they were a season would otherwise have no way to say so.
+    /// A cancelled tournament scores nowhere, so that one is refused.
+    /// </para>
+    /// </summary>
     public void AssignToLeague(Guid? leagueId)
     {
-        DomainException.Require(!SettingsLocked, "El torneo ya está en curso.");
+        DomainException.Require(
+            Status != TournamentStatus.Cancelled,
+            "Un torneo cancelado no puntúa para ninguna liga.");
+
         LeagueId = leagueId;
     }
 

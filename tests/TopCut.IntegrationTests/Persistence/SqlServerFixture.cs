@@ -96,6 +96,10 @@ public sealed class SqlServerFixture : IAsyncLifetime
     public IStorePlayers CreateStorePlayers(Guid? tenantId = null) =>
         new StorePlayers(CreateContextFactory(tenantId), new FixedTenantContext(tenantId));
 
+    /// <summary>The store's seasonal leagues (ADR-0036), scoped like everything else.</summary>
+    public ILeagues CreateLeagues(Guid? tenantId = null) =>
+        new Leagues(CreateContextFactory(tenantId), new FixedTenantContext(tenantId));
+
     private sealed class FixtureContextFactory(Func<TopCutDbContext> create) : IDbContextFactory<TopCutDbContext>
     {
         public TopCutDbContext CreateDbContext() => create();

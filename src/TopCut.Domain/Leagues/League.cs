@@ -4,7 +4,7 @@ namespace TopCut.Domain.Leagues;
 
 /// <summary>
 /// A seasonal league: groups several of a store's tournaments and accumulates their points using
-/// the same scoring model as a one-off tournament. Cumulative standings land in milestone 6.
+/// the same scoring model as a one-off tournament. Cumulative standings land in tramo 6d.
 /// </summary>
 public class League : BusinessEntity, ITenantOwned, IAuditable
 {
@@ -39,6 +39,21 @@ public class League : BusinessEntity, ITenantOwned, IAuditable
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset? UpdatedAt { get; set; }
+
+    /// <summary>
+    /// Renaming and moving the season. The game is not here on purpose: the tournaments already
+    /// pointing at the league are of that game, and changing it would leave a Magic league adding
+    /// up One Piece results.
+    /// </summary>
+    public void UpdateDetails(string name, DateOnly startsOn, DateOnly endsOn)
+    {
+        DomainException.Require(!string.IsNullOrWhiteSpace(name), "La liga necesita un nombre.");
+        DomainException.Require(endsOn >= startsOn, "La temporada no puede terminar antes de empezar.");
+
+        Name = name.Trim();
+        StartsOn = startsOn;
+        EndsOn = endsOn;
+    }
 
     public void Close()
     {

@@ -106,6 +106,7 @@ public sealed class TournamentQueries(IDbContextFactory<TopCutDbContext> context
             tournament.TopCutSize,
             tournament.Status,
             tournament.SettingsLocked,
+            tournament.LeagueId,
             Count(counts.Select(c => (c.Status, c.Count)), ParticipantStatus.Registered),
             Count(counts.Select(c => (c.Status, c.Count)), ParticipantStatus.Waitlisted),
             tournament.Settings.SwissPhase,

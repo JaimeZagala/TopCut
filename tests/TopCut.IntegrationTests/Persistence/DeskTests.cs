@@ -371,6 +371,7 @@ public class DeskTests(SqlServerFixture fixture)
         var setup = new TournamentSetupService(
             new TournamentRepository(fixture.CreateContextFactory(storeId)),
             new TcgCatalog(fixture.CreateContextFactory(storeId)),
+            fixture.CreateLeagues(storeId),
             new StoreScope(storeId));
 
         var created = await setup.CreateAsync(

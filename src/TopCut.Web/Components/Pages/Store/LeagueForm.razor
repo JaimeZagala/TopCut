@@ -1,0 +1,71 @@
+@* Los mismos campos para crear y para editar. El juego solo se elige al crear: los torneos que ya
+   apuntan a la liga son de ese juego, y cambiarlo dejaría una liga de Magic sumando One Piece. *@
+
+<EditForm Model="Model" OnValidSubmit="OnSubmit">
+    <DataAnnotationsValidator />
+
+    <MudPaper Class="pa-6 mb-6" Elevation="0" Outlined="true">
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="6">
+                <MudSelect T="int"
+                           @bind-Value="Model.TcgId"
+                           Label="@Textos.FieldGame"
+                           Variant="Variant.Outlined"
+                           Disabled="GameLocked">
+                    @foreach (var game in Games)
+                    {
+                        <MudSelectItem T="int" Value="game.Id">@game.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                <ValidationMessage For="() => Model.TcgId" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="Model.Name"
+                              Label="@Textos.FieldLeagueName"
+                              Variant="Variant.Outlined" />
+                <ValidationMessage For="() => Model.Name" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudDatePicker @bind-Date="Model.StartsOn"
+                               Label="@Textos.FieldSeasonStart"
+                               Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudDatePicker @bind-Date="Model.EndsOn"
+                               Label="@Textos.FieldSeasonEnd"
+                               Variant="Variant.Outlined" />
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudStack Row="true" Spacing="3">
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="Busy">
+            @SubmitLabel
+        </MudButton>
+        <MudButton Href="/tienda/ligas" Variant="Variant.Text">@Textos.ActionCancel</MudButton>
+    </MudStack>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public LeagueFormModel Model { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<TcgOption> Games { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public string SubmitLabel { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback OnSubmit { get; set; }
+
+    /// <summary>The game cannot change after creation.</summary>
+    [Parameter]
+    public bool GameLocked { get; set; }
+
+    [Parameter]
+    public bool Busy { get; set; }
+}

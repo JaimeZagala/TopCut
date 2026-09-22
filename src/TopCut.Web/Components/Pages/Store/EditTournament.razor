@@ -4,6 +4,7 @@
 @using TopCut.Application.Tournaments
 @inject ITcgCatalog Catalog
 @inject ITournamentQueries Tournaments
+@inject ILeagues Leagues
 @inject TournamentSetupService Setup
 @inject LocalTime Clock
 @inject IDialogService Dialogs
@@ -72,6 +73,35 @@ else
         }
     </MudStack>
 
+    @* La liga vive fuera del formulario a propósito (ADR-0036): es lo único que se puede cambiar
+       cuando el torneo ya se ha jugado, porque decide qué tabla suma los puntos y no toca nada de
+       lo jugado. El formulario entero se congela al empezar; esto no. *@
+    <MudPaper Class="pa-6 mb-6" Elevation="0" Outlined="true">
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="6">
+                <MudSelect T="Guid?"
+                           Value="league"
+                           ValueChanged="AssignAsync"
+                           Label="@Textos.FieldLeague"
+                           Variant="Variant.Outlined"
+                           Disabled="@(busy || details.Status == TournamentStatus.Cancelled)">
+                    <MudSelectItem T="Guid?" Value="@((Guid?)null)">@Textos.LeagueNone</MudSelectItem>
+                    @foreach (var option in leagues)
+                    {
+                        <MudSelectItem T="Guid?" Value="@((Guid?)option.Id)">
+                            @(option.IsOpen ? option.Name : $"{option.Name} ({Textos.LeagueClosed})")
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" Class="d-flex align-center">
+                <MudText Typo="Typo.caption">
+                    @(leagues.Count == 0 ? Textos.LeagueNoneForGame : Textos.LeagueAssignHint)
+                </MudText>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
     <TournamentForm Model="model!"
                     Games="games!"
                     SubmitLabel="@Textos.ActionSave"
@@ -88,6 +118,8 @@ else
     public Guid TournamentId { get; set; }
 
     private IReadOnlyList<TcgOption>? games;
+    private IReadOnlyList<LeagueOption> leagues = [];
+    private Guid? league;
     private TournamentDetails? details;
     private TournamentFormModel? model;
     private bool loading = true;
@@ -125,12 +157,50 @@ else
         details = await Tournaments.DetailsAsync(TournamentId);
         model = details is null ? null : TournamentFormModel.From(details, Clock);
 
+        // The league it is already in comes along even when closed, so opening this screen cannot
+        // quietly leave the picker on "ninguna" and drop it on the next change.
+        league = details?.LeagueId;
+        leagues = details is null
+            ? []
+            : await Leagues.OpenForAsync(details.TcgId, details.LeagueId);
+
         loading = false;
     }
 
     private Task SaveAsync() => Run(
         () => Setup.UpdateAsync(TournamentId, model!.ToDraft(Clock), model.ToRules()),
         Textos.NoticeSaved);
+
+    /// <summary>
+    /// Not through <see cref="Run"/> because the picker has to hold what was just clicked while the
+    /// save is in flight: handing it back the old value mid-render leaves it showing "ninguna" over
+    /// a tournament that is already in the league.
+    /// </summary>
+    private async Task AssignAsync(Guid? leagueId)
+    {
+        errors.Clear();
+        busy = true;
+        league = leagueId;
+
+        try
+        {
+            var result = await Setup.AssignToLeagueAsync(TournamentId, leagueId);
+
+            if (!result.Succeeded)
+            {
+                errors.AddRange(result.Errors);
+                league = details!.LeagueId;
+                return;
+            }
+
+            Snackbar.Add(Textos.NoticeLeagueAssigned, Severity.Success);
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
 
     private Task PublishAsync() => Run(() => Setup.PublishAsync(TournamentId), Textos.NoticePublished);
 

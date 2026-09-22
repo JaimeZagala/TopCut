@@ -1105,4 +1105,103 @@
   <data name="NavBook" xml:space="preserve">
     <value>Jugadores</value>
   </data>
+  <data name="NavLeagues" xml:space="preserve">
+    <value>Ligas</value>
+  </data>
+  <data name="LeaguesTitle" xml:space="preserve">
+    <value>Ligas</value>
+  </data>
+  <data name="LeaguesIntro" xml:space="preserve">
+    <value>Una liga agrupa varios torneos de una misma temporada y suma sus puntos. Un torneo puntúa como mucho para una liga.</value>
+  </data>
+  <data name="LeaguesNew" xml:space="preserve">
+    <value>Nueva liga</value>
+  </data>
+  <data name="LeaguesEmpty" xml:space="preserve">
+    <value>Todavía no has creado ninguna liga.</value>
+  </data>
+  <data name="LeagueNewTitle" xml:space="preserve">
+    <value>Nueva liga</value>
+  </data>
+  <data name="LeagueNotFound" xml:space="preserve">
+    <value>Esa liga no existe o no es de tu tienda.</value>
+  </data>
+  <data name="ColumnLeague" xml:space="preserve">
+    <value>Liga</value>
+  </data>
+  <data name="LeagueColumnSeason" xml:space="preserve">
+    <value>Temporada</value>
+  </data>
+  <data name="LeagueColumnTournaments" xml:space="preserve">
+    <value>Torneos</value>
+  </data>
+  <data name="LeagueSeason" xml:space="preserve">
+    <value>Del {0} al {1}</value>
+  </data>
+  <data name="LeagueOpen" xml:space="preserve">
+    <value>Abierta</value>
+  </data>
+  <data name="LeagueClosed" xml:space="preserve">
+    <value>Cerrada</value>
+  </data>
+  <data name="LeagueClosedNotice" xml:space="preserve">
+    <value>La liga está cerrada: ya no admite torneos nuevos. Los que tenía siguen contando.</value>
+  </data>
+  <data name="FieldLeagueName" xml:space="preserve">
+    <value>Nombre de la liga</value>
+  </data>
+  <data name="FieldSeasonStart" xml:space="preserve">
+    <value>Empieza</value>
+  </data>
+  <data name="FieldSeasonEnd" xml:space="preserve">
+    <value>Termina</value>
+  </data>
+  <data name="ValidationLeagueNameRequired" xml:space="preserve">
+    <value>La liga necesita un nombre.</value>
+  </data>
+  <data name="ValidationLeagueNameLength" xml:space="preserve">
+    <value>El nombre de la liga no puede pasar de 200 caracteres.</value>
+  </data>
+  <data name="ActionCloseLeague" xml:space="preserve">
+    <value>Cerrar la liga</value>
+  </data>
+  <data name="ActionReopenLeague" xml:space="preserve">
+    <value>Reabrir la liga</value>
+  </data>
+  <data name="ConfirmCloseLeagueTitle" xml:space="preserve">
+    <value>Cerrar la liga</value>
+  </data>
+  <data name="ConfirmCloseLeagueBody" xml:space="preserve">
+    <value>Dejará de aparecer al asignar torneos. Puedes volver a abrirla cuando quieras.</value>
+  </data>
+  <data name="NoticeLeagueCreated" xml:space="preserve">
+    <value>Liga creada.</value>
+  </data>
+  <data name="NoticeLeagueClosed" xml:space="preserve">
+    <value>Liga cerrada.</value>
+  </data>
+  <data name="NoticeLeagueReopened" xml:space="preserve">
+    <value>Liga reabierta.</value>
+  </data>
+  <data name="LeagueTournamentsTitle" xml:space="preserve">
+    <value>Torneos de la liga</value>
+  </data>
+  <data name="LeagueNoTournaments" xml:space="preserve">
+    <value>Todavía no hay ningún torneo en esta liga. Se asignan desde la ficha de cada torneo.</value>
+  </data>
+  <data name="FieldLeague" xml:space="preserve">
+    <value>Liga</value>
+  </data>
+  <data name="LeagueNone" xml:space="preserve">
+    <value>Ninguna</value>
+  </data>
+  <data name="LeagueNoneForGame" xml:space="preserve">
+    <value>No tienes ninguna liga abierta de este juego.</value>
+  </data>
+  <data name="LeagueAssignHint" xml:space="preserve">
+    <value>Los puntos de este torneo se suman a la clasificación de la liga que elijas.</value>
+  </data>
+  <data name="NoticeLeagueAssigned" xml:space="preserve">
+    <value>Liga del torneo actualizada.</value>
+  </data>
 </root>

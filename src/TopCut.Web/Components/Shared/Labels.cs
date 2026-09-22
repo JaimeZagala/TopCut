@@ -88,4 +88,8 @@ public static class Labels
         topCutSize is { } size
             ? string.Format(Textos.RoundsAndCutSummary, swissRounds, size)
             : string.Format(Textos.RoundsSummary, swissRounds);
+
+    /// <summary>A league's season, "Del 1/10/2026 al 31/12/2026".</summary>
+    public static string Season(DateOnly startsOn, DateOnly endsOn) =>
+        string.Format(Textos.LeagueSeason, startsOn.ToString("d"), endsOn.ToString("d"));
 }

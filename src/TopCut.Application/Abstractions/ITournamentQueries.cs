@@ -35,6 +35,7 @@ public sealed record TournamentDetails(
     int? TopCutSize,
     TournamentStatus Status,
     bool SettingsLocked,
+    Guid? LeagueId,
     int Registered,
     int Waitlisted,
     PhaseSettings SwissPhase,

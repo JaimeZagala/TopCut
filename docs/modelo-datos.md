@@ -163,7 +163,12 @@ parece la misma persona la pantalla lo señala y es la tienda quien las junta.
 
 `League` pertenece a una tienda y a un TCG, con temporada (`StartsOn` / `EndsOn`) y bandera de
 abierta. `Tournament.LeagueId` apunta a ella, así que un torneo puntua **como mucho para una liga**. La
-clasificación acumulada llega en el hito 6.
+clasificación acumulada llega en el tramo 6d.
+
+Cerrar una liga no borra nada: deja de admitir torneos nuevos y los que ya tenía siguen contando.
+El juego no se cambia después de crearla, porque los torneos que ya apuntan a ella son de ese juego.
+Y asignar la liga de un torneo **no se congela** cuando el torneo empieza, al contrario que el resto
+de su configuración (ADR-0036): decide qué tabla suma los puntos, no toca nada de lo jugado.
 
 ## Esquema en SQL Server
 

@@ -1,0 +1,65 @@
+@page "/tienda/ligas"
+@layout StoreLayout
+@attribute [Authorize(Policy = TopCutPolicies.CanOrganize)]
+@inject ILeagues Leagues
+
+<PageTitle>@Textos.LeaguesTitle - @Textos.AppName</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+    <MudText Typo="Typo.h1">@Textos.LeaguesTitle</MudText>
+    <MudSpacer />
+    <MudButton Href="/tienda/ligas/nueva"
+               Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add">
+        @Textos.LeaguesNew
+    </MudButton>
+</MudStack>
+
+<MudText Typo="Typo.body1" Class="mb-6">@Textos.LeaguesIntro</MudText>
+
+@if (rows is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" aria-label="@Textos.Loading" />
+}
+else if (rows.Count == 0)
+{
+    <MudPaper Class="pa-8 text-center" Elevation="0" Outlined="true">
+        <MudIcon Icon="@Icons.Material.Filled.MilitaryTech" Size="Size.Large" Color="Color.Primary" Class="mb-3" />
+        <MudText Typo="Typo.body1" Class="mb-4">@Textos.LeaguesEmpty</MudText>
+        <MudButton Href="/tienda/ligas/nueva" Variant="Variant.Filled" Color="Color.Primary">
+            @Textos.LeaguesNew
+        </MudButton>
+    </MudPaper>
+}
+else
+{
+    <MudTable Items="rows" Hover="true" Elevation="0" Outlined="true" Breakpoint="Breakpoint.Sm">
+        <HeaderContent>
+            <MudTh>@Textos.ColumnLeague</MudTh>
+            <MudTh>@Textos.ColumnGame</MudTh>
+            <MudTh>@Textos.LeagueColumnSeason</MudTh>
+            <MudTh>@Textos.LeagueColumnTournaments</MudTh>
+            <MudTh>@Textos.ColumnStatus</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="row">
+            <MudTd DataLabel="@Textos.ColumnLeague">
+                <MudLink Href="@($"/tienda/ligas/{row.Id}")" Typo="Typo.body1">@row.Name</MudLink>
+            </MudTd>
+            <MudTd DataLabel="@Textos.ColumnGame">@row.TcgName</MudTd>
+            <MudTd DataLabel="@Textos.LeagueColumnSeason">@Labels.Season(row.StartsOn, row.EndsOn)</MudTd>
+            <MudTd DataLabel="@Textos.LeagueColumnTournaments">@row.Tournaments</MudTd>
+            <MudTd DataLabel="@Textos.ColumnStatus">
+                <MudChip T="string" Size="Size.Small" Color="@(row.IsOpen ? Color.Primary : Color.Dark)">
+                    @(row.IsOpen ? Textos.LeagueOpen : Textos.LeagueClosed)
+                </MudChip>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private IReadOnlyList<LeagueRow>? rows;
+
+    protected override async Task OnInitializedAsync() => rows = await Leagues.ForCurrentStoreAsync();
+}

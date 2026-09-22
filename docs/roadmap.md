@@ -310,9 +310,21 @@ que faltaba: hasta ahora un participante era un nombre suelto de un torneo.
   guardado: la absorbida la suelta, llega a la base, y solo entonces la otra la toma
 - ✅ **6 pruebas nuevas** sobre quién se fusiona y quién no, contra SQL Server real
 
-#### 6c — Ligas ⬜
+#### 6c — Ligas ✅
 
-Crear, editar y cerrar una liga; asignarle torneos.
+- ✅ **`/tienda/ligas`**: crear una liga con su juego y su temporada, corregirla, cerrarla y volver a
+  abrirla. Una liga cerrada no admite torneos nuevos; los que ya tenía siguen contando
+- ✅ **La liga de un torneo se elige en su propia ficha**, encima del formulario y guardando al
+  elegirla. Al crear un torneo se aterriza justo ahí, así que sigue siendo un clic
+- ✅ **Asignar la liga ya no se congela al empezar el torneo** (ADR-0036): decide qué tabla suma los
+  puntos, no toca nada de lo jugado. Sin eso, quien jugara tres torneos y luego decidiera que eran
+  una temporada perdía esos puntos para siempre. Un torneo **cancelado** sí que se rechaza
+- ✅ **Una sola respuesta a "¿a qué ligas puede ir este torneo?"**, la que pinta el desplegable y la
+  que comprueba el servidor: abierta, del mismo juego y de la misma tienda, más la liga en la que ya
+  estuviera aunque esté cerrada
+- ✅ **12 pruebas nuevas** contra SQL Server real
+- ✅ Corregido en el navegador: al elegir liga se guardaba bien pero el desplegable volvía a
+  "Ninguna" hasta recargar, porque durante el guardado se le devolvía el valor viejo
 
 #### 6d — Clasificación acumulada ⬜
 
