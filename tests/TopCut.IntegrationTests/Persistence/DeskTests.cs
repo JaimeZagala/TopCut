@@ -14,8 +14,8 @@ namespace TopCut.IntegrationTests.Persistence;
 /// tournament. The engine itself is already covered elsewhere; what these pin down is the view the
 /// screen is built from and the contract between the buttons it shows and what the domain accepts.
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class DeskTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class DeskTests(PostgresFixture fixture)
 {
     [Fact]
     public async Task Before_anything_is_played_the_desk_offers_the_first_round_and_nothing_else()

@@ -6,7 +6,7 @@ namespace TopCut.Infrastructure.Persistence;
 
 /// <summary>
 /// Read-only projections for the store's screens. These never load the aggregate: the counts come
-/// back as counts, computed by SQL Server, instead of dragging every participant across the wire to
+/// back as counts, computed by the database, instead of dragging every participant across the wire to
 /// call <c>Count()</c> on them.
 /// <para>
 /// No <c>IgnoreQueryFilters</c>: the tenant filter is what makes "the current store's tournaments"

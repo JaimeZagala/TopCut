@@ -7,10 +7,10 @@ namespace TopCut.IntegrationTests.Identity;
 
 /// <summary>
 /// Boots the real application — the same <c>Program</c> that runs in production, migrations,
-/// seeding and all — against the throwaway SQL Server. Nothing about authentication is stubbed:
+/// seeding and all — against the throwaway PostgreSQL. Nothing about authentication is stubbed:
 /// these tests go through actual HTTP with real cookies and real bearer tokens.
 /// </summary>
-public sealed class TopCutAppFactory(SqlServerFixture sqlServer) : WebApplicationFactory<Program>
+public sealed class TopCutAppFactory(PostgresFixture postgres) : WebApplicationFactory<Program>
 {
     public const string SuperadminEmail = "superadmin@topcut.test";
     public const string SuperadminPassword = "Superadmin-1234";
@@ -21,7 +21,7 @@ public sealed class TopCutAppFactory(SqlServerFixture sqlServer) : WebApplicatio
 
         builder.ConfigureHostConfiguration(config => config.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["ConnectionStrings:TopCut"] = sqlServer.ConnectionString,
+            ["ConnectionStrings:TopCut"] = postgres.ConnectionString,
             ["Superadmin:Email"] = SuperadminEmail,
             ["Superadmin:Password"] = SuperadminPassword
         }));

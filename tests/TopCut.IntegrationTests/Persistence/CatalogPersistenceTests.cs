@@ -4,8 +4,8 @@ using TopCut.Infrastructure.Persistence;
 
 namespace TopCut.IntegrationTests.Persistence;
 
-[Collection(SqlServerCollection.Name)]
-public class CatalogPersistenceTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class CatalogPersistenceTests(PostgresFixture fixture)
 {
     [Fact]
     public async Task The_seeder_creates_both_TCGs_with_their_rulesets()

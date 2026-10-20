@@ -10,8 +10,8 @@ namespace TopCut.IntegrationTests.Persistence;
 /// The whole multi-tenancy design rests on one claim: a store never sees another store's data,
 /// without any use case having to remember to filter. These are the tests that prove it.
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class MultiTenancyTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class MultiTenancyTests(PostgresFixture fixture)
 {
     [Fact]
     public async Task A_store_sees_its_own_tournaments_and_not_the_other_stores()

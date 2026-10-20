@@ -368,8 +368,8 @@ Aprobar y revocar el rol de tienda, catálogo de TCGs, tiempos de ronda por defe
 
 ### Hito 8 — Web API externa, despliegue y CI/CD ⬜
 
-Endpoints REST con Bearer y [`api.md`](api.md) al día. Despliegue en App Service F1 + Azure SQL
-gratuito + Azure SignalR gratuito, y GitHub Actions con OpenID Connect.
+Endpoints REST con Bearer y [`api.md`](api.md) al día. Despliegue en Render + Neon gratuitos
+(ADR-0039; preparado en `render.yaml`), y GitHub Actions para las pruebas en cada pull request.
 
 ## Fase 2 — App Android nativa (.apk) ⬜
 

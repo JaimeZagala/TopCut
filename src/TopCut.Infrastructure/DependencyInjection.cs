@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,11 +30,11 @@ public static class DependencyInjection
 
         services.AddDbContext<TopCutDbContext>((provider, options) =>
         {
-            options.UseSqlServer(connectionString, sql =>
+            options.UseNpgsql(connectionString, npgsql =>
             {
-                // The Azure SQL free tier is serverless and pauses when idle, so the first query
-                // after a quiet spell can time out while the database wakes up.
-                sql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), null);
+                // Neon's free tier suspends the compute when idle, so the first query after a
+                // quiet spell can fail while it wakes up (ADR-0039).
+                npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), null);
             });
 
             options.AddInterceptors(
@@ -44,6 +45,12 @@ public static class DependencyInjection
         // One DbContext per operation instead of one per request (ADR-0023). The scoped instance
         // stays registered because Identity's stores expect to be handed one.
         services.AddScoped<IDbContextFactory<TopCutDbContext>, TopCutDbContextFactory>();
+
+        // Keys in the database, not on disk (ADR-0039): the container's disk is new on every
+        // deploy and every wake-up, and keys lost there would invalidate every session.
+        services.AddDataProtection()
+            .SetApplicationName("TopCut")
+            .PersistKeysToDbContext<TopCutDbContext>();
 
         services.AddScoped<ITournamentRepository, TournamentRepository>();
         services.AddScoped<ITournamentQueries, TournamentQueries>();

@@ -37,7 +37,7 @@ internal sealed class StorePlayerConfiguration : EntityConfiguration<StorePlayer
         // that cannot be wrong, and two rows for it would split somebody's league points in half.
         builder.HasIndex(player => new { player.TenantId, player.UserId })
             .IsUnique()
-            .HasFilter("[UserId] IS NOT NULL");
+            .HasFilter("\"UserId\" IS NOT NULL");
 
         // What the counter's autocomplete searches on.
         builder.HasIndex(player => new { player.TenantId, player.NormalizedName });

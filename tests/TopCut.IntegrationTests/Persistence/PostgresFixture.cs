@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Testcontainers.MsSql;
+using Testcontainers.PostgreSql;
 using TopCut.Application.Abstractions;
 using TopCut.Domain.Common;
 using TopCut.Infrastructure.Persistence;
@@ -8,27 +8,27 @@ using TopCut.Infrastructure.Persistence.Interceptors;
 namespace TopCut.IntegrationTests.Persistence;
 
 /// <summary>
-/// Spins up a real, disposable SQL Server in Docker for the whole test class collection and applies
+/// Spins up a real, disposable PostgreSQL in Docker for the whole test class collection and applies
 /// the EF Core migrations to it. Deliberately not the InMemory provider: the point of these tests is
 /// to check the schema against the same engine production runs, including the constraints, filtered
-/// indexes and rowversion semantics InMemory does not have (see docs/arquitectura.md).
+/// indexes and <c>xmin</c> concurrency InMemory does not have (see docs/arquitectura.md).
 /// </summary>
-public sealed class SqlServerFixture : IAsyncLifetime
+public sealed class PostgresFixture : IAsyncLifetime
 {
-    // Pinned to the SQL Server major version Azure SQL is built on, so the constraints these
-    // tests exercise are the ones production will enforce.
-    private const string Image = "mcr.microsoft.com/mssql/server:2022-latest";
+    // Pinned to the PostgreSQL major version the Neon project runs (ADR-0039), so the constraints
+    // these tests exercise are the ones production will enforce.
+    private const string Image = "postgres:17";
 
     /// <summary>
-    /// Points the suite at an existing SQL Server instead of starting a container. Useful when
-    /// Docker is not available locally, and for a CI runner that already provides SQL Server as a
+    /// Points the suite at an existing PostgreSQL instead of starting a container. Useful when
+    /// Docker is not available locally, and for a CI runner that already provides PostgreSQL as a
     /// service container. Unset, which is the normal case, the suite starts its own container.
     /// </summary>
     private static readonly string? ExternalConnection =
         Environment.GetEnvironmentVariable("TOPCUT_TEST_SQL");
 
-    private readonly MsSqlContainer? _container =
-        ExternalConnection is null ? new MsSqlBuilder(Image).Build() : null;
+    private readonly PostgreSqlContainer? _container =
+        ExternalConnection is null ? new PostgreSqlBuilder(Image).Build() : null;
 
     public string ConnectionString => ExternalConnection ?? _container!.GetConnectionString();
 
@@ -68,7 +68,7 @@ public sealed class SqlServerFixture : IAsyncLifetime
         TimeProvider? timeProvider = null)
     {
         var builder = new DbContextOptionsBuilder<TopCutDbContext>()
-            .UseSqlServer(ConnectionString)
+            .UseNpgsql(ConnectionString)
             .AddInterceptors(new AuditingInterceptor(timeProvider ?? TimeProvider.System));
 
         if (dispatcher is not null)
@@ -118,11 +118,11 @@ public sealed class SqlServerFixture : IAsyncLifetime
     }
 }
 
-/// <summary>Shares one container across every test class in the collection; starting SQL Server is slow.</summary>
+/// <summary>Shares one container across every test class in the collection; starting a database is slow.</summary>
 [CollectionDefinition(Name)]
-public sealed class SqlServerCollection : ICollectionFixture<SqlServerFixture>
+public sealed class PostgresCollection : ICollectionFixture<PostgresFixture>
 {
-    public const string Name = "sqlserver";
+    public const string Name = "postgres";
 }
 
 /// <summary>Records what was dispatched, so tests can assert on domain events without a real handler.</summary>

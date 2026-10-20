@@ -6,14 +6,14 @@ using TopCut.IntegrationTests.Persistence;
 
 namespace TopCut.IntegrationTests.Identity;
 
-[Collection(SqlServerCollection.Name)]
-public class AuthenticationTests(SqlServerFixture sqlServer) : IAsyncLifetime
+[Collection(PostgresCollection.Name)]
+public class AuthenticationTests(PostgresFixture postgres) : IAsyncLifetime
 {
     private TopCutAppFactory _app = null!;
 
     public Task InitializeAsync()
     {
-        _app = new TopCutAppFactory(sqlServer);
+        _app = new TopCutAppFactory(postgres);
         return Task.CompletedTask;
     }
 

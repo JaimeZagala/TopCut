@@ -8,8 +8,8 @@ using TopCut.Infrastructure.Persistence;
 
 namespace TopCut.IntegrationTests.Persistence;
 
-[Collection(SqlServerCollection.Name)]
-public class TournamentPersistenceTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class TournamentPersistenceTests(PostgresFixture fixture)
 {
     [Fact]
     public async Task The_whole_aggregate_survives_a_round_trip()

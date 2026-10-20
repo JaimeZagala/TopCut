@@ -10,11 +10,11 @@ namespace TopCut.IntegrationTests.Persistence;
 
 /// <summary>
 /// The roster: signing players in at the counter, the waitlist filling up and emptying again, and
-/// dropping someone. Against real SQL Server, because the waitlist is a queue whose positions have
+/// dropping someone. Against real PostgreSQL, because the waitlist is a queue whose positions have
 /// to survive being written down and read back.
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class ParticipantTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class ParticipantTests(PostgresFixture fixture)
 {
     [Fact]
     public async Task Players_are_signed_up_by_name_alone()

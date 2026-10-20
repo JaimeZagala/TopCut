@@ -153,7 +153,7 @@ public sealed class TournamentRepository(IDbContextFactory<TopCutDbContext> cont
     /// loading would turn one operation into dozens of round trips against a database that, on the
     /// free tier, is charged by the second.
     /// <para>
-    /// <b>Ordered on purpose.</b> Without it SQL Server returns the rows in whatever order suits it,
+    /// <b>Ordered on purpose.</b> Without it the database returns the rows in whatever order suits it,
     /// which is not the order they were created in: the round buttons came out as 2, 4, 3, 1.
     /// </para>
     /// <para>

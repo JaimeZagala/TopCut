@@ -52,7 +52,7 @@ public class Pairing : BusinessEntity, ITenantOwned, IHasRowVersion
     /// <summary>The clock decided this match, not the players.</summary>
     public bool DecidedByTimeExpiry { get; private set; }
 
-    public byte[]? RowVersion { get; set; }
+    public uint RowVersion { get; set; }
 
     public bool IsBye => PlayerBId is null;
 

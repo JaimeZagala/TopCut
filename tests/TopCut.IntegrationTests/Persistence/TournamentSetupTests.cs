@@ -9,13 +9,13 @@ using TopCut.Infrastructure.Persistence;
 namespace TopCut.IntegrationTests.Persistence;
 
 /// <summary>
-/// Creating, editing and publishing a tournament, against real SQL Server. These cover the path the
+/// Creating, editing and publishing a tournament, against real PostgreSQL. These cover the path the
 /// store's screens take in milestone 3b, including the two things that are easy to get wrong and
 /// impossible to spot by looking: that a refused change saves nothing, and that one store's list
 /// never contains another store's tournaments.
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class TournamentSetupTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class TournamentSetupTests(PostgresFixture fixture)
 {
     // --- Creating -----------------------------------------------------------------------------
 

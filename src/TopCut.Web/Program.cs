@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using MudBlazor.Services;
 using TopCut.Web.Time;
@@ -42,7 +43,19 @@ builder.Services.AddTopCutApi(builder.Configuration);
 
 builder.Services.AddCascadingAuthenticationState();
 
+// En Render el TLS acaba en su proxy y Kestrel recibe HTTP plano (ADR-0039). Sin
+// esto, la redirección a HTTPS no sabe que ya lo es y el callback de Google sale con http://.
+// La IP del proxy no es fija, así que se confía en él por estar delante, no por su dirección.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
 {

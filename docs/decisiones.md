@@ -261,7 +261,7 @@ contexto, la comparación es contra `NULL` y **no devuelve ninguna fila**.
 
 ## ADR-0012 — Las pruebas de integración aceptan un SQL Server externo
 
-**Fecha**: 2026-09-20 · **Estado**: aceptada · **Impacto**: bajo
+**Fecha**: 2026-09-20 · **Estado**: sustituida por ADR-0039 (la válvula sigue, ahora hacia PostgreSQL) · **Impacto**: bajo
 
 Por defecto la batería levanta SQL Server con Testcontainers, como fija el ADR-0005. Si la variable
 de entorno `TOPCUT_TEST_SQL` trae una cadena de conexión, se usa esa instancia y se recrea el
@@ -311,7 +311,7 @@ fallo que solo aparece cuando algo llama de verdad al endpoint y mira el código
 
 ## ADR-0015 — La base de datos de desarrollo es SQL Server en Docker, no LocalDB
 
-**Fecha**: 2026-09-20 · **Estado**: aceptada (confirmada por Jaime) · **Impacto**: bajo, solo afecta al puesto de desarrollo
+**Fecha**: 2026-09-20 · **Estado**: sustituida por ADR-0039 (sigue en Docker, ahora PostgreSQL) · **Impacto**: bajo, solo afecta al puesto de desarrollo
 
 El desarrollo local usa el SQL Server 2022 que levanta el [`compose.yaml`](../compose.yaml) de la
 raíz, en el puerto **11433** y con los datos en un volumen con nombre. `appsettings.Development.json`
@@ -1023,3 +1023,68 @@ Decía que verían tu nombre y tus resultados "la tienda y el resto de jugadores
 la página de la liga el alcance real es más ancho que eso. Se corrige ahora porque el aviso está
 **versionado** y todavía no hay usuarios que hayan aceptado una versión anterior: es el momento más
 barato que va a haber. Cualquier ampliación posterior del alcance sí obliga a versión nueva.
+
+---
+
+## ADR-0039 — Producción en Render con PostgreSQL en Neon
+
+**Fecha**: 2026-10-20 · **Estado**: aceptada (decidida por Jaime) · **Impacto**: alto · **Cambia**:
+el motor de base de datos, la tabla de infraestructura de `arquitectura.md`, y sustituye a los
+ADR-0012 y ADR-0015
+
+El plan era App Service F1 + Azure SignalR Service + Azure SQL gratuita. Al ir a desplegar, **Azure
+exige una tarjeta para crear la suscripción**, incluso la gratuita, y no es una opción. Se despliega
+en **Render** (plan gratuito, contenedor Docker desde el `Dockerfile` de la raíz, configurado en
+`render.yaml`) con la base en **Neon** (PostgreSQL gratuito). Ninguno de los dos pide tarjeta.
+
+- **Alternativas descartadas**:
+  - *Vercel*: no tiene runtime de .NET; ejecuta el contenedor dentro de sus funciones, con
+    WebSockets en beta que se cortan con la duración de la función y sin afinidad entre instancias.
+    Un circuito de Blazor Server no sobrevive a eso. Partir la aplicación (UI en WebAssembly
+    estática, API aparte) obligaría a reescribir la UI, a escribir la API que falta y a migrar a
+    PostgreSQL igualmente.
+  - *Cloudflare*: Workers y Pages no ejecutan un proceso ASP.NET Core, y Containers es de pago.
+  - *Azure Container Apps*: técnicamente el mejor encaje, y llegó a estar preparado (Bicep y
+    script), pero necesita la misma suscripción con tarjeta.
+- **El precio: SQL Server sale del proyecto.** Ningún proveedor sin tarjeta ofrece SQL Server.
+  Como producción no había llegado a existir, no hay datos que migrar: las migraciones se rehacen
+  desde cero contra PostgreSQL y los scripts de `docs/migraciones/` empiezan de nuevo en `001`.
+
+### Lo que cambia en el código
+
+- **`Npgsql.EntityFrameworkCore.PostgreSQL`** en lugar del proveedor de SQL Server. La espera al
+  arrancar de `DatabaseInitializer` se queda: Neon también suspende la base cuando no se usa.
+- **La versión de fila es `xmin`.** PostgreSQL no tiene `rowversion`; su columna de sistema `xmin`
+  cambia en cada escritura de la fila, que es lo mismo. `IHasRowVersion.RowVersion` pasa de
+  `byte[]` a `uint`, y el truco de ADR-0032 (marcar `UpdatedAt` del torneo) sigue funcionando
+  porque obliga a escribir su fila.
+- **Los instantes se guardan en UTC.** `timestamptz` no guarda la zona y Npgsql se niega a escribir
+  un `DateTimeOffset` con desfase distinto de cero. Un conversor global los pasa a UTC; las
+  pantallas ya convierten a la hora de la tienda con `LocalTime` (ADR-0025).
+- **Mayúsculas y orden.** La intercalación de SQL Server (`CI_AS`) ignoraba mayúsculas. En
+  PostgreSQL las búsquedas que tienen que ignorarlas lo dicen explícitamente (`ILIKE` en la
+  búsqueda pública, `lower()` en la ciudad); el libro de jugadores ya buscaba sobre
+  `NormalizedName`. Todas las columnas de texto llevan la intercalación ICU `und-x-icu`, para que
+  "Álvaro" no se ordene detrás de "Zoe" según cómo se haya creado el servidor.
+- **Las claves de Data Protection van a la base de datos** (tabla `DataProtectionKeys`). El disco
+  del contenedor es nuevo en cada despliegue y cada vez que Render lo despierta: con las claves ahí,
+  se cerraría la sesión de todo el mundo cada vez.
+- **`UseForwardedHeaders`**: el TLS termina en el proxy de Render. Sin las cabeceras reenviadas la
+  aplicación cree que la petición es HTTP, y el callback de Google sale con `http://`.
+
+### Límites del plan gratuito que se aceptan
+
+- **Render duerme el servicio tras 15 minutos sin tráfico** y tarda en torno a un minuto en
+  despertarlo. Para una tienda que abre el día del torneo es asumible; si molesta, el plan Starter
+  lo evita (de pago).
+- **512 MB y CPU compartida.** Se usa el GC de estación de trabajo (`DOTNET_gcServer=0`).
+- **Una sola instancia**, que es justo lo que pide el difusor en proceso de las pantallas en vivo
+  (ADR-0027). Los WebSockets van directos: no hace falta Azure SignalR Service.
+- **Neon**: 0,5 GB de almacenamiento y horas de cómputo limitadas al mes; la base se suspende sola
+  cuando no se usa.
+
+### Desarrollo y pruebas
+
+`compose.yaml` levanta PostgreSQL 17 en el puerto **15432**, y las pruebas de integración usan
+`Testcontainers.PostgreSql` con la misma versión mayor que el proyecto de Neon. `TOPCUT_TEST_SQL`
+sigue siendo la válvula para apuntar la batería a un PostgreSQL existente.

@@ -9,7 +9,7 @@
 | Framework | .NET 10 (LTS, soporte hasta noviembre de 2028) |
 | Web | ASP.NET Core 10 + Blazor Web App (modelo unificado) |
 | API | ASP.NET Core Web API (controladores REST) + SignalR |
-| Datos | Entity Framework Core 10 sobre SQL Server / Azure SQL |
+| Datos | Entity Framework Core 10 sobre PostgreSQL (Neon en producción, ADR-0039) |
 | Identidad | ASP.NET Core Identity (email+contraseña y Google) |
 | UI | MudBlazor |
 | Futuro móvil | .NET MAUI 10 + Blazor Hybrid |
@@ -34,7 +34,7 @@
             │                            │
 ┌───────────▼──────────┐      ┌──────────▼─────────────┐
 │    TopCut.Domain     │      │ TopCut.Infrastructure  │
-│  entidades y reglas  ◄──────┤  EF Core, SQL Server,  │
+│  entidades y reglas  ◄──────┤  EF Core, PostgreSQL,  │
 │  puras, sin deps     │      │  Identity, externos    │
 └──────────────────────┘      └────────────────────────┘
 ```
@@ -47,7 +47,7 @@ Reglas de dependencia:
   pueden probar simulando torneos enteros sin base de datos.
 - **Application** referencia Domain. Casos de uso independientes de si se invocan desde Blazor o
   desde HTTP.
-- **Infrastructure** referencia Application. EF Core, acceso a SQL Server, Identity, integraciones.
+- **Infrastructure** referencia Application. EF Core, acceso a PostgreSQL, Identity, integraciones.
 - **Presentation** referencia Application (para invocar casos de uso) e Infrastructure (solo como
   raíz de composición, para registrar los servicios en el contenedor de DI).
 
@@ -102,12 +102,12 @@ dos WebSockets por espectador cuando el plan gratuito permite cinco.
 - **Un hub propio** queda para los clientes **externos** (la app móvil, que no tiene circuito), con
   la Web API externa.
 
-En producción se delega en **Azure SignalR Service** (ver más abajo): lo que se delega son los
-circuitos de Blazor, que es justo lo que resuelve el límite de WebSockets del plan gratuito.
+En producción los circuitos van directos a la aplicación: Render no limita los WebSockets
+(ADR-0039), así que no hace falta delegarlos en Azure SignalR Service.
 
-> El difusor es de **un solo proceso**. Con varias instancias de App Service cada una avisaría solo
-> a sus propias pantallas; el plan gratuito tiene una sola instancia, y el día que haya más esto
-> pasa a ser un backplane detras de la misma interfaz.
+> El difusor es de **un solo proceso**. Con varias réplicas cada una avisaría solo a sus propias
+> pantallas; por eso la aplicación está limitada a una réplica, y el día que haya más esto pasa a
+> ser un backplane detras de la misma interfaz.
 
 ## Acceso a datos
 
@@ -116,7 +116,7 @@ Dos caminos distintos, segun lo que haga falta (ADR-0026):
 - **Cambiar algo**: `ITournamentRepository` carga el agregado entero, aplica la operación y guarda
   **solo si sale bien**. Una regla rota a mitad no deja rastro.
 - **Leer para pintar**: `ITournamentQueries` e `ITcgCatalog` devuelven proyecciones sin seguimiento,
-  con los contadores calculados en SQL Server. Una lista de torneos no carga rondas ni partidas.
+  con los contadores calculados en la base de datos. Una lista de torneos no carga rondas ni partidas.
 
 Cada operación abre su **propio `DbContext`** (ADR-0023), creado por `IDbContextFactory` con el
 mismo `ITenantContext` del ámbito, no desde un ámbito hijo: un ámbito hijo traería un contexto de
@@ -128,9 +128,8 @@ Una **única base de datos compartida** con columna `TenantId` (identificador de
 entidades que pertenecen a una tienda, y **filtros de consulta globales de EF Core**
 (`HasQueryFilter`) para que cada tienda solo vea sus propios datos automáticamente.
 
-Motivo: es el enfoque más simple, más barato (una sola base de datos, que además encaja con el
-límite del nivel gratuito de Azure SQL de una base de datos por suscripción) y válido de sobra
-para el volumen previsto.
+Motivo: es el enfoque más simple, más barato (una sola base de datos, que es lo que da el plan
+gratuito de Neon) y válido de sobra para el volumen previsto.
 
 Los filtros se aplican **por convención**, recorriendo las entidades que implementan `ITenantOwned`
 al construir el modelo, para que añadir una entidad nueva no pueda filtrar datos entre tiendas
@@ -231,44 +230,39 @@ escrita no compila. Añadir un idioma será añadir `Textos.<cultura>.resx` al l
 
 ## Infraestructura y despliegue (gratuito)
 
-Proyecto personal: todo se despliega en recursos gratuitos de una cuenta propia.
+Proyecto personal: todo se despliega en planes gratuitos que no piden tarjeta (ADR-0039). El
+servicio está descrito en [`render.yaml`](../render.yaml) y la imagen sale del
+[`Dockerfile`](../Dockerfile) de la raíz.
 
 | Recurso | Plan | Límites relevantes |
 |---|---|---|
-| **Azure App Service** | Gratuito (F1) | Sin "Always On" (cold start tras inactividad), cuota de CPU compartida al día, sin dominio propio con SSL (solo `*.azurewebsites.net`, que si trae HTTPS) |
-| **Azure SignalR Service** | Gratuito | ~20 conexiones concurrentes, ~20.000 mensajes/día, 1 unit |
-| **Azure SQL Database** | Oferta gratuita | Serverless, ~100.000 segundos-vCore/mes y 32 GB, **una base de datos gratuita por suscripción** |
-| **CI/CD** | GitHub Actions | Minutos gratuitos de sobra para un repo personal; despliegue vía OpenID Connect, sin credenciales de larga duración |
+| **Render** (web service, Docker) | Free | 512 MB, CPU compartida, **se duerme tras 15 min sin tráfico** y tarda ~1 min en despertar. Una instancia. Dominio `*.onrender.com` con HTTPS. Despliega solo en cada push a `main` |
+| **Neon** (PostgreSQL 17) | Free | 0,5 GB de almacenamiento, horas de cómputo limitadas al mes; la base se suspende sola cuando no se usa |
+| **CI/CD** | GitHub Actions | Minutos gratuitos de sobra para un repo personal |
 
-**Por qué Azure SignalR Service y no SignalR directo sobre App Service**: el plan gratuito de App
-Service limita las conexiones WebSocket a **5 simultáneas**, insuficiente para una pantalla en vivo
-con 12-16 jugadores conectados. Delegar el tiempo real en Azure SignalR Service (modo "Default")
-elimina ese cuello de botella y entra de sobra en el volumen de un torneo local.
+**Tiempo real**: los WebSockets de los circuitos de Blazor van directos al servicio, sin límite de
+conexiones del plan, así que no hace falta Azure SignalR Service.
 
 > Los niveles gratuitos de los proveedores cloud cambian con frecuencia: **revisar los límites
 > exactos en el momento de desplegar**.
 
 ### Alternativa anotada
 
-Si el nivel gratuito de Azure se queda corto (por ejemplo, si el cold start de App Service resulta
-molesto): **Render** o **Railway** ofrecen niveles gratuitos para contenedores .NET con mejor
-comportamiento "always-on" limitado, pero exigirían moverse de SQL Server a **PostgreSQL** para
-aprovechar sus niveles gratuitos de base de datos. No hay que planificarlo ahora; queda anotado.
-
-Si el cold start molesta pero se quiere seguir en Azure, el siguiente escalon (App Service Basic
-B1) tiene un coste mensual bajo.
+Si el arranque en frío de Render molesta, su plan Starter mantiene el servicio despierto (de
+pago). Si algún día se puede usar una suscripción de Azure, Azure Container Apps es el encaje
+natural para la misma imagen; en ADR-0039 queda por qué no se hizo ahora.
 
 ## Entornos y aislamiento de la base de datos
 
-El nivel gratuito de Azure SQL permite **una sola base de datos por suscripción**, así que no hay
-un "staging" completo sin coste. Tres capas, todas gratuitas:
+El plan gratuito de Neon da **una base de datos de producción**, así que no hay un "staging"
+completo sin coste. Tres capas, todas gratuitas:
 
-1. **Desarrollo local** — **SQL Server en Docker**, con el `compose.yaml` de la raíz (ADR-0015).
+1. **Desarrollo local** — **PostgreSQL en Docker**, con el `compose.yaml` de la raíz (ADR-0039).
    Ningún cambio se prueba primero contra un recurso de la nube.
 2. **Pruebas de integración automatizadas** — **Testcontainers para .NET**
-   (`Testcontainers.MsSql`), que levanta una instancia real y desechable de SQL Server en cada
+   (`Testcontainers.PostgreSql`), que levanta una instancia real y desechable de PostgreSQL en cada
    ejecución. **No** el proveedor InMemory de EF Core, que no valida las mismas restricciones que
-   SQL Server. Se ejecutan en GitHub Actions en cada pull request, antes de fusionar cambios de
+   PostgreSQL. Se ejecutan en GitHub Actions en cada pull request, antes de fusionar cambios de
    esquema.
 3. **Antes de tocar producción** — generar el script SQL de cada migración y revisarlo a mano antes
    de aplicarlo contra la base real, ya que no hay una base de respaldo donde ensayarlo. Los
@@ -281,7 +275,7 @@ un "staging" completo sin coste. Tres capas, todas gratuitas:
    Se generan **idempotentes**, de modo que aplicar uno dos veces no rompe nada.
 
 Si Docker no está disponible en la máquina, la variable `TOPCUT_TEST_SQL` apunta la batería de
-integración a un SQL Server existente, LocalDB incluido (ADR-0012). Es una válvula de escape para
+integración a un PostgreSQL existente (ADR-0012, ADR-0039). Es una válvula de escape para
 seguir trabajando, no un sustituto: un cambio de esquema se valida con Testcontainers antes de
 fusionarse.
 

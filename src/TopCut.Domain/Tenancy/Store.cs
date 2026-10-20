@@ -39,7 +39,7 @@ public class Store : BusinessEntity, IAuditable
 
     /// <summary>
     /// Test tenant: excluded from public search. Stands in for a full staging environment, which
-    /// the Azure SQL free tier cannot fund.
+    /// the free database plan cannot fund.
     /// </summary>
     public bool IsTestStore { get; private set; }
 

@@ -83,7 +83,7 @@ internal sealed class ParticipantConfiguration : EntityConfiguration<Participant
         // walk-ins, who have no account at all, share the NULL.
         builder.HasIndex(participant => new { participant.TournamentId, participant.UserId })
             .IsUnique()
-            .HasFilter("[UserId] IS NOT NULL");
+            .HasFilter("\"UserId\" IS NOT NULL");
 
         builder.HasIndex(participant => new { participant.TournamentId, participant.Status });
     }

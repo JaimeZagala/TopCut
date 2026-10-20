@@ -9,12 +9,12 @@ using TopCut.Infrastructure.Persistence;
 namespace TopCut.IntegrationTests.Persistence;
 
 /// <summary>
-/// The store's book of regulars (ADR-0035), against real SQL Server. What matters here is <b>who
+/// The store's book of regulars (ADR-0035), against real PostgreSQL. What matters here is <b>who
 /// gets folded together and who does not</b>: a league adds up whatever this says is one person, so
 /// a wrong merge quietly hands somebody else's points to the wrong player.
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class StoreBookTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class StoreBookTests(PostgresFixture fixture)
 {
     // --- What counts as the same person ------------------------------------------------------------
 

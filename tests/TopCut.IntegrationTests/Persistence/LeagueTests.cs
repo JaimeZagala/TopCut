@@ -11,12 +11,12 @@ using TopCut.Infrastructure.Persistence;
 namespace TopCut.IntegrationTests.Persistence;
 
 /// <summary>
-/// Seasonal leagues and which tournaments score towards them (ADR-0036), against real SQL Server.
+/// Seasonal leagues and which tournaments score towards them (ADR-0036), against real PostgreSQL.
 /// What matters here is the picker and the check behind it agreeing: a league of another game, of
 /// another store or already closed has to be refused on the way in, not merely hidden from a list.
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class LeagueTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class LeagueTests(PostgresFixture fixture)
 {
     // --- The league itself ------------------------------------------------------------------------
 

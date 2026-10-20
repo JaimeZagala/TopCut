@@ -33,17 +33,19 @@ public sealed class PublicTournaments(IDbContextFactory<TopCutDbContext> context
         if (!string.IsNullOrWhiteSpace(criteria.City))
         {
             var city = criteria.City.Trim();
-            query = query.Where(tournament => tournament.Venue.City == city);
+            // Case-insensitive, as it was on SQL Server: "madrid" has to find "Madrid".
+            query = query.Where(tournament => tournament.Venue.City.ToLower() == city.ToLower());
         }
 
         if (!string.IsNullOrWhiteSpace(criteria.Text))
         {
             // The player remembers either the event or the shop, and rarely spells either exactly.
+            // ILIKE and not LIKE: PostgreSQL's LIKE is case-sensitive, SQL Server's was not.
             var text = $"%{criteria.Text.Trim()}%";
 
             query = query.Where(tournament =>
-                EF.Functions.Like(tournament.Name, text)
-                || db.Stores.Any(store => store.Id == tournament.TenantId && EF.Functions.Like(store.Name, text)));
+                EF.Functions.ILike(tournament.Name, text)
+                || db.Stores.Any(store => store.Id == tournament.TenantId && EF.Functions.ILike(store.Name, text)));
         }
 
         if (criteria.From is { } from)

@@ -11,13 +11,13 @@ using TopCut.Infrastructure.Persistence;
 namespace TopCut.IntegrationTests.Persistence;
 
 /// <summary>
-/// The season's cumulative table and the league's public page (ADR-0037), against real SQL Server.
+/// The season's cumulative table and the league's public page (ADR-0037), against real PostgreSQL.
 /// Two things are worth the round trip: that the same person's points really do come back added up
 /// across tournaments through their book entry, and that what a visitor sees is only what the store
 /// has published.
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class LeagueStandingsTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class LeagueStandingsTests(PostgresFixture fixture)
 {
     [Fact]
     public async Task The_season_adds_up_what_the_same_person_scored_in_every_tournament()

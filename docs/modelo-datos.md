@@ -82,8 +82,8 @@ reglamento, esos tests son los primeros que deben fallar.
 
 Nombre, `Address`, estado de aprobación (`PendingApproval` / `Approved` / `Revoked`) y
 `IsTestStore`. Solo una tienda aprobada puede organizar. El tenant de pruebas queda fuera de las
-búsquedas públicas y sustituye a un entorno de staging, que el nivel gratuito de Azure SQL no
-permite costear.
+búsquedas públicas y sustituye a un entorno de staging, que el plan gratuito de Neon no permite
+costear.
 
 ### `Address` (value object)
 
@@ -171,7 +171,7 @@ El juego no se cambia después de crearla, porque los torneos que ya apuntan a e
 Y asignar la liga de un torneo **no se congela** cuando el torneo empieza, al contrario que el resto
 de su configuración (ADR-0036): decide qué tabla suma los puntos, no toca nada de lo jugado.
 
-## Esquema en SQL Server
+## Esquema en PostgreSQL
 
 Diez tablas más `__EFMigrationsHistory`. Los tipos propiedad se aplanan en la fila de su dueño en
 lugar de crear tablas aparte, porque nunca se consultan por separado y un join no aportaría nada:
@@ -181,7 +181,7 @@ lugar de crear tablas aparte, porque nunca se consultan por separado y un join n
 | `Address` | Columnas `Venue_Street`, `Venue_City`... dentro de `Tournaments`, y `Address_*` dentro de `Stores`. |
 | `PhaseSettings` | `SwissPhase_Format`, `SwissPhase_RoundLength`, `SwissPhase_ExtraTime` y sus equivalentes de top cut. |
 | `TournamentSettings` | Prefijo `Settings_` en `Tournaments`, con las fases anidadas dentro (`Settings_SwissPhase_Format`...). |
-| `Tiebreakers` | Una sola columna `nvarchar(64)` con los criterios separados por comas: la lista es corta, el orden se conserva solo y nadie consulta un criterio suelto. Lleva un `ValueComparer` para que EF detecte una reordenación. |
+| `Tiebreakers` | Una sola columna `varchar(64)` con los criterios separados por comas: la lista es corta, el orden se conserva solo y nadie consulta un criterio suelto. Lleva un `ValueComparer` para que EF detecte una reordenación. |
 
 ### Índices
 
@@ -204,11 +204,14 @@ lugar de crear tablas aparte, porque nunca se consultan por separado y un join n
 
 - **`Pairing` no tiene clave ajena a `Participant`** a propósito: borrar un participante nunca debe
   arrastrar en cascada un enfrentamiento que ya cuenta para la clasificación.
-- **`RowVersion`** en `Tournaments`, `Participants` y `Pairings`, que son las filas donde dos
+- **`RowVersion`** en `Tournaments`, `Participants` y `Pairings`, que en PostgreSQL es la columna
+  de sistema `xmin` (ADR-0039): son las filas donde dos
   acciones simultáneas pueden pisarse. La del torneo protege **todo el agregado**, no solo su fila:
   cualquier escritura dentro del agregado marca también la raíz, para que dos inscripciones a la
   vez por la última plaza choquen en vez de colarse las dos (ADR-0032).
-- **Fechas** como `datetimeoffset`; las duraciones de ronda como `time`.
+- **Fechas** como `timestamptz`, siempre en UTC (ADR-0039); las duraciones de ronda como `interval`.
+- **Texto** con la intercalación ICU `und-x-icu` en todas las columnas, para que el orden no dependa
+  de cómo se creó el servidor.
 - Las claves `Guid` v7 las genera el dominio, no la base de datos (`ValueGeneratedNever`).
 
 ## Seed del catálogo

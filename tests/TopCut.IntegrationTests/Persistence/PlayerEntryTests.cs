@@ -11,12 +11,12 @@ using TopCut.Infrastructure.Persistence;
 namespace TopCut.IntegrationTests.Persistence;
 
 /// <summary>
-/// A player signing themselves up from the public sheet, against real SQL Server. Every write here
+/// A player signing themselves up from the public sheet, against real PostgreSQL. Every write here
 /// lands in a <b>different store's</b> tournament than the one the caller is scoped to (ADR-0031),
 /// which is the thing worth testing: the rest of the application cannot do that and must not.
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class PlayerEntryTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class PlayerEntryTests(PostgresFixture fixture)
 {
     // --- Signing up -------------------------------------------------------------------------------
 

@@ -11,19 +11,19 @@ namespace TopCut.Infrastructure.Persistence;
 public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<TopCutDbContext>
 {
     /// <summary>
-    /// The SQL Server that <c>compose.yaml</c> at the repository root brings up (ADR-0015).
+    /// The PostgreSQL that <c>compose.yaml</c> at the repository root brings up (ADR-0039).
     /// Override it with the <c>TOPCUT_CONNECTION</c> environment variable to point the tooling
     /// somewhere else.
     /// </summary>
     private const string DesignTimeConnection =
-        "Server=localhost,11433;Database=TopCut;User Id=sa;Password=TopCut-Local-2026;TrustServerCertificate=True";
+        "Host=localhost;Port=15432;Database=topcut;Username=topcut;Password=TopCut-Local-2026";
 
     public TopCutDbContext CreateDbContext(string[] args)
     {
         var connection = Environment.GetEnvironmentVariable("TOPCUT_CONNECTION") ?? DesignTimeConnection;
 
         var options = new DbContextOptionsBuilder<TopCutDbContext>()
-            .UseSqlServer(connection)
+            .UseNpgsql(connection)
             .Options;
 
         return new TopCutDbContext(options, new NoTenantContext());

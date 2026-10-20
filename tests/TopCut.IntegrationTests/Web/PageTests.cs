@@ -16,8 +16,8 @@ namespace TopCut.IntegrationTests.Web;
 /// same path a person does. These are the tests that would catch a form that renders beautifully
 /// and posts nothing, or a protected page that returns an empty screen instead of a redirect.
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
+[Collection(PostgresCollection.Name)]
+public class PageTests(PostgresFixture postgres) : IAsyncLifetime
 {
     private const string Password = "Jugador-1234";
 
@@ -25,7 +25,7 @@ public class PageTests(SqlServerFixture sqlServer) : IAsyncLifetime
 
     public Task InitializeAsync()
     {
-        _app = new TopCutAppFactory(sqlServer);
+        _app = new TopCutAppFactory(postgres);
         return Task.CompletedTask;
     }
 

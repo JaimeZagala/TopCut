@@ -74,7 +74,7 @@ public class Tournament : BusinessEntity, ITenantOwned, IAuditable, IHasRowVersi
 
     public DateTimeOffset? UpdatedAt { get; set; }
 
-    public byte[]? RowVersion { get; set; }
+    public uint RowVersion { get; set; }
 
     public IReadOnlyList<Participant> Participants => _participants.AsReadOnly();
 

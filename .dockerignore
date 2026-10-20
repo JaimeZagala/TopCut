@@ -1,0 +1,15 @@
+# Lo que no debe viajar al contexto de compilación de la imagen.
+**/bin/
+**/obj/
+**/*.user
+**/appsettings.Development.json
+.git/
+.vs/
+.vscode/
+.claude/
+docs/
+tests/
+compose.yaml
+render.yaml
+Dockerfile
+.dockerignore

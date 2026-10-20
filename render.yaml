@@ -1,0 +1,36 @@
+# Blueprint de Render (ADR-0039). En el panel: New > Blueprint, elegir este repositorio, y Render
+# pide al crear el servicio los valores marcados con "sync: false". Ninguno está en el repositorio.
+services:
+  - type: web
+    name: topcut
+    runtime: docker
+    plan: free
+    # Frankfurt, al lado de la región de Neon (aws-eu-central-1): cada consulta cruza menos red.
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    branch: main
+    autoDeploy: true
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      # El puerto en el que escucha la imagen (ASPNETCORE_HTTP_PORTS en el Dockerfile). Render
+      # enruta al que diga PORT.
+      - key: PORT
+        value: "8080"
+      # El plan gratuito tiene 512 MB. El GC de servidor reserva por núcleo y está pensado para
+      # máquinas grandes; el de estación de trabajo cabe holgado.
+      - key: DOTNET_gcServer
+        value: "0"
+      # Cadena de Neon en formato .NET (Connect > .NET en su panel), con SSL Mode=Require.
+      - key: ConnectionStrings__TopCut
+        sync: false
+      - key: Superadmin__Email
+        sync: false
+      - key: Superadmin__Password
+        sync: false
+      # Opcionales: sin ellos el login con Google no aparece.
+      - key: Authentication__Google__ClientId
+        sync: false
+      - key: Authentication__Google__ClientSecret
+        sync: false

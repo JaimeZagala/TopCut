@@ -22,8 +22,8 @@ namespace TopCut.IntegrationTests.Live;
 /// test that proves the seam was real and not just a nice idea in a document.
 /// </para>
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class LiveUpdatesTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class LiveUpdatesTests(PostgresFixture fixture)
 {
     [Fact]
     public async Task Starting_a_round_reaches_the_screens_watching_that_tournament()

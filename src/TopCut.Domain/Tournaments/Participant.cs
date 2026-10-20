@@ -50,7 +50,7 @@ public class Participant : BusinessEntity, ITenantOwned, IHasRowVersion
 
     public DateTimeOffset RegisteredAt { get; private set; }
 
-    public byte[]? RowVersion { get; set; }
+    public uint RowVersion { get; set; }
 
     /// <summary>Eligible for the next round's pairings.</summary>
     public bool IsActive => Status == ParticipantStatus.Registered;

@@ -9,7 +9,7 @@ using TopCut.Infrastructure.Persistence;
 namespace TopCut.IntegrationTests.Persistence;
 
 /// <summary>
-/// The public search, against real SQL Server. This is the one place in the application that reads
+/// The public search, against real PostgreSQL. This is the one place in the application that reads
 /// across stores on purpose (ADR-0029), so these tests pull in both directions: that a visitor with
 /// no store in scope <b>does</b> see other people's tournaments, and that the three things which
 /// must stay hidden — drafts, unapproved stores and test tenants — stay hidden.
@@ -18,8 +18,8 @@ namespace TopCut.IntegrationTests.Persistence;
 /// database, so a search with no filters would pick up whatever another test class left behind.
 /// </para>
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class PublicSearchTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class PublicSearchTests(PostgresFixture fixture)
 {
     // --- What is public and what is not -----------------------------------------------------------
 

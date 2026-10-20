@@ -1,38 +1,34 @@
-# SQL Server para desarrollo local.
+# PostgreSQL para desarrollo local.
 #
-# Sustituye a LocalDB (ADR-0015): el mismo motor que usan las pruebas de integración y el mismo
-# que hay detras de Azure SQL, en vez de una variante de escritorio con sus propias manias.
+# El mismo motor y la misma versión mayor que Neon en producción y que las pruebas de integración
+# (ADR-0039), en vez de un servidor instalado a mano con su propia configuración.
 #
 #   docker compose up -d      arranca
 #   docker compose down       para, conservando los datos
 #   docker compose down -v    para y borra la base entera, para empezar de cero
 services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: topcut-sqlserver
+  postgres:
+    image: postgres:17
+    container_name: topcut-postgres
     environment:
-      ACCEPT_EULA: "Y"
+      POSTGRES_DB: topcut
+      POSTGRES_USER: topcut
       # Contraseña de desarrollo, deliberadamente en claro: esta base solo existe en tu máquina,
       # solo escucha en localhost y no contiene nada real. Nunca la reutilices en ningún otro sitio.
-      MSSQL_SA_PASSWORD: "TopCut-Local-2026"
-      MSSQL_PID: Developer
+      POSTGRES_PASSWORD: "TopCut-Local-2026"
     ports:
-      # 11433 y no 1433 para no chocar con una instalación de SQL Server que ya tengas.
-      - "11433:1433"
+      # 15432 y no 5432 para no chocar con un PostgreSQL que ya tengas instalado.
+      - "127.0.0.1:15432:5432"
     volumes:
       # Volumen con nombre: los datos sobreviven a "docker compose down".
-      - topcut-sqldata:/var/opt/mssql
+      - topcut-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1",
-        ]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U topcut -d topcut"]
+      interval: 5s
       timeout: 5s
       retries: 12
-      start_period: 30s
+      start_period: 10s
     restart: unless-stopped
 
 volumes:
-  topcut-sqldata:
+  topcut-pgdata:

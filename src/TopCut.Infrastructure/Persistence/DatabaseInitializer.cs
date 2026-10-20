@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using TopCut.Infrastructure.Identity;
 
 namespace TopCut.Infrastructure.Persistence;
@@ -14,8 +14,8 @@ namespace TopCut.Infrastructure.Persistence;
 public static class DatabaseInitializer
 {
     /// <summary>
-    /// How long to keep knocking before giving up. Enough for LocalDB to auto-start or for Azure
-    /// SQL serverless to resume from its idle pause.
+    /// How long to keep knocking before giving up. Enough for a Docker container that is still
+    /// starting, or for Neon to resume a compute suspended while idle.
     /// </summary>
     private static readonly TimeSpan WakeUpBudget = TimeSpan.FromSeconds(90);
 
@@ -58,22 +58,23 @@ public static class DatabaseInitializer
     /// Waits for the server to answer <b>before</b> touching migrations.
     /// <para>
     /// Without this, a paused server loses the race: EF's existence check fails while the engine is
-    /// still waking up, EF concludes the database is missing and issues CREATE DATABASE, which then
-    /// fails because the files were there all along. It bites on LocalDB, which shuts itself down
-    /// when idle, and on Azure SQL serverless, which does the same on the free tier.
+    /// still waking up, EF concludes the database is missing and tries to create it, which then
+    /// fails because it was there all along. It bites on Neon's free tier, which suspends the
+    /// compute when idle, and on a local container that has not finished starting.
     /// </para>
-    /// The connection targets <c>master</c>, which always exists, so this is purely "is the engine
-    /// up?" and never "does our database exist?".
+    /// So this asks only "is the engine up?", never "does our database exist?": a server that
+    /// answers that the database is missing (<c>3D000</c>) has answered, and creating it is EF's job.
+    /// It does not go through the <c>postgres</c> maintenance database because a hosted role is not
+    /// guaranteed to be allowed in there.
     /// </summary>
     private static async Task WaitForServerAsync(
         string connectionString,
         ILogger logger,
         CancellationToken cancellationToken)
     {
-        var toMaster = new SqlConnectionStringBuilder(connectionString)
+        var withShortTimeout = new NpgsqlConnectionStringBuilder(connectionString)
         {
-            InitialCatalog = "master",
-            ConnectTimeout = 15
+            Timeout = 15
         }.ConnectionString;
 
         var deadline = DateTimeOffset.UtcNow + WakeUpBudget;
@@ -85,7 +86,7 @@ public static class DatabaseInitializer
 
             try
             {
-                await using var connection = new SqlConnection(toMaster);
+                await using var connection = new NpgsqlConnection(withShortTimeout);
                 await connection.OpenAsync(cancellationToken);
 
                 if (attempt > 1)
@@ -95,7 +96,11 @@ public static class DatabaseInitializer
 
                 return;
             }
-            catch (SqlException error) when (DateTimeOffset.UtcNow < deadline)
+            catch (PostgresException error) when (error.SqlState == PostgresErrorCodes.InvalidCatalogName)
+            {
+                return;
+            }
+            catch (Exception error) when (error is NpgsqlException or TimeoutException && DateTimeOffset.UtcNow < deadline)
             {
                 logger.LogInformation(
                     "Esperando a que el servidor de base de datos arranque (intento {Intento}): {Mensaje}",

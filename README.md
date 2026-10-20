@@ -27,7 +27,7 @@ TopCut.slnx
 src/
   TopCut.Domain/          entidades y reglas de negocio puras
   TopCut.Application/     casos de uso
-  TopCut.Infrastructure/  EF Core, SQL Server, Identity, integraciones
+  TopCut.Infrastructure/  EF Core, PostgreSQL, Identity, integraciones
   TopCut.Api/             controladores REST + hubs de SignalR (biblioteca)
   TopCut.Web/             Blazor Web App; aloja tambien TopCut.Api
 tests/
@@ -53,7 +53,7 @@ Arranca primero la base de datos:
 docker compose up -d
 ```
 
-Levanta un SQL Server 2022 en el puerto **11433** con los datos en un volumen, así que sobreviven
+Levanta un PostgreSQL 17 en el puerto **15432** con los datos en un volumen, así que sobreviven
 entre sesiones. La cadena de conexión ya apunta ahí en `appsettings.Development.json`.
 
 Lo demás son secretos y va en user-secrets, nunca en el repositorio. El `UserSecretsId` ya está en
@@ -78,23 +78,21 @@ que pueda aprobar la primera tienda. El login con Google se activa solo si exist
 | Arrancarla | `docker compose up -d` |
 | Pararla conservando los datos | `docker compose down` |
 | Empezar de cero | `docker compose down -v` |
-| Ver los logs | `docker compose logs -f sqlserver` |
+| Ver los logs | `docker compose logs -f postgres` |
 
 Tras un `down -v`, la aplicación recrea el esquema y siembra el catálogo al siguiente arranque.
 
 Para mirar dentro sin salir de la terminal:
 
 ```bash
-docker exec -it topcut-sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "TopCut-Local-2026" -C -d TopCut
+docker exec -it topcut-postgres psql -U topcut -d topcut
 ```
 
 La contraseña está en claro en `compose.yaml` a propósito: esa base solo escucha en tu localhost y
 no contiene nada real. **No la reutilices en ningún otro sitio.**
 
-> **Por qué no LocalDB** (ADR-0015): funcionaba, pero es un motor distinto al de producción, se
-> apaga solo cuando lleva rato sin uso y su estado vive en el registro de Windows, donde es fácil
-> que se desincronice del disco y deje errores desconcertantes. El contenedor es el mismo SQL Server
-> que usan las pruebas de integración y el que hay detras de Azure SQL.
+> **Por qué en Docker** (ADR-0039): es el mismo motor y la misma versión mayor que Neon en
+> producción y que las pruebas de integración, sin instalar nada en Windows.
 
 ## Comandos
 
@@ -109,3 +107,26 @@ dotnet test TopCut.slnx
 ```bash
 dotnet run --project src/TopCut.Web
 ```
+
+## Despliegue
+
+Producción vive en **Render** (la aplicación) y **Neon** (PostgreSQL), los dos en plan gratuito y
+sin tarjeta (ADR-0039). Se monta una vez:
+
+1. **Neon**: crea un proyecto con PostgreSQL 17 en la región *AWS Europe Central 1 (Frankfurt)*.
+   En *Connect*, elige el formato **.NET** y copia la cadena: es la que empieza por `Host=`, no la
+   URL `postgresql://`, que Npgsql no entiende. Usa la conexión directa, no la *pooled*.
+2. **Render**: *New > Blueprint*, conecta GitHub y elige este repositorio. Render lee
+   [`render.yaml`](render.yaml) y pide los valores que no están en el repositorio:
+   `ConnectionStrings__TopCut` (la cadena de Neon), `Superadmin__Email`, `Superadmin__Password` y,
+   si se quiere login con Google, `Authentication__Google__ClientId` y
+   `Authentication__Google__ClientSecret`.
+3. **Google Cloud** (solo si hay login con Google): añade
+   `https://<servicio>.onrender.com/signin-google` como URI de redirección autorizada.
+
+A partir de ahí, cada push a `main` se despliega solo. La aplicación aplica las migraciones al
+arrancar; antes de fusionar un cambio de esquema, revisa su script en
+[`docs/migraciones/`](docs/migraciones/).
+
+El plan gratuito de Render duerme el servicio tras 15 minutos sin visitas y tarda en torno a un
+minuto en despertarlo: abre la web un rato antes del torneo.

@@ -16,8 +16,8 @@ namespace TopCut.IntegrationTests.Persistence;
 /// holding one object in memory can never catch.
 /// </para>
 /// </summary>
-[Collection(SqlServerCollection.Name)]
-public class TournamentEngineTests(SqlServerFixture fixture)
+[Collection(PostgresCollection.Name)]
+public class TournamentEngineTests(PostgresFixture fixture)
 {
     [Fact]
     public async Task A_full_swiss_tournament_runs_with_the_aggregate_reloaded_between_rounds()

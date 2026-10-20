@@ -30,8 +30,12 @@ public interface IAuditable
 /// <summary>
 /// Optimistic concurrency. Implemented by entities where two simultaneous actions can collide:
 /// reporting a result, taking the last seat, promoting from the waitlist.
+/// <para>
+/// The database bumps it on every write to the row; nobody sets it by hand. On PostgreSQL it is
+/// the system column <c>xmin</c>, which is why it is a 32-bit number (ADR-0039).
+/// </para>
 /// </summary>
 public interface IHasRowVersion
 {
-    byte[]? RowVersion { get; set; }
+    uint RowVersion { get; set; }
 }
